@@ -1,0 +1,9 @@
+.DS_Store
+__pycache__/
+
+migrations/
+db.sqlite3
+
+static/js/threejs
+
+.env

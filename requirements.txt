@@ -1,0 +1,12 @@
+Django
+django-sslserver-v2
+django-environ
+pandas
+matplotlib
+pyunicore
+mozilla-django-oidc
+ujson
+numpy
+requests
+h5py
+networkx
