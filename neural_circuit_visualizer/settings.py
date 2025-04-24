@@ -117,9 +117,10 @@ USE_I18N = True
 
 USE_TZ = True
 
+MEDIA_ROOT = env('MEDIA_ROOT')
+STATIC_ROOT = env('STATIC_ROOT')
 
-MEDIA_URL = env('MEDIA_URL')
-STATIC_URL = env('STATIC_URL')
+STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
