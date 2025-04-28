@@ -79,25 +79,7 @@
               <h3>Neural Circuit Visualizer</h3>
             </div>
             <div class="col-12 col-md-2">
-              <div class="p-2 d-flex flex-direction-row justify-content-end m-auto" style="text-align: right; color: white;">
-                {% if user.is_authenticated %}
-                <div id="logout-button" action="{% url 'oidc_logout' %}">
-                  <p>Logout</p>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-box-arrow-in-left" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M10 3.5a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 1 1 0v2A1.5 1.5 0 0 1 9.5 14h-8A1.5 1.5 0 0 1 0 12.5v-9A1.5 1.5 0 0 1 1.5 2h8A1.5 1.5 0 0 1 11 3.5v2a.5.5 0 0 1-1 0z"/>
-                    <path fill-rule="evenodd" d="M4.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H14.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708z"/>
-                  </svg>
-                </div>
-                {% else %}
-                <a id="login-button" style="cursor: pointer; text-decoration: none; color: white" href="{% url 'oidc_authentication_init' %}" >
-                  <p>Login</p>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-box-arrow-in-right" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0z"/>
-                    <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
-                  </svg>
-                </a>
-                {% endif %}
-              </div>
+              {% include "components/login_logout.html" %}
             </div>
           </div>
         </div>
@@ -1782,21 +1764,11 @@
                     <!-- Sub Accordion Ends Here -->
                   </div>
                 </div>
+                {% include "components/hpc_integration/job_submission.html" %}
               </div>
             </div>
 
-            <div class="accordion-item">
-              <h2 class="accordion-header heading" id="flush-headingFour"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseFour" aria-expanded="false" aria-controls="flush-collapseFour">FETCH RESULTS</button></h2>
-              <div id="flush-collapseFour" class="accordion-collapse collapse" aria-labelledby="flush-headingFour" data-bs-parent="#accordionFlushExample">
-                <div class="accordion-body">
-                  <div class="d-grid gap-2">
-                    <button type="button" class="btn btn-success">Check Job Status</button>
-                    <button type="button" class="btn btn-success">Fetch and Load Simulation Results</button>
-                    <button type="button" class="btn btn-success">Download Simulation Results</button>
-                  </div>
-                </div>
-              </div>
-            </div>
+
           </div>
 
           <div id="lblnetwork" class="text-white mt-1 p-2" style="background-color: #2a6b38">Network:</div>
