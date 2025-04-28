@@ -1,7 +1,5 @@
 
 import base64
-from logging import Logger
-from venv import logger
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import numpy as np
@@ -763,7 +761,7 @@ def compute_connections():
     connections = connect_all_pyramidal(ca3_pyramidal, ca1_pyramidal, average_CA1_contacted_by_CA3)
     return connections
 
-@csrf_exempt
+
 def fetchConnections(request):
     try:
         connections = compute_connections()  # Retrieve precomputed connections
@@ -782,7 +780,7 @@ def fetchConnections(request):
         return JsonResponse(response_data)
 
     except Exception as e:
-        Logger.error(f"An error occurred in fetchConnections: {e}")
+        print(e)
         return JsonResponse({'error': str(e), 'connections': {}}, status=500)
 
 

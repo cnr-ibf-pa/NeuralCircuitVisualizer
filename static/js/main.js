@@ -85,9 +85,8 @@ const animationtime = document.getElementById("txtanimationtime");
 const txtPersistenttime = document.getElementById("txtPersistenttime");
 let selectedCheckboxByLayer = [];
 let selectedCheckboxIds = [];
-const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
-const baseURL = isLocal ? "https://127.0.0.1:8000" : "https://hcv.ebrains-italy.eu";
-const texturePath = isLocal ? "./img/disc.png" : "/static/img/disc.png";
+const baseURL = "";
+const texturePath = "/static/img/disc.png";
 const dropdown = document.getElementById("ddactivity_chunks");
 const txttimefrom = document.getElementById("txttimefrom");
 const txttimeto = document.getElementById("txttimeto");
@@ -1725,6 +1724,7 @@ function GetNetworkData(number_of_neuros = 0) {
 window.addEventListener("load", function () {
   const btnLoadAllLayers = document.getElementById("btnLoadAllLayers");
   btnLoadAllLayers.addEventListener("click", function () {
+    console.log('ciaone');
     document.getElementById("msgprogress").innerText = `Loading Hippocampal formation data, please wait...`;
 
     document.getElementById("progress-percentage").style.display = "none";
@@ -2725,3 +2725,4 @@ function clearScene() {
 
 CreateScene();
 disableAllElements();
+

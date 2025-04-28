@@ -160,3 +160,5 @@ AUTHENTICATION_BACKENDS = (
     'hpc_integration.auth.CustomOIDCAuthenticationBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
+
+UNICORE_JOB_TAGS = ['neural_circuit_visualizer']
