@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'django.middleware.gzip.GZipMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -162,3 +163,12 @@ AUTHENTICATION_BACKENDS = (
 )
 
 UNICORE_JOB_TAGS = ['neural_circuit_visualizer']
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+
+NETWORK_GLOBAL_VARIABLE = None
+ACTIVITY_GLOBAL_VARIABLE = None
+JSON_DIR = None
+DATA_UPLOAD_MAX_MEMORY_SIZE = 9242880000  # 9GB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 9242880000  # 9GB

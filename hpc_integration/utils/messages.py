@@ -2,11 +2,18 @@ USER_NOT_AUTHENTICATED = 'User not authenticated'
 OK = 'Ok'
 KO = 'Ko'
 
-USER_LOGIN_ERROR = 'Unable to logged in the user.'
-JOB_SUBMITTED = 'Job submitted on {}.'
-HPC_CONNECTION_ERROR = '<b>HPC error !</b><br><br>Unable to connect to {}.<br><br>If the problem persists contact the <a href="https://ebrains.eu/support" class="alert-link" target="_blank">EBRAINS support</a> specifying this error code: <br><b>{}</b>. '
-JOB_SUBMISSION_FAILED = '<b>Error !</b><br><br>Job submission failed.<br><br>Please, contact the <a href="https://ebrains.eu/support" class="alert-link" target="_blank">EBRAINS support</a> if the problem persists specifying this error code: <br><b>{}</b>. '
-HPC_SYSTEM_ERROR = '<b>HPC Error !</b><br><br>It seems the {} system is down or got an error.<br>Please, try again later...<br><br>If the problem persists contact the <a href="https://ebrains.eu/support" class="alert-link" target="_blank">EBRAINS support</a>. '
-GENERAL_ERROR = '<b>General error !</b>'
 
-HPC_NOT_AVAILABLE = '<b>HPC not available</b><br><br><b>{}</b> system not available at this moment.<br>Please, try again later...<br><br>If the problem persists contact the <a href="https://ebrains.eu/support" class="alert-link" target="_blank">EBRAINS support</a>.'
+HPC_CONNECTION_ERROR = 'Connection error! Unable to reach hpc system.'
+HPC_NOT_AVAILABLE = 'Service error! The hpc system is not available at this moment.'
+USER_LOGIN_ERROR = 'Authentication error! Unable to log in the user.'
+JOB_SUBMISSION_FAILED = 'Connection error! The job submission failed.'
+HPC_SYSTEM_ERROR = 'Service error! The hpc system encounter an error.'
+INVALID_HPC_ERROR = 'HPC value error! This hpc {} is not valid.'
+
+JOB_SUBMITTED = 'Job submitted on {}.'
+
+HPC_NOT_PROVIDED = 'HPC not provided!'
+HPC_NOT_VALID = 'HPC value not valid!'
+
+JOB_ID_NOT_PROVIDED = 'Job id not provided!'
+JOB_NAME_ALREADY_EXISTS = 'Job name already exists! Unable to submit job with the same name.'

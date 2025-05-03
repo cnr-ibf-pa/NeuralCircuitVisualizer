@@ -1,0 +1,75 @@
+{% block content %}
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="fetch-jobs-heading"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fetch-jobs-collapse" aria-expanded="false" aria-controls="fetch-jobs-collapse">FETCH JOBS</button></h2>
+    <div id="fetch-jobs-collapse" class="accordion-collapse collapse" aria-labelledby="fetch-jobs-heading" data-bs-parent="#accordionFlushExample">
+      <div class="accordion-body">
+        <form id="fetch-jobs-form">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="hpc-selector" class="form-label">Select HPC Platform:</label>
+            <select class="form-select" id="hpc-selector" name="hpc">
+              <option value="CINECA - G100">CINECA - G100</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-success w-100">Fetch jobs</button>
+        </form>
+        <div id="fetchedJobsDiv" class="d-block d-none">
+          <hr>
+          <div class="accordion" id="fetchedJobsAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                  Fetched Jobs
+                </button>
+              </h2>
+              <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#fetchedJobsAccordion">
+                <div class="accordion-body" style="padding: 0;">
+                  <div id="fetched-jobs-list"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+    function addJobToList(jobId, details) {
+      const el = document.createElement('button');
+      el.classList.add('btn', 'job-button', 'border');
+      el.innerText = jobId;
+      if (details.status == 'success') {
+        el.classList.add('job-success', 'btn-success');
+      } else if (details.status == 'failed') {
+        el.classList.add('job-failed', 'btn-danger');
+      } else if (details.status == 'pending') {
+        el.classList.add('job-pending', 'btn-info');
+      }
+      el.addEventListener('click', function () {
+        const a = document.createElement('a');
+        a.href = new URL(`/hpc-integration/download-job-results?job_id=${jobId}`, window.location.origin);
+        a.download = `${jobId}.zip`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+      })
+      document.getElementById('fetched-jobs-list').appendChild(el);
+    }
+
+    document.getElementById('fetch-jobs-form').addEventListener('submit', function (event) {
+      event.preventDefault()
+      const formData = new FormData(this);
+      const url = new URL('/hpc-integration/fetch-jobs', window.location.origin);
+      url.searchParams.set('hpc', formData.get('hpc'));
+      fetch(url)
+        .then((response) => response.json())
+        .then((data) => {
+          document.getElementById('fetchedJobsDiv').classList.remove('d-none');
+          Object.keys(data).forEach(jobId => addJobToList(jobId, data[jobId]));
+        })
+        .catch((error) => console.error('Error:', error))
+    })
+  </script>
+{% endblock %}

@@ -1,5 +1,9 @@
 import datetime
 import re
+import os
+import time
+
+from neural_circuit_visualizer.settings import MEDIA_ROOT
 
 
 def str_to_datetime(datetime_string, format=None):
@@ -40,3 +44,26 @@ def str_to_datetime(datetime_string, format=None):
         raise ValueError('Format value is not valid')
 
     return datetime.datetime.strptime(datetime_string, format).replace(tzinfo=None)
+
+
+def get_tmp_working_dir() -> str:
+    while True:
+        tmp_working_dir = os.path.join(str(MEDIA_ROOT), 'tmp', str(time.time()))
+        if not os.path.exists(tmp_working_dir):
+            os.makedirs(tmp_working_dir)
+            return tmp_working_dir
+
+
+def get_tmp_dir() -> str:
+    tmp_dir = os.path.join(str(MEDIA_ROOT), 'tmp')
+    if not os.path.exists(tmp_dir):
+        os.mkdir(tmp_dir)
+    return tmp_dir
+
+
+def get_tmp_results_dir() -> str:
+    while True:
+        tmp_working_dir = os.path.join(str(MEDIA_ROOT), 'tmp', str(time.time()), 'results')
+        if not os.path.exists(tmp_working_dir):
+            os.makedirs(tmp_working_dir)
+            return tmp_working_dir

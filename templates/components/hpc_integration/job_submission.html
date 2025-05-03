@@ -5,13 +5,18 @@
     </h2>
     <div id="job-submission-collapse" class="accordion-collapse collapse" aria-labelledby="job-submission-heading" data-bs-parent="#accordionFlushExample">
       <div class="accordion-body">
-        <form id="optimization-settings" method="post">
+        <form id="optimization-settings-forms">
           {% csrf_token %}
           <div class="mb-3">
             <label for="hpc-selector" class="form-label">Select HPC Platform:</label>
             <select class="form-select" id="hpc-selector" name="hpc">
               <option value="CINECA - G100">CINECA - G100</option>
             </select>
+          </div>
+          <div class="mb-3">
+            <label for="job-name" class="form-label">Job Name:</label>
+            <input type="text" class="form-control" id="job-name" name="job_name" maxlength="32" aria-describedby="job-name-help" />
+            <div id="job-name-help" class="form-text">Enter the job name (max 32 characters).</div>
           </div>
           <div class="mb-3">
             <label for="runtime" class="form-label">Runtime (hours):</label>
@@ -35,19 +40,29 @@
   </div>
 
   <script>
-    document.getElementById('optimization-settings').addEventListener('submit', function (event) {
+    document.getElementById('optimization-settings-forms').addEventListener('submit', async function (event) {
+      console.log("Form submitted")
       event.preventDefault()
-      const url = '/hpc-integration/submit-job'
-      const formData = new FormData(this)
-      fetch(url, {
-        method: 'POST',
-        body: formData
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log(data)
-        })
-        .catch((error) => console.error('Error:', error))
+      const url = '/hpc-integration/submit-job';
+      const formData = new FormData(this);
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          body: formData
+        });
+        if (!response.ok) {
+          throw new Error(`${await response.text()}`);
+        }
+      } catch (error) {
+        const details = JSON.parse(error.message);
+        for (const key in details) {
+          const errorElement = document.querySelector(`#optimization-settings-forms input[name=${key}`);
+          errorElement.classList.add('is-invalid');
+          const errorMessage = details[key][0].message;
+          console.error(errorMessage);
+        }
+      }
     })
   </script>
 {% endblock %}

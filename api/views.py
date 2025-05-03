@@ -202,11 +202,10 @@ def fetch_user_network_data(request):
         total_size = 0
         flag_check = 0
 
-        # Read the "network.json" file if it exists
         network_file_path = os.path.join(json_directory, "network.json")
         if os.path.exists(network_file_path):
             with open(network_file_path, 'r') as f:
-                file_data = ujson.load(f)  # ✅ Load full JSON instead of reading line by line
+                file_data = ujson.load(f)
                 total_excitatory = sum(1 for neuro in file_data if neuro.get('type') == 1)
                 total_inhibitory = sum(1 for neuro in file_data if neuro.get('type') != 1)
                 total_neurons = len(file_data)
@@ -221,72 +220,70 @@ def fetch_user_network_data(request):
                 })
                 total_size += (os.path.getsize(network_file_path) / (1024 * 1024))
 
-        # Read and process "activity.csv" if it exists
         activity_file_path = os.path.join(json_directory, "activity.csv")
         if os.path.exists(activity_file_path):
-            flag_check = 1  #  Indicates that activity data is available
+            flag_check = 1
 
             try:
-                CHUNK_SIZE = 100 * 1024 * 1024  # 100 MB chunks
+                CHUNK_SIZE = 100 * 1024 * 1024
                 csv_data = pd.read_csv(activity_file_path, header=None, names=['id', 't'])
                 data_dict = csv_data.groupby('t')['id'].agg(list).to_dict()
-                # os.remove(activity_file_path)  #  Remove CSV after processing
 
                 chunk_number = 0
-                first_last_keys = []  # List to store first and last keys of each chunk
-                chunk_mfr_list = []  # Store Mean Firing Rate (MFR) of each chunk
-                total_spikes = 0
-                unique_neurons = set()
+                first_last_keys = []
+                chunk_mfr_list = []
                 current_chunk_size = 0
                 current_data_dict = {}
 
                 for key, values in data_dict.items():
                     entry_size = len(ujson.dumps({key: values}))
 
-                    #  Save chunk when it exceeds size limit
                     if current_chunk_size + entry_size > CHUNK_SIZE and current_data_dict:
-                        first_key = list(current_data_dict.keys())[0]
-                        last_key = list(current_data_dict.keys())[-1]
-                        mfr = round(total_spikes / len(unique_neurons), 2) if unique_neurons else 0
+                        times_in_chunk = list(current_data_dict.keys())
+                        t_min = float(times_in_chunk[0])
+                        t_max = float(times_in_chunk[-1])
+                        total_time_sec = (t_max - t_min) / 1000.0
+                        total_spikes = sum(len(v) for v in current_data_dict.values())
+                        unique_neurons = set(gid for v in current_data_dict.values() for gid in v)
+                        total_neurons = len(unique_neurons)
+                        mfr = round((total_spikes / total_neurons) / total_time_sec, 2) if total_neurons > 0 and total_time_sec > 0 else 0
 
                         chunk_mfr_list.append({
-                            "first_key": first_key,
-                            "last_key": last_key,
+                            "first_key": t_min,
+                            "last_key": t_max,
                             "chunk_number": chunk_number,
                             "MFR": mfr
                         })
-                        first_last_keys.append({'chunk_number': chunk_number, 'first_key': first_key, 'last_key': last_key})
+                        first_last_keys.append({'chunk_number': chunk_number, 'first_key': t_min, 'last_key': t_max})
 
                         chunk_file_path = os.path.join(json_directory, f'activity_chunk_{chunk_number}.json')
                         with open(chunk_file_path, 'w') as f:
                             ujson.dump(current_data_dict, f)
 
-                        #  Reset for the next chunk
                         current_data_dict = {}
                         current_chunk_size = 0
                         chunk_number += 1
-                        total_spikes = 0
-                        unique_neurons = set()
 
-                    #  Add the complete `t={values}` entry to the chunk
                     current_data_dict[key] = values
                     current_chunk_size += entry_size
-                    total_spikes += len(values)
-                    unique_neurons.update(values)
 
-                #  Save the final chunk (if any)
                 if current_data_dict:
-                    first_key = list(current_data_dict.keys())[0]
-                    last_key = list(current_data_dict.keys())[-1]
-                    mfr = round(total_spikes / len(unique_neurons), 2) if unique_neurons else 0
+                    times_in_chunk = list(current_data_dict.keys())
+                    t_min = float(times_in_chunk[0])
+                    t_max = float(times_in_chunk[-1])
+                    total_time_sec = (t_max - t_min) / 1000.0
+                    total_spikes = sum(len(v) for v in current_data_dict.values())
+                    unique_neurons = set(gid for v in current_data_dict.values() for gid in v)
+                    total_neurons = len(unique_neurons)
+                    mfr = round((total_spikes / total_neurons) / total_time_sec, 2) if total_neurons > 0 and total_time_sec > 0 else 0
 
                     chunk_mfr_list.append({
-                        "first_key": first_key,
-                        "last_key": last_key,
+                        "first_key": t_min,
+                        "last_key": t_max,
                         "chunk_number": chunk_number,
                         "MFR": mfr
                     })
-                    first_last_keys.append({'chunk_number': chunk_number, 'first_key': first_key, 'last_key': last_key})
+                    first_last_keys.append({'chunk_number': chunk_number, 'first_key': t_min, 'last_key': t_max})
 
                     final_chunk_file_path = os.path.join(json_directory, f'activity_chunk_{chunk_number}.json')
                     with open(final_chunk_file_path, 'w') as f:
@@ -304,7 +301,6 @@ def fetch_user_network_data(request):
             except Exception as e:
                 return JsonResponse({'error': f'Error processing activity file: {str(e)}'}, status=500)
 
-        #  Final response
         response_data = {
             'files': data_list,
             'lstresponse': lstresponse,
@@ -445,8 +441,8 @@ def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="mediumse
 
         # Annotate bars for legend
         legend_labels = {
-            "# Max": max(spike_counts),
-            "# Min ": min(spike_counts),
+            "# Max Spike": max(spike_counts),
+            "# Min Spike ": min(spike_counts),
             "# Spikes": total_spikes,
             "# Neurons": total_neurons,
 
@@ -454,7 +450,7 @@ def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="mediumse
         legend_text = "\n".join([f"{key}: {value}" for key, value in legend_labels.items()])
 
         # Create legend box
-        legend_box = plt.gcf().text(0.81, 0.79, legend_text, fontsize=8, bbox=dict(facecolor='white', alpha=0.5))
+        legend_box = plt.gcf().text(0.80, 0.79, legend_text, fontsize=8, bbox=dict(facecolor='white', alpha=0.5))
         # plt.gcf().text(0.75, 0.85, legend_text, fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
 
         # Axes and title
@@ -761,7 +757,7 @@ def compute_connections():
     connections = connect_all_pyramidal(ca3_pyramidal, ca1_pyramidal, average_CA1_contacted_by_CA3)
     return connections
 
-
+@csrf_exempt
 def fetchConnections(request):
     try:
         connections = compute_connections()  # Retrieve precomputed connections
@@ -780,7 +776,7 @@ def fetchConnections(request):
         return JsonResponse(response_data)
 
     except Exception as e:
-        print(e)
+        Logger.error(f"An error occurred in fetchConnections: {e}")
         return JsonResponse({'error': str(e), 'connections': {}}, status=500)
 
 
@@ -1031,5 +1027,3 @@ def LoadHumanActivityData(request):
     except Exception as e:
         print("Error in LoadActivityData:", e)  # Debugging
         return JsonResponse({'error': str(e)}, status=500)
-
-
