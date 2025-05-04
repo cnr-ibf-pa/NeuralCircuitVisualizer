@@ -26,7 +26,6 @@ def submit_job(request):
 
     if not form.is_valid():
         logging.error(f'Invalid form: {form.errors}')
-        print(form.errors.get_json_data())
         return JsonResponse(status=BAD_REQUEST, data=form.errors.get_json_data(escape_html=True), safe=False)
 
     data = form.cleaned_data
@@ -39,7 +38,7 @@ def submit_job(request):
 
     zip_filename = os.path.join(get_tmp_dir(), f'{data["job_name"]}.zip')
     if os.path.exists(zip_filename):
-        logging.error(f'Job name "{data['job_name']}" already exists')
+        logging.error(f'Job name "{data["job_name"]}" already exists')
         return JsonResponse(status=BAD_REQUEST, data={'job_name': [{'message': messages.JOB_NAME_ALREADY_EXISTS}]})
 
     shutil.make_archive(base_name=zip_filename.replace('.zip', ''), format='zip', root_dir=working_dir)
