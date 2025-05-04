@@ -44,7 +44,7 @@ def submit_job(request):
     shutil.make_archive(base_name=zip_filename.replace('.zip', ''), format='zip', root_dir=working_dir)
 
     try:
-        JobHelper().submit_job(request.user.token, zip_filename, data)
+        JobHelper().submit_job(request.session['oidc_access_token'], zip_filename, data)
     except Exception as err:
         logger.error(f'Error while submitting job: {err}')
         return HttpResponseServerError(content=str(err))
@@ -69,7 +69,7 @@ def fetch_jobs(request):
     request.session['hpc'] = hpc
 
     try:
-        jobs_list = JobHelper().fetch_jobs_list(request.user.token, hpc)
+        jobs_list = JobHelper().fetch_jobs_list(request.session['oidc_access_token'], hpc)
         return JsonResponse(data=jobs_list)
     except Exception as err:
         logger.error(f'Error while fetching jobs: {err}')
@@ -97,7 +97,7 @@ def download_job_results(request):
         request.session['download_dir'] = download_dir
 
     try:
-        file_list = JobHelper().fetch_job_files(request.user.token, hpc, job_id)
+        file_list = JobHelper().fetch_job_files(request.session['oidc_access_token'], hpc, job_id)
         for f in file_list.keys():
             if type(file_list[f]) == UnicorePathFile:
                 dst = os.path.join(download_dir, f)
