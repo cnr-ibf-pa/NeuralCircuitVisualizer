@@ -236,14 +236,14 @@ class JobHelper:
 
     @classmethod
     @check_hpc_supported
-    def submit_job(cls, token, zip_file, settings):
+    def submit_job(cls, hpc, zip_file, settings, token):
         job_handler = cls()
         hpc = settings.pop('hpc')
         return job_handler._submit_on_unicore(hpc, token, zip_file, settings)
 
     @classmethod
     @check_hpc_supported
-    def fetch_jobs_list(cls, token, hpc):
+    def fetch_jobs_list(cls, hpc, token):
         job_handler = cls()
         raw_jobs = job_handler._get_unicore_jobs(hpc, token)
         jobs = job_handler.parse_raw_jobs(raw_jobs)
@@ -251,6 +251,6 @@ class JobHelper:
 
     @classmethod
     @check_hpc_supported
-    def fetch_job_files(cls, token, hpc, job_id):
+    def fetch_job_files(cls, hpc, job_id, token):
         job_handler = cls()
         return job_handler._get_unicore_job_results(hpc, token, job_id)
