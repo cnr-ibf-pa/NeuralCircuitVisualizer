@@ -46,8 +46,8 @@ let totalX = 0,
   totalZ = 0;
 const params = { Backgound: "#000000" };
 const parameters = {
-  SphereSize: 20,
-  FiringSphereSize: 100,
+  Neuron_Size: 30,
+  Firing_Neuron_Size: 100,
 };
 let pt = 2;
 let colorsArray;
@@ -55,10 +55,12 @@ let vertexColors = [];
 let particles;
 const scalingFactor = 0.1;
 let r = 0;
-// Playback config object
-let playbackConfig = {
-  simTimestep: 0.1, // ms per simulation step
-  stepDuration: 0, // ms per animation frame
+let spikeTimes = new Map();
+
+// Global playback config
+const playbackConfig = {
+  simTimestep: parseFloat(document.getElementById("simTimestepValue").value),
+  stepDuration: parseInt(document.getElementById("stepDurationValue").value),
 };
 let dgRGB = [0.0, 0.0, 1.0];
 let ca3RGB = [0.0, 0.0, 1.0];
@@ -92,7 +94,7 @@ const txttimefrom = document.getElementById("txttimefrom");
 const txttimeto = document.getElementById("txttimeto");
 const networkFileInput = document.getElementById("networkFileInput");
 const hdfFileInput = document.getElementById("activityFileInput");
-var ca1RegDiv = document.getElementById("ca1-reg");
+
 activitySelect.addEventListener("change", loadActivity);
 document.getElementById("activitySelect").disabled = true;
 HumanactivitySelect.addEventListener("change", loadHumanActivity);
@@ -138,7 +140,7 @@ async function LoadActivityData(file_id) {
       gids_activity_indexes = response_data.gids_activity_indexes;
       //   console.log("gids activity indexes: ", gids_activity_indexes);
 
-      document.getElementById("lblspikes").innerText = "Spikes: " + number_of_spikes;
+      document.getElementById("lblspikes").innerText = "# spikes: " + number_of_spikes;
 
       //   const lasttime = parseFloat(timeRanges[timeRanges.length - 1]).toFixed(1);
       //   //   document.getElementById("lblLasttime").innerHTML =
@@ -189,6 +191,8 @@ async function LoadHumanActivityData(file_id) {
     document.getElementById("page-loader").style.display = "block";
     document.getElementById("progress-percentage").innerText = "0%";
     document.getElementById("msgprogress").innerText = "Loading Human activity data...";
+    document.getElementById("Neurons_firing_attributes").style.visibility = "visible";
+    document.getElementById("networkspikes").style.visibility = "visible";
 
     const response = await fetch(`${baseURL}/api/LoadHumanActivityData/?dir=${file_id}`, {
       method: "POST",
@@ -204,7 +208,7 @@ async function LoadHumanActivityData(file_id) {
 
       gids_activity_indexes = response_data.gids_activity_indexes;
 
-      document.getElementById("lblspikes").innerText = "Spikes: " + number_of_spikes;
+      document.getElementById("lblspikes").innerText = "# spikes: " + number_of_spikes;
 
       //   lasttime = parseFloat(timeRanges[timeRanges.length - 1]).toFixed(1);
 
@@ -222,7 +226,7 @@ async function LoadHumanActivityData(file_id) {
         lasttime = parseInt(lastKey);
         totalTimeDisplay.textContent = lasttime;
         document.getElementById("timebar").max = lasttime;
-        spikeNeuronSize = 300;
+        // spikeNeuronSize = 300;
       }
 
       startButton.disabled = false;
@@ -241,7 +245,12 @@ async function LoadHumanActivityData(file_id) {
 
 async function LoadHipForm() {
   try {
+    document.getElementById("HumanactivitySelect").selectedIndex = 0;
     clearScene();
+    resetSpikeState();
+    resetPlaybackConfig();
+    resetTimeUI();
+    flag = false;
     // Fetch the data from the server
     const response = await fetch(`${baseURL}/api/LoadAllLayers/`);
     const data = await response.json();
@@ -286,6 +295,11 @@ async function LoadHipForm() {
 
 async function LoadHumanHipForm() {
   try {
+    document.getElementById("activitySelect").selectedIndex = 0;
+
+    resetSpikeState();
+    resetPlaybackConfig();
+    resetTimeUI();
     clearScene();
     const response = await fetch(`${baseURL}/api/LoadHumanHipForm/`);
     const data = await response.json();
@@ -295,7 +309,9 @@ async function LoadHumanHipForm() {
     total_neurons = data.total_neurons;
 
     document.getElementById("page-loader").style.display = "none";
+    resetAndDisableAllCheckboxes();
     flag = true;
+
     VisualizateNeurons();
     document.getElementById("HumanactivitySelect").disabled = false;
   } catch (error) {
@@ -340,133 +356,168 @@ const uniqueDirectory = getTimestampDirectory(); // generate once per session
 
 networkFileInput.addEventListener("change", async (event) => {
   const files = event.target.files;
-  if (files.length > 0) {
-    try {
-      const chunkSize = 10 * 1024 * 1024; // 10 MB
-      const uploadPromises = [];
+  if (!files.length) return;
 
-      document.getElementById("progress-percentage").innerText = "0%";
-      document.getElementById("page-loader").style.display = "block";
-      document.getElementById("msgprogress").innerText = "Uploading your file, please wait...";
+  const chunkSize = 10 * 1024 * 1024; // 10 MB
+  const uploadPromises = [];
 
-      for (const file of files) {
-        const fileType = file.name.split(".").pop().toLowerCase(); // Detect file type (csv or hdf5)
-        const totalChunks = Math.ceil(file.size / chunkSize);
-        let uploadedChunks = 0;
+  resetSpikeState();
+  resetPlaybackConfig();
+  resetTimeUI();
+  clearScene();
 
-        for (let start = 0; start < file.size; start += chunkSize) {
-          const chunk = file.slice(start, start + chunkSize);
-          const formData = new FormData();
-          formData.append("file", chunk, file.name);
-          formData.append("chunkIndex", Math.floor(start / chunkSize));
-          formData.append("totalChunks", totalChunks);
-          formData.append("uniqueDirectory", uniqueDirectory);
-          formData.append("fileType", fileType);
+  const progressBar = document.getElementById("progress-percentage");
+  const loader = document.getElementById("page-loader");
+  const msg = document.getElementById("msgprogress");
 
-          uploadPromises.push(
-            fetch(`${baseURL}/api/upload_and_save_Network_file/`, {
-              method: "POST",
-              body: formData,
-              headers: {
-                "X-Requested-With": "XMLHttpRequest",
-              },
-            }).then(() => {
-              uploadedChunks++;
-              const progress = Math.round((uploadedChunks / totalChunks) * 100);
-              document.getElementById("progress-percentage").innerText = `${progress}%`;
-            })
-          );
-        }
-      }
+  loader.style.display = "block";
+  progressBar.innerText = "0%";
+  msg.innerText = "Uploading your file, please wait...";
 
-      await Promise.all(uploadPromises);
+  let overallChunks = 0;
+  let overallUploaded = 0;
 
-      document.getElementById("progress-percentage").innerText = "99%";
-      document.getElementById("msgprogress").innerText = "Processing your data for visualizing Circuit, please wait...";
+  // Count total number of chunks across all files
+  for (const file of files) {
+    overallChunks += Math.ceil(file.size / chunkSize);
+  }
 
-      const response = await fetch(`${baseURL}/api/fetch_user_network_data/?dir=${uniqueDirectory}`);
-      const data = await response.json();
+  try {
+    for (const file of files) {
+      const fileType = file.name.split(".").pop().toLowerCase();
+      const totalChunks = Math.ceil(file.size / chunkSize);
 
-      if (data.files.length > 0) {
-        document.getElementById("progress-percentage").innerText = "100%";
-        document.getElementById("typeHeading").style.visibility = "visible";
+      for (let start = 0; start < file.size; start += chunkSize) {
+        const chunk = file.slice(start, start + chunkSize);
+        const formData = new FormData();
+        formData.append("file", chunk, file.name);
+        formData.append("chunkIndex", Math.floor(start / chunkSize));
+        formData.append("totalChunks", totalChunks);
+        formData.append("uniqueDirectory", uniqueDirectory);
+        formData.append("fileType", fileType);
 
-        vertexColors = [];
-        NetworkArray = [];
-        data.files.forEach((file) => {
-          NetworkArray.push(file.fileData);
-          total_neurons += file.total_neuros;
+        const uploadPromise = fetch(`${baseURL}/api/upload_and_save_Network_file/`, {
+          method: "POST",
+          body: formData,
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        }).then(() => {
+          overallUploaded++;
+          const progress = Math.round((overallUploaded / overallChunks) * 100);
+          progressBar.innerText = `${progress}%`;
         });
 
-        if (total_neurons > 1000000) spikeNeuronSize = 70; // set spike neuron size
-
-        flag = true;
-        VisualizateNeurons();
-
-        if (parseInt(data.flag_check) == 1) {
-          document.getElementById("lblspikes").innerText = "Spikes :" + data.lstresponse.total_lines;
-
-          total_activity_files = data.lstresponse.total_activity_files;
-          firstLastKeys = data.lstresponse.first_last_keys;
-
-          // Ensure chunk_mfr_list exists
-          if (!data.lstresponse.chunk_mfr_list || data.lstresponse.chunk_mfr_list.length === 0) {
-            return;
-          }
-
-          const dropdown = document.getElementById("ddactivity_chunks");
-          dropdown.innerHTML = ""; // Clear previous options
-
-          const defaultOption = document.createElement("option");
-          defaultOption.textContent = "Select Activity Chunk";
-
-          dropdown.appendChild(defaultOption);
-
-          data.lstresponse.chunk_mfr_list.forEach((chunk) => {
-            const option = document.createElement("option");
-            option.value = chunk.chunk_number;
-
-            // Convert chunk number to string and apply padding
-            const chunkNum = String(chunk.chunk_number);
-            const timeRange = `[${chunk.first_key} - ${chunk.last_key}]ms`;
-            const mfr = `MFR: ${chunk.MFR} Hz`;
-
-            // Properly spaced columns using Unicode spaces (\u2003)
-            option.textContent = `Chunk ${chunkNum}\u2003 ${timeRange}\u2003 \u2003 ${mfr}`;
-
-            dropdown.appendChild(option);
-          });
-        } else {
-          console.log("not available data...");
-        }
-      } else {
-        console.log("No files found in the response.");
+        uploadPromises.push(uploadPromise);
       }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("An error occurred. Please try again.");
-    } finally {
-      document.getElementById("page-loader").style.display = "none";
-      networkFileInput.value = "";
     }
+
+    await Promise.all(uploadPromises);
+
+    // After uploads complete, reset progress for fetch phase
+    progressBar.innerText = "0%";
+    msg.innerText = "Processing your data for visualizing Circuit, please wait...";
+
+    let fetchProgress = 0;
+    const percentInterval = setInterval(() => {
+      if (fetchProgress < 99) {
+        fetchProgress += 1;
+        progressBar.innerText = `${fetchProgress}%`;
+      }
+    }, 100); // progress every 100ms = ~10s
+
+    const response = await fetch(`${baseURL}/api/fetch_user_network_data/?dir=${uniqueDirectory}`);
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch processed data.");
+    }
+
+    const data = await response.json();
+    clearInterval(percentInterval);
+    progressBar.innerText = "100%";
+    msg.innerText = "Data loaded successfully! Visualizing neurons...";
+
+    if (data.files.length > 0) {
+      vertexColors = [];
+      NetworkArray = [];
+      document.getElementById("Neurons_firing_attributes").style.visibility = "visible";
+      document.getElementById("networkspikes").style.visibility = "visible";
+
+      data.files.forEach((file) => {
+        NetworkArray.push(file.fileData);
+        total_neurons += file.total_neurons;
+      });
+
+      if (parseInt(data.flag_check) === 1) {
+        document.getElementById("lblspikes").innerText = "# spikes :" + data.lstresponse.total_lines;
+
+        total_activity_files = data.lstresponse.total_activity_files;
+        firstLastKeys = data.lstresponse.first_last_keys;
+
+        const dropdown = document.getElementById("ddactivity_chunks");
+        dropdown.innerHTML = "";
+
+        const defaultOption = document.createElement("option");
+        defaultOption.textContent = "Activity windows";
+        dropdown.appendChild(defaultOption);
+
+        data.lstresponse.chunk_mfr_list.forEach((chunk) => {
+          const option = document.createElement("option");
+          option.value = chunk.chunk_number;
+
+          const chunkNum = String(chunk.chunk_number);
+          const timeRange = `[${chunk.first_key} - ${chunk.last_key}]ms`;
+          const mfr = `MFR: ${chunk.MFR} Hz`;
+          option.textContent = `Chunk ${chunkNum}\u2003 ${timeRange}\u2003\u2003 ${mfr}`;
+
+          dropdown.appendChild(option);
+        });
+      } else {
+        console.log("No activity data available.");
+      }
+
+      flag = true;
+      VisualizateNeurons();
+    } else {
+      console.log("No files found in the response.");
+    }
+  } catch (error) {
+    console.error("Upload or processing error:", error);
+    alert("An error occurred. Please try again.");
+    msg.innerText = "Upload failed. Please refresh and try again.";
+  } finally {
+    loader.style.display = "none";
+    networkFileInput.value = "";
   }
 });
 
 hdfFileInput.addEventListener("change", async (event) => {
+  resetSpikeState();
+  resetPlaybackConfig();
+  resetTimeUI();
+  clearScene();
   const files = event.target.files;
   if (files.length > 0) {
     try {
       const chunkSize = 10 * 1024 * 1024; // 10 MB
       const uploadPromises = [];
 
-      document.getElementById("progress-percentage").innerText = "0%";
-      document.getElementById("page-loader").style.display = "block";
-      document.getElementById("msgprogress").innerText = "Uploading your file, please wait...";
+      const progressBar = document.getElementById("progress-percentage");
+      const loader = document.getElementById("page-loader");
+      const msg = document.getElementById("msgprogress");
+
+      progressBar.innerText = "0%";
+      loader.style.display = "block";
+      msg.innerText = "Uploading your file, please wait...";
+
+      let totalChunksAllFiles = 0;
+      let totalUploadedChunks = 0;
 
       for (const file of files) {
-        const fileType = file.name.split(".").pop().toLowerCase(); // Detect file type (csv or hdf5)
+        totalChunksAllFiles += Math.ceil(file.size / chunkSize);
+      }
+
+      for (const file of files) {
+        const fileType = file.name.split(".").pop().toLowerCase(); // csv or hdf5
         const totalChunks = Math.ceil(file.size / chunkSize);
-        let uploadedChunks = 0;
 
         for (let start = 0; start < file.size; start += chunkSize) {
           const chunk = file.slice(start, start + chunkSize);
@@ -485,9 +536,9 @@ hdfFileInput.addEventListener("change", async (event) => {
                 "X-Requested-With": "XMLHttpRequest",
               },
             }).then(() => {
-              uploadedChunks++;
-              const progress = Math.round((uploadedChunks / totalChunks) * 100);
-              document.getElementById("progress-percentage").innerText = `${progress}%`;
+              totalUploadedChunks++;
+              const uploadProgress = Math.round((totalUploadedChunks / totalChunksAllFiles) * 100);
+              progressBar.innerText = `${uploadProgress}%`;
             })
           );
         }
@@ -495,15 +546,28 @@ hdfFileInput.addEventListener("change", async (event) => {
 
       await Promise.all(uploadPromises);
 
-      document.getElementById("progress-percentage").innerText = "99%";
-      document.getElementById("msgprogress").innerText = "Processing your data for visualizing Circuit, please wait...";
+      // ✅ Simulated fetch progress bar
+      progressBar.innerText = "0%";
+      msg.innerText = "Processing your data for visualizing Circuit, please wait...";
+      let fetchProgress = 0;
+
+      const percentInterval = setInterval(() => {
+        if (fetchProgress < 99) {
+          fetchProgress += 1;
+          progressBar.innerText = `${fetchProgress}%`;
+        }
+      }, 100); // ~10 seconds to simulate fetch
 
       const response = await fetch(`${baseURL}/api/fetch_user_network_data/?dir=${uniqueDirectory}`);
       const data = await response.json();
 
+      clearInterval(percentInterval);
+      progressBar.innerText = "100%";
+      msg.innerText = "Data loaded successfully! Visualizing neurons...";
+
       if (data.files.length > 0) {
-        document.getElementById("progress-percentage").innerText = "100%";
-        document.getElementById("typeHeading").style.visibility = "visible";
+        document.getElementById("Neurons_firing_attributes").style.visibility = "visible";
+        document.getElementById("networkspikes").style.visibility = "visible";
 
         vertexColors = [];
         NetworkArray = [];
@@ -512,46 +576,39 @@ hdfFileInput.addEventListener("change", async (event) => {
           total_neurons += file.total_neuros;
         });
 
-        if (total_neurons > 1000000) spikeNeuronSize = 70; // set spike neuron size
-
         flag = true;
         VisualizateNeurons();
 
-        if (parseInt(data.flag_check) == 1) {
-          document.getElementById("lblspikes").innerText = "Spikes :" + data.lstresponse.total_lines;
+        if (parseInt(data.flag_check) === 1) {
+          document.getElementById("lblspikes").innerText = "# spikes :" + data.lstresponse.total_lines;
 
           total_activity_files = data.lstresponse.total_activity_files;
           firstLastKeys = data.lstresponse.first_last_keys;
 
-          // Ensure chunk_mfr_list exists
           if (!data.lstresponse.chunk_mfr_list || data.lstresponse.chunk_mfr_list.length === 0) {
             return;
           }
 
           const dropdown = document.getElementById("ddactivity_chunks");
-          dropdown.innerHTML = ""; // Clear previous options
+          dropdown.innerHTML = "";
 
           const defaultOption = document.createElement("option");
-          defaultOption.textContent = "Select Activity Chunk";
-
+          defaultOption.textContent = "Activity windows";
           dropdown.appendChild(defaultOption);
 
           data.lstresponse.chunk_mfr_list.forEach((chunk) => {
             const option = document.createElement("option");
             option.value = chunk.chunk_number;
 
-            // Convert chunk number to string and apply padding
             const chunkNum = String(chunk.chunk_number);
             const timeRange = `[${chunk.first_key} - ${chunk.last_key}]ms`;
             const mfr = `MFR: ${chunk.MFR} Hz`;
-
-            // Properly spaced columns using Unicode spaces (\u2003)
-            option.textContent = `Chunk ${chunkNum}\u2003 ${timeRange}\u2003 \u2003 ${mfr}`;
+            option.textContent = `Chunk ${chunkNum}\u2003 ${timeRange}\u2003\u2003 ${mfr}`;
 
             dropdown.appendChild(option);
           });
         } else {
-          console.log("not available data...");
+          console.log("No activity data available.");
         }
       } else {
         console.log("No files found in the response.");
@@ -561,115 +618,107 @@ hdfFileInput.addEventListener("change", async (event) => {
       alert("An error occurred. Please try again.");
     } finally {
       document.getElementById("page-loader").style.display = "none";
-      networkFileInput.value = "";
+      hdfFileInput.value = "";
     }
   }
 });
 
 dropdown.addEventListener("change", async function () {
+  resetSpikeState();
+  resetPlaybackConfig();
+  resetTimeUI();
   counter_check += 1;
+  selectedChunkNumber = this.value;
 
-  selectedChunkNumber = this.value; // Get selected chunk number
-
-  // Ignore the first (default) option
   if (!selectedChunkNumber || selectedChunkNumber === "Select Activity Chunk") return;
 
-  //   console.log(`Fetching data for Chunk ${selectedChunkNumber}...`);
+  const progressBar = document.getElementById("progress-percentage");
+  const loader = document.getElementById("page-loader");
+  const msg = document.getElementById("msgprogress");
+
+  let fetchProgress = 0;
 
   try {
-    // Show progress UI
-    // document.getElementById("progress-percentage").innerText = "0%";
-    document.getElementById("page-loader").style.display = "block";
-    document.getElementById("msgprogress").innerText = "Loading Data...., please wait...";
-    // Determine the base URL dynamically
+    loader.style.display = "block";
+    msg.innerText = "Loading data..., please wait...";
+    progressBar.innerText = "0%";
+
+    // Simulated loading
+    const percentInterval = setInterval(() => {
+      if (fetchProgress < 99) {
+        fetchProgress += 1;
+        progressBar.innerText = `${fetchProgress}%`;
+      }
+    }, 100); // ~10s simulated fetch duration
 
     const response = await fetch(`${baseURL}/api/get_chunk_data/?dir=${uniqueDirectory}&chunk_number=${selectedChunkNumber}`);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-
     const data = await response.json();
-    // console.log("Received Chunk Data:", data);
 
-    // Ensure response contains expected data
+    clearInterval(percentInterval);
+    progressBar.innerText = "100%";
+    msg.innerText = "Chunk data loaded successfully!";
+
     if (!data.chunk_data || !data.gids_activity_indexes) {
       throw new Error("Missing chunk_data or gids_activity_indexes in API response.");
     }
 
     if (data.histogram) {
       document.getElementById("histogramImage").src = "data:image/png;base64," + data.histogram;
-      document.getElementById("histogramImage").style.display = "block"; // Show histogram
-    } else {
-      console.error("No histogram found for chunk:", selectedChunkNumber);
+      document.getElementById("histogramImage").style.display = "block";
     }
 
-    // if (data.raster_plot) {
-    //   document.getElementById("rasterImage").src =
-    //     "data:image/png;base64," + data.raster_plot;
-    //   document.getElementById("rasterImage").style.display = "block"; // Show histogram
-    // } else {
-    //   console.error("No raster found for chunk:", selectedChunkNumber);
-    // }
-
-    // Assign Activity Data
     Activitys = data.chunk_data;
 
-    // Extract and sort keys
     const sortedKeys = Object.keys(Activitys).sort((a, b) => parseFloat(a) - parseFloat(b));
-
-    // Print the last key after sorting
     if (sortedKeys.length > 0) {
-      lastKey = sortedKeys[sortedKeys.length - 1]; // Get the last key in the sorted array
-      //   document.getElementById("lblLasttime").innerHTML =
-      //     " / " + lastKey + " (ms)";
+      lastKey = sortedKeys[sortedKeys.length - 1];
       lasttime = parseInt(lastKey);
       totalTimeDisplay.textContent = lasttime;
       document.getElementById("timebar").max = lasttime;
     }
-    if (selectedChunkNumber > 0) {
-      if (sortedKeys.length > 0) {
-        firstKey = sortedKeys[0]; // Get the first key in the sorted array
-        // document.getElementById("txtTime").innerHTML =
-        //   "t = " + parseFloat(firstKey).toFixed(1);
-        count = parseFloat(firstKey).toFixed(1);
-        currentTimeDisplay.textContent = count;
-      }
+
+    if (selectedChunkNumber > 0 && sortedKeys.length > 0) {
+      firstKey = sortedKeys[0];
+      count = parseFloat(firstKey).toFixed(1);
+      currentTimeDisplay.textContent = count;
+
+      //   timebar.min = count;
+      //   timebar.max = lastKey;
+      //   timebar.value = count;
     } else {
-      //   document.getElementById("txtTime").innerHTML = "t =" + 0.0;
       count = 0.0;
       currentTimeDisplay.textContent = count.toFixed(1);
-      //totalTimeDisplay.textContent = count;
     }
 
-    // Store sorted time ranges for further processing
     timeRanges = sortedKeys;
-
-    // Assign GIDs activity indexes
     gids_activity_indexes = data.gids_activity_indexes;
-    document.getElementById("lblspikes").innerText = "Spikes :" + data.total_spikes;
+
+    document.getElementById("lblspikes").innerText = "# spikes :" + data.total_spikes;
 
     if (counter_check > 1) {
       clearInterval(interval);
-      interval = null; // Reset interval variable
+      interval = null;
       isPaused = true;
-
       resetParticles();
     }
+
     previousTimeDisplay = parseFloat(currentTimeDisplay.textContent).toFixed(1);
-    document.getElementById("mySidebar").style.display = "block";
-    document.getElementById("mySidebar").style.width = "220px";
+    // document.getElementById("playbackcontainer").style.display = "block";
 
     startButton.disabled = false;
+    document.getElementById("Neurons_firing_attributes").style.visibility = "visible";
+    document.getElementById("networkspikes").style.visibility = "visible";
   } catch (error) {
     console.error("Error fetching chunk data:", error);
     alert("Failed to fetch chunk data. Please try again.");
+    progressBar.innerText = "0%";
+    msg.innerText = "Error loading chunk.";
   } finally {
-    document.getElementById("page-loader").style.display = "none";
+    loader.style.display = "none";
   }
 });
 
-// Get the modal
+/*  Get the modal */
 var modal = document.getElementById("myModal");
 
 // Get the image and insert it inside the modal - use its "alt" text as a caption
@@ -763,24 +812,28 @@ timebar.addEventListener("input", (event) => {
 const startButton = document.getElementById("startbtn");
 
 startButton.addEventListener("click", () => {
-  const startVal = Math.max(0, parseFloat(startTimeInput.value)) || 0.0;
-  const endVal = Math.max(0, parseFloat(endTimeInput.value)) || parseFloat(lasttime);
+  let startVal = Math.max(0, parseFloat(startTimeInput.value)) || 0.0;
+  let endVal = Math.max(0, parseFloat(endTimeInput.value)) || parseFloat(lasttime);
 
-  timebar.min = startVal;
-  timebar.max = endVal;
-
-  if (!interval || isPaused) {
-    count = Math.max(count, startVal); // Ensure within bounds
-    timebar.value = count;
-    currentTimeDisplay.textContent = count.toFixed(1);
+  if (selectedChunkNumber > 0 && isFinished) {
+    isFinished = false;
 
     isPaused = false;
-    startButton.disabled = true;
-    stopButton.disabled = false;
-    restart.disabled = false;
-
-    startAnimation(startVal, endVal);
+    startVal = parseFloat(firstKey);
+    count = parseFloat(startVal).toFixed(1);
+    timebar.value = count;
+  } else if (!interval || isPaused) {
+    isPaused = false;
+    count = Math.max(count, startVal); // Ensure within bounds
+    timebar.value = count;
   }
+  currentTimeDisplay.textContent = parseFloat(count).toFixed(1);
+  startButton.disabled = true;
+  stopButton.disabled = false;
+  restart.disabled = false;
+  timebar.min = count;
+  timebar.max = endVal;
+  startAnimation(startVal, endVal);
 });
 
 const stopButton = document.getElementById("pause");
@@ -796,18 +849,35 @@ stopButton.addEventListener("click", () => {
 const restart = document.getElementById("restart");
 
 restart.addEventListener("click", () => {
-  const startVal = parseFloat(startTimeInput.value) || 0.0;
-  const endVal = parseFloat(endTimeInput.value) || parseFloat(lasttime);
+  let startVal, endVal;
+
+  if (selectedChunkNumber > 0) {
+    startVal = parseFloat(firstKey).toFixed(1);
+
+    endVal = parseFloat(lasttime).toFixed(1);
+    count = startVal;
+
+    currentTimeDisplay.textContent = parseFloat(count).toFixed(1);
+  } else {
+    startVal = parseFloat(startTimeInput.value) || 0.0;
+    endVal = parseFloat(endTimeInput.value) || parseFloat(lasttime);
+    count = startVal;
+    currentTimeDisplay.textContent = parseFloat(count).toFixed(1);
+    //totalTimeDisplay.textContent = count;
+  }
+
+  //   const startVal = parseFloat(startTimeInput.value) || 0.0;
+  //   const endVal = parseFloat(endTimeInput.value) || parseFloat(lasttime);
 
   clearInterval(interval);
   interval = null;
   resetParticles();
 
-  count = startVal;
+  //   count = startVal;
   timebar.min = startVal;
   timebar.max = endVal;
   timebar.value = count;
-  currentTimeDisplay.textContent = count.toFixed(1);
+  //   currentTimeDisplay.textContent = count.toFixed(1);
 
   isPaused = false;
   startButton.disabled = true;
@@ -815,6 +885,21 @@ restart.addEventListener("click", () => {
 
   startAnimation(startVal, endVal);
 });
+
+function resetSpikeState() {
+  clearInterval(interval);
+  interval = null;
+  isPaused = true;
+  count = 0;
+
+  Activitys = {};
+  gids_activity_indexes = {};
+  timeRanges = [];
+
+  // Optional: reset UI
+  currentTimeDisplay.textContent = "0.0";
+  timebar.value = 0;
+}
 
 const visualizeButton = document.getElementById("btnvisualize");
 visualizeButton.addEventListener("click", () => {
@@ -841,29 +926,28 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   render();
 }
-function CreateScene() {
-  // set up the options for a perspective camera
-  const fav = 45;
-  const aspect = container.clientWidth / container.clientHeight;
-  const near = 0.01;
-  const far = 10000;
-  camera = new THREE.PerspectiveCamera(fav, aspect, near, far);
-  camera.position.z = 1000;
-  scene = new THREE.Scene();
-  //   scene.add(new THREE.AxesHelper(200));
 
+const canvas = document.getElementById("neuronCanvas");
+function CreateScene() {
+  // Use your canvas explicitly
   renderer = new THREE.WebGLRenderer({
-    antialias: false, // Disable antialiasing for performance
-    powerPreference: "high-performance", // Use high-performance GPU settings
+    canvas: canvas,
+    powerPreference: "high-performance",
+    alpha: true,
+    // antialias: true,
   });
 
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap at 2 for performance
+  renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.01, 10000);
+  camera.position.z = 1000;
+
   renderer.toneMapping = THREE.ReinhardToneMapping;
   renderer.toneMappingExposure = 1000;
-  container.appendChild(renderer.domElement);
 
-  controls = new TrackballControls(camera, renderer.domElement);
+  controls = new TrackballControls(camera, canvas);
   controls.rotateSpeed = 5.0;
   controls.zoomSpeed = 5;
   controls.panSpeed = 0.8;
@@ -873,14 +957,6 @@ function CreateScene() {
   stopButton.disabled = true;
   startButton.disabled = true;
   restart.disabled = true;
-
-  //controls = new OrbitControls(camera, renderer.domElement);
-  //   controls.enableDamping = true;
-  //   controls.enableZoom = true;
-  //   controls.dampingFactor = 0.25;
-  //   controls.screenSpacePanning = false;
-
-  //controls.enableRotate = true;
 }
 
 const colorSelectdg = document.getElementById("colorSelectdg");
@@ -923,42 +999,92 @@ colorSelectcaec.addEventListener("change", function () {
   VisualizateNeurons();
 });
 
-function addDirectionalArrows(
-  scene,
-  camera,
-  sceneObject,
-  length = 50,
-  arrowSize = 5,
-  offset = 100 // Offset to position arrows near the object
-) {
-  // Calculate the bounding box of the scene object
-  const boundingBox = new THREE.Box3().setFromObject(sceneObject);
-  const objectCenter = boundingBox.getCenter(new THREE.Vector3());
-  const objectSize = boundingBox.getSize(new THREE.Vector3());
+function createTextLabel(text) {
+  const canvas = document.createElement("canvas");
+  const size = 128;
+  canvas.width = size;
+  canvas.height = size;
 
-  // Define positions for the arrows based on the bounding box
-  const dorsalPosition = new THREE.Vector3(objectCenter.x, objectCenter.y + objectSize.y / 2 + offset, objectCenter.z);
-  const ventralPosition = new THREE.Vector3(objectCenter.x, objectCenter.y - objectSize.y / 2 - offset, objectCenter.z);
-  const distalPosition = new THREE.Vector3(objectCenter.x + objectSize.x / 2 + offset, objectCenter.y, objectCenter.z);
-  const proximalPosition = new THREE.Vector3(objectCenter.x - objectSize.x / 2 - offset, objectCenter.y, objectCenter.z);
+  const ctx = canvas.getContext("2d");
+  ctx.font = "bold 48px Arial";
+  ctx.fillStyle = "white";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, size / 2, size / 2);
 
-  // Define directional vectors
-  const dorsalVector = new THREE.Vector3(0, 1, 0); // Upwards in Y-axis
-  const ventralVector = new THREE.Vector3(0, -1, 0); // Downwards in Y-axis
-  const distalVector = new THREE.Vector3(1, 0, 0); // Right in X-axis
-  const proximalVector = new THREE.Vector3(-1, 0, 0); // Left in X-axis
+  const texture = new THREE.CanvasTexture(canvas);
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+  return new THREE.Sprite(material);
+}
 
-  // Create and add arrows to the scene
-  const dorsalArrow = new THREE.ArrowHelper(dorsalVector, dorsalPosition, length, 0x00ff00, arrowSize, arrowSize);
-  const ventralArrow = new THREE.ArrowHelper(ventralVector, ventralPosition, length, 0xff0000, arrowSize, arrowSize);
-  const distalArrow = new THREE.ArrowHelper(distalVector, distalPosition, length, 0x0000ff, arrowSize, arrowSize);
-  const proximalArrow = new THREE.ArrowHelper(proximalVector, proximalPosition, length, 0xffff00, arrowSize, arrowSize);
+let arrowsScene, arrowsCamera;
 
-  // Add arrows to the scene
-  scene.add(dorsalArrow);
-  scene.add(ventralArrow);
-  scene.add(distalArrow);
-  scene.add(proximalArrow);
+function addAnatomicalArrowsFromPCA(scene, origin, length, pcaAxes) {
+  const labels = [
+    { label: "A", dir: pcaAxes[0].clone().negate(), color: 0xff00ff },
+    { label: "P", dir: pcaAxes[0], color: 0xffff00 },
+    { label: "D", dir: pcaAxes[1], color: 0x00ff00 },
+    { label: "V", dir: pcaAxes[1].clone().negate(), color: 0xffffff },
+    { label: "L", dir: pcaAxes[2], color: 0xff0000 },
+    { label: "M", dir: pcaAxes[2].clone().negate(), color: 0x0000ff },
+  ];
+
+  labels.forEach(({ label, dir, color }) => {
+    const arrow = new THREE.ArrowHelper(dir.clone().normalize(), origin, length, color, 0.3 * length, 0.2 * length);
+    scene.add(arrow);
+
+    const labelSprite = createTextLabel(label);
+    labelSprite.position.copy(
+      origin.clone().add(
+        dir
+          .clone()
+          .normalize()
+          .multiplyScalar(length + 0.4)
+      )
+    );
+    scene.add(labelSprite);
+  });
+}
+
+function computePCA(positions) {
+  // Step 1: Format to matrix [[x, y, z], ...]
+  const matrix = [];
+  for (let i = 0; i < positions.length; i += 3) {
+    matrix.push([positions[i], positions[i + 1], positions[i + 2]]);
+  }
+
+  // Step 2: Compute mean of each dimension
+  const mean = [0, 0, 0];
+  matrix.forEach((p) => {
+    mean[0] += p[0];
+    mean[1] += p[1];
+    mean[2] += p[2];
+  });
+  mean[0] /= matrix.length;
+  mean[1] /= matrix.length;
+  mean[2] /= matrix.length;
+
+  // Step 3: Center data
+  const centered = matrix.map((p) => [p[0] - mean[0], p[1] - mean[1], p[2] - mean[2]]);
+
+  // Step 4: Compute covariance matrix
+  const cov = numeric.dot(numeric.transpose(centered), centered);
+
+  // Step 5: Compute eigenvectors
+  const eig = numeric.eig(cov);
+  const eigVectors = eig.E.x;
+
+  return eigVectors.map((v) => new THREE.Vector3(...v));
+}
+
+function createArrowOverlayFromPCA(pcaAxes) {
+  arrowsScene = new THREE.Scene();
+  arrowsCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+  arrowsCamera.position.set(0, 0, 5);
+  arrowsCamera.lookAt(0, 0, 0);
+  arrowsScene.add(new THREE.AmbientLight(0xffffff, 2));
+
+  addAnatomicalArrowsFromPCA(arrowsScene, new THREE.Vector3(0, 0, 0), 1.0, pcaAxes);
 }
 
 function VisualizateNeurons() {
@@ -971,384 +1097,281 @@ function VisualizateNeurons() {
 
     if (particles) {
       scene.remove(particles);
-
-      if (particles.geometry) {
-        particles.geometry.dispose();
-      }
-
-      if (particles.material) {
-        if (Array.isArray(particles.material)) {
-          particles.material.forEach((mat) => mat.dispose());
-        } else {
-          particles.material.dispose();
-        }
-      }
-
-      particles = null; // Optional: clear reference
+      if (particles.geometry) particles.geometry.dispose();
+      if (particles.material) Array.isArray(particles.material) ? particles.material.forEach((mat) => mat.dispose()) : particles.material.dispose();
+      particles = null;
     }
 
-    document.getElementById("lblnetwork").innerText = "Network :";
-    document.getElementById("typeHeading").style.visibility = "hidden";
+    document.getElementById("lblnetwork").innerText = "# neurons :";
+    document.getElementById("Neurons_firing_attributes").style.visibility = "hidden";
+    document.getElementById("networkspikes").style.visibility = "hidden";
     removeTable();
   }
 
   geometry = new THREE.BufferGeometry();
-
   total_excitatory = 0;
   total_inhibitory = 0;
+  totalParticles = 0;
+  totalX = 0;
+  totalY = 0;
+  totalZ = 0;
 
-  let DG = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
-  let CA3 = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43];
-  let CA2 = [44, 45, 46, 47, 48];
-  let CA1 = [49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88];
+  let DG = [...Array(19).keys()].map((i) => i + 1);
+  let CA3 = [...Array(25).keys()].map((i) => i + 19);
+  let CA2 = [...Array(5).keys()].map((i) => i + 44);
+  let CA1 = [...Array(40).keys()].map((i) => i + 49);
   let SUB = [89, 90, 91];
-  let EC = [92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122];
+  let EC = [...Array(31).keys()].map((i) => i + 92);
 
-  if (selectedCheckboxIds.length > 0) {
+  if (flag) {
     NetworkArray.forEach((net) => {
-      const filteredParticles = net.filter((particle) => selectedCheckboxIds.includes(particle.ntype.toString()));
-      totalParticles += filteredParticles.length;
-      filteredParticles.forEach((particle) => {
-        if (Number(particle.type) === 1) {
-          //if (selectedCheckboxIds.some((id) => DG.includes(Number(id)))) {
-          if (DG.includes(Number(particle.ntype))) {
-            //vertexColors.push(0.0, 0.0, 1.0); // Blue color for PC
-            vertexColors.push(Number(dgRGB[0]), Number(dgRGB[1]), Number(dgRGB[2]));
-          }
-          if (CA3.includes(Number(particle.ntype))) {
-            //vertexColors.push(0.0, 0.0, 1.0); // Blue color for PC
-            vertexColors.push(Number(ca3RGB[0]), Number(ca3RGB[1]), Number(ca3RGB[2]));
-          }
-
-          if (CA2.includes(Number(particle.ntype))) {
-            //vertexColors.push(0.0, 0.0, 1.0); // Blue color for PC
-            vertexColors.push(Number(ca2RGB[0]), Number(ca2RGB[1]), Number(ca2RGB[2]));
-          }
-          if (CA1.includes(Number(particle.ntype))) {
-            //vertexColors.push(0.0, 0.0, 1.0); // Blue color for PC
-            vertexColors.push(Number(ca1RGB[0]), Number(ca1RGB[1]), Number(ca1RGB[2]));
-          }
-          if (SUB.includes(Number(particle.ntype))) {
-            //vertexColors.push(0.0, 0.0, 1.0); // Blue color for PC
-            vertexColors.push(Number(subRGB[0]), Number(subRGB[1]), Number(subRGB[2]));
-          }
-          if (EC.includes(Number(particle.ntype))) {
-            //vertexColors.push(0.0, 0.0, 1.0); // Blue color for PC
-            vertexColors.push(Number(ecRGB[0]), Number(ecRGB[1]), Number(ecRGB[2]));
-          }
-
-          total_excitatory++;
-        } else {
-          vertexColors.push(1.0, 0.0, 0.0); // Red color for Interneurons
-          total_inhibitory++;
-        }
-
-        const x = particle.x * scalingFactor;
-        const y = particle.y * scalingFactor;
-        const z = particle.z * scalingFactor;
+      net.forEach((p) => {
+        const x = p.x * scalingFactor;
+        const y = p.y * scalingFactor;
+        const z = p.z * scalingFactor;
         positions.push(x, y, z);
         sizes.push(30);
-        gIDs.push(particle.id);
-        neuron_class.push(particle.type);
-      });
-    });
-
-    //   start
-
-    // end
-  } else if (flag) {
-    NetworkArray.forEach((net) => {
-      for (let i = 0; i < net.length; i++) {
-        const x = net[i].x * scalingFactor;
-        const y = net[i].y * scalingFactor;
-        const z = net[i].z * scalingFactor;
-
-        if (net[i].id < 261845) {
-          vertexColors.push(0.0, 0.0, 1.0); // blue color for exci
-          total_excitatory++;
-        } else {
-          vertexColors.push(1.0, 0.0, 0.0); // red for inhi
-          total_inhibitory++;
-        }
-        // if (Number(net[i].type) === 1) {
-        //   vertexColors.push(0.0, 0.0, 1.0); // Blue color for PC
-        //   total_excitatory += 1;
-        // } else {
-        //   vertexColors.push(1.0, 0.0, 0.0); // Red color for Interneurons
-        //   total_inhibitory += 1;
-        // }
-
-        positions.push(x, y, z);
-        sizes.push(30);
-        gIDs.push(net[i].id);
-        //neuron_class.push(net.type);
-
-        // Accumulate coordinates to calculate center
+        gIDs.push(p.id);
+        p.id < 261845 ? (vertexColors.push(0, 0, 1), total_excitatory++) : (vertexColors.push(1, 0, 0), total_inhibitory++);
         totalX += x;
         totalY += y;
         totalZ += z;
-      }
+      });
       totalParticles += net.length;
     });
-    // Calculate the center point
-    const centerX = totalX / totalParticles;
-    const centerY = totalY / totalParticles;
-    const centerZ = totalZ / totalParticles;
-  } else if (selectedCheckboxByLayer.length > 0) {
-    NetworkArray.forEach((net, index) => {
-      if (selectedCheckboxByLayer.includes(index)) {
-        //console.log("Net index:  " + index);
+  } else if (selectedCheckboxIds.length > 0) {
+    NetworkArray.forEach((net) => {
+      const filteredParticles = net.filter((p) => selectedCheckboxIds.includes(p.ntype.toString()));
+      totalParticles += filteredParticles.length;
+      filteredParticles.forEach((p) => {
+        const x = p.x * scalingFactor;
+        const y = p.y * scalingFactor;
+        const z = p.z * scalingFactor;
 
-        net.forEach((particle) => {
-          if (Number(particle.type) === 1) {
-            vertexColors.push(0.0, 0.0, 1.0); // Blue color for PC
-            total_excitatory += 1;
-          } else {
-            vertexColors.push(1.0, 0.0, 0.0); // Red color for Interneurons
-            total_inhibitory += 1;
-          }
-          const x = particle.x * scalingFactor;
-          const y = particle.y * scalingFactor;
-          const z = particle.z * scalingFactor;
+        if (p.type === 1) {
+          const ntype = Number(p.ntype);
+          if (DG.includes(ntype)) vertexColors.push(...dgRGB);
+          else if (CA3.includes(ntype)) vertexColors.push(...ca3RGB);
+          else if (CA2.includes(ntype)) vertexColors.push(...ca2RGB);
+          else if (CA1.includes(ntype)) vertexColors.push(...ca1RGB);
+          else if (SUB.includes(ntype)) vertexColors.push(...subRGB);
+          else if (EC.includes(ntype)) vertexColors.push(...ecRGB);
+          total_excitatory++;
+        } else {
+          vertexColors.push(1.0, 0.0, 0.0);
+          total_inhibitory++;
+        }
+
+        positions.push(x, y, z);
+        sizes.push(30);
+        gIDs.push(p.id);
+        neuron_class.push(p.type);
+      });
+    });
+  } else if (selectedCheckboxByLayer.length > 0) {
+    NetworkArray.forEach((net, i) => {
+      if (selectedCheckboxByLayer.includes(i)) {
+        net.forEach((p) => {
+          const x = p.x * scalingFactor;
+          const y = p.y * scalingFactor;
+          const z = p.z * scalingFactor;
           positions.push(x, y, z);
           sizes.push(30);
-          gIDs.push(particle.id);
-          neuron_class.push(particle.type);
+          gIDs.push(p.id);
+          p.type === 1 ? (vertexColors.push(0, 0, 1), total_excitatory++) : (vertexColors.push(1, 0, 0), total_inhibitory++);
         });
-
-        // Update the total particle count
         totalParticles += net.length;
       }
     });
   }
 
-  document.getElementById("typeHeading").style.visibility = "visible";
-  document.getElementById("lblnetwork").innerText = "Network :" + totalParticles;
-
+  document.getElementById("Neurons_firing_attributes").style.visibility = "visible";
+  document.getElementById("networkspikes").style.visibility = "visible";
+  document.getElementById("lblnetwork").innerText = "# neurons :" + totalParticles;
   generateTable(totalParticles, total_excitatory, total_inhibitory);
 
-  //console.log("gIDs length:  " + gIDs.length);
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute("color", new THREE.BufferAttribute(new Float32Array(vertexColors), 3));
-
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute(vertexColors, 3));
   geometry.setAttribute("size", new THREE.Float32BufferAttribute(sizes, 1));
   geometry.setAttribute("gid", new THREE.Float32BufferAttribute(gIDs, 1));
+  geometry.setAttribute("originalColor", new THREE.Float32BufferAttribute(vertexColors, 3));
 
-  const uniforms = {
-    pointTexture: { value: new THREE.TextureLoader().load(texturePath) },
-  };
+  const uniforms = { pointTexture: { value: new THREE.TextureLoader().load(texturePath) } };
   material = new THREE.ShaderMaterial({
-    uniforms: uniforms,
+    uniforms,
     vertexShader: document.getElementById("vertexshader").textContent,
     fragmentShader: document.getElementById("fragmentshader").textContent,
-    //depthTest: true,
     transparent: true,
     vertexColors: true,
-    depthWrite: true,
     depthTest: true,
-
-    // blending: THREE.AdditiveBlending,
+    depthWrite: true,
+    blending: THREE.NormalBlending,
   });
+  material.uniforms.uBrightness = { value: 7.0 };
   particles = new THREE.Points(geometry, material);
   scene.add(particles);
-
-  // Assume `sceneObject` is your hippocampus or main object in the scene
-  //addDirectionalArrows(scene, camera, particles, 50, 5, 30);
-
-  // Add lighting
-  const ambientLight = new THREE.AmbientLight(0x404040, 10); // Ambient light with intensity 2
-  scene.add(ambientLight);
-
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1); // White directional light with intensity 1
-  directionalLight.position.set(1, 1, 1).normalize(); // Set position and normalize
-  scene.add(directionalLight);
-
-  const pointLight = new THREE.PointLight(0xffffff, 1, 100); // White point light with intensity 1
-  pointLight.position.set(50, 50, 50); // Set position
-  scene.add(pointLight);
-
-  const spotLight = new THREE.SpotLight(0xffffff, 1); // White spotlight with intensity 1
-  spotLight.position.set(0, 100, 100); // Set position
-  spotLight.angle = Math.PI / 6; // Set spotlight angle
-  spotLight.penumbra = 0.2; // Softening the spotlight edge
-  spotLight.decay = 2; // Distance attenuation
-  spotLight.distance = 200; // Light distance
-  scene.add(spotLight);
+  resetCamera();
+  centerCameraToObject(particles);
 
   scene.background = new THREE.Color(params.Backgound);
 
   if (!chkpanle) {
     chkpanle = true;
 
-    const center = new THREE.Vector3();
-    const boundingBox = new THREE.Box3().setFromObject(particles);
-    boundingBox.getCenter(center);
+    let guiCreated = false;
+    let guiCreated1 = false;
 
-    const size = boundingBox.getSize(new THREE.Vector3());
-    const maxDimension = Math.max(size.x, size.y, size.z);
-    const fov = camera.fov * (Math.PI / 200);
-    let distance = maxDimension / Math.tan(fov);
-    distance *= 2.0; // Optional: adjust the distance for better view
+    document.getElementById("togglePanelBtn").style.display = "block";
+    document.getElementById("btnopen").style.display = "block";
 
-    const direction = new THREE.Vector3(0, 0, 1);
+    document.getElementById("togglePanelBtn").addEventListener("click", () => {
+      const panel = document.getElementById("panel");
 
-    direction.normalize();
-    direction.multiplyScalar(distance);
-    const newPosition = center.clone().add(direction);
-    camera.position.copy(newPosition);
-    camera.lookAt(center);
-    controls.target.copy(center);
-    controls.update();
+      if (!guiCreated) {
+        panel.style.display = "block";
 
-    //////GUI panel code below
-    var gui = new GUI({ autoPlace: false });
-    gui.domElement.id = "gui";
-    document.getElementById("panel").append(gui.domElement);
-    gui.addColor(params, "Backgound").onChange(function (value) {
-      scene.background.set(value);
-    });
+        //////GUI panel code below
+        var gui = new GUI({ autoPlace: false });
+        gui.domElement.id = "gui";
+        panel.appendChild(gui.domElement);
 
-    // Add controls to GUI
-    const cameraFolder = gui.addFolder("Camera");
-    cameraFolder.add(camera.position, "x", 0, 1000).listen();
-    cameraFolder.add(camera.position, "y", 0, 1000).listen();
-    cameraFolder.add(camera.position, "z", 0, 1000).listen();
+        gui.addColor(params, "Backgound").onChange((value) => {
+          scene.background.set(value);
+        });
 
-    const pm = gui.addFolder("Sphere Material");
-    pm.add(parameters, "SphereSize", 1, 200).onChange(function (value) {
-      //below commented code is for set size only for without firing neurons blue and red
+        const cameraFolder = gui.addFolder("Camera");
+        cameraFolder.add(camera.position, "x", 0, 1000).listen();
+        cameraFolder.add(camera.position, "y", 0, 1000).listen();
+        cameraFolder.add(camera.position, "z", 0, 1000).listen();
 
-      //   const sizes = geometry.attributes.size.array;
-      //   const colors = geometry.attributes.color.array;
+        const pm = gui.addFolder("Sphere Material");
+        pm.add(parameters, "Neuron_Size", 1, 200).onChange((value) => {
+          const sizes = geometry.attributes.size.array;
+          for (let i = 0; i < sizes.length; i++) sizes[i] = value;
+          geometry.attributes.size.needsUpdate = true;
+        });
 
-      //   for (let i = 0; i < colors.length; i++) {
-      //     const r = colors[i];
-      //     const g = colors[i + 1];
-      //     const b = colors[i + 2];
-      //     const neuronIndex = i / 3;
+        pm.add(parameters, "Firing_Neuron_Size", 1, 500).onChange((value) => {
+          const sizes = geometry.attributes.size.array;
+          const colors = geometry.attributes.color.array;
+          for (let i = 0; i < colors.length; i += 3) {
+            const r = colors[i],
+              g = colors[i + 1],
+              b = colors[i + 2];
+            const neuronIndex = i / 3;
+            if (r === 1 && g === 1 && b === 0) {
+              sizes[neuronIndex] = value;
+            }
+          }
+          geometry.attributes.size.needsUpdate = true;
+          geometry.attributes.color.needsUpdate = true;
+          spikeNeuronSize = value;
+        });
 
-      //     if (
-      //       (r === 0 && g === 0 && b === 1) ||
-      //       (r === 1 && g === 0 && b === 0)
-      //     ) {
-      //       sizes[neuronIndex] = value; // set spike size
-      //     }
-      //   }
-
-      //   geometry.attributes.size.needsUpdate = true;
-      //   geometry.attributes.color.needsUpdate = true;
-
-      const sizes = geometry.attributes.size.array;
-      for (let i = 0; i < sizes.length; i++) {
-        sizes[i] = value;
+        guiCreated = true;
+      } else {
+        // Toggle visibility
+        panel.style.display = panel.style.display === "none" ? "block" : "none";
       }
-      geometry.attributes.size.needsUpdate = true;
     });
-    pm.add(parameters, "FiringSphereSize", 1, 500).onChange(function (value) {
-      const sizes = geometry.attributes.size.array;
-      const colors = geometry.attributes.color.array;
 
-      for (let i = 0; i < colors.length; i += 3) {
-        const r = colors[i];
-        const g = colors[i + 1];
-        const b = colors[i + 2];
+    document.getElementById("btnopen").addEventListener("click", () => {
+      const playbackcontainer = document.getElementById("playbackcontainer");
 
-        const neuronIndex = i / 3;
-
-        if (r === 1 && g === 1 && b === 0) {
-          sizes[neuronIndex] = value; // set spike size
-        }
+      if (!guiCreated1) {
+        playbackcontainer.style.display = "block";
+        guiCreated1 = true;
+      } else {
+        // Toggle visibility
+        playbackcontainer.style.display = playbackcontainer.style.display === "none" ? "block" : "none";
+        guiCreated1 = false;
       }
-
-      geometry.attributes.size.needsUpdate = true;
-      geometry.attributes.color.needsUpdate = true;
-      spikeNeuronSize = value;
     });
-
-    animate();
-  } else {
-    camera.position.set(xcord, ycord, zcord);
-    animate();
   }
+  const pcaAxes = computePCA(positions);
+  createArrowOverlayFromPCA(pcaAxes);
+
+  animate();
 }
 
 function generateTable(total_neuros, total_excitatory, total_inhibitory) {
-  // start
+  const containerDiv = document.createElement("div");
+  containerDiv.className = "container-fluid px-2 mt-3";
 
-  var containerDiv = document.createElement("div");
-  containerDiv.className = "generateTable";
+  const row = document.createElement("div");
+  row.className = "row";
 
-  var rowDiv2 = document.createElement("div");
-  rowDiv2.className = "row border";
+  // Total Neurons
+  const col1 = document.createElement("div");
+  col1.className = "col-12 d-flex justify-content-between small py-1 border-bottom";
+  col1.innerHTML = `<span><strong>Total Neurons</strong></span><span>${total_neuros}</span>`;
+  row.appendChild(col1);
 
-  var colDiv2 = document.createElement("div");
-  colDiv2.className = "col-sm border";
-  colDiv2.style.fontSize = "12px";
+  // Excitatory Neurons
+  const col2 = document.createElement("div");
+  col2.className = "col-12 d-flex justify-content-between small py-1 border-bottom";
+  col2.innerHTML = `<span><strong>Excitatory Neurons</strong></span><span>${total_excitatory}</span>`;
+  row.appendChild(col2);
 
-  var lblTotalNeurons = document.createElement("label");
-  lblTotalNeurons.setAttribute("for", "neurons_total"); // For attribute is used to associate label with an input element
-  lblTotalNeurons.textContent = "Neurons: " + total_neuros;
-  lblTotalNeurons.style.fontSize = "12px";
+  // Inhibitory Neurons
+  const col3 = document.createElement("div");
+  col3.className = "col-12 d-flex justify-content-between small py-1";
+  col3.innerHTML = `<span><strong>Inhibitory Neurons</strong></span><span>${total_inhibitory}</span>`;
+  row.appendChild(col3);
 
-  colDiv2.appendChild(lblTotalNeurons);
-  rowDiv2.appendChild(colDiv2);
-  containerDiv.appendChild(rowDiv2);
+  containerDiv.appendChild(row);
 
-  var rowDiv3 = document.createElement("div");
-  rowDiv3.className = "row border";
-  var colDiv3 = document.createElement("div");
-  colDiv3.className = "col-sm border";
-  colDiv3.style.fontSize = "12px";
+  // Clean previous if needed (optional: only remove old table, not indicators)
+  const previous = document.querySelector("#Neurons_firing_attributes .stats-block");
+  if (previous) previous.remove();
 
-  var lblTotalExcit = document.createElement("label");
-  lblTotalExcit.setAttribute("for", "neurons_Excit"); // For attribute is used to associate label with an input element
-  lblTotalExcit.textContent = " Excitatory Neurons: " + total_excitatory;
-  lblTotalExcit.style.fontSize = "12px";
-
-  colDiv3.appendChild(lblTotalExcit);
-  rowDiv3.appendChild(colDiv3);
-  containerDiv.appendChild(rowDiv3);
-
-  var rowDiv4 = document.createElement("div");
-  rowDiv4.className = "row border";
-  var colDiv4 = document.createElement("div");
-  colDiv4.className = "col-sm border";
-  colDiv4.style.fontSize = "12px";
-
-  var lblTotalInhib = document.createElement("label");
-  lblTotalInhib.setAttribute("for", "neurons_Inhib:"); // For attribute is used to associate label with an input element
-  lblTotalInhib.textContent = " Inhibitory Neurons: " + total_inhibitory;
-  lblTotalInhib.style.fontSize = "12px";
-
-  colDiv4.appendChild(lblTotalInhib);
-  rowDiv4.appendChild(colDiv4);
-  containerDiv.appendChild(rowDiv4);
-
-  ca1RegDiv.appendChild(containerDiv);
-
-  // end
+  containerDiv.classList.add("stats-block"); // to identify this block later
+  document.getElementById("Neurons_firing_attributes").appendChild(containerDiv);
 }
+
 function removeTable() {
   var containerDiv = document.querySelector(".generateTable");
   if (containerDiv) {
     containerDiv.remove();
   }
 }
-function animate() {
-  requestAnimationFrame(animate);
-  controls.update();
-
-  xcord = camera.position.x;
-  ycord = camera.position.y;
-  zcord = camera.position.z;
-
-  render();
-}
-
 function render() {
   renderer.render(scene, camera);
 }
+function animate() {
+  requestAnimationFrame(animate);
+  if (controls) controls.update();
 
+  // ✅ Reset viewport and scissor for full screen
+  const width = renderer.domElement.clientWidth;
+  const height = renderer.domElement.clientHeight;
+
+  renderer.setViewport(0, 0, width, height);
+  renderer.setScissor(0, 0, width, height);
+  renderer.setScissorTest(true);
+  renderer.clear();
+  renderer.render(scene, camera);
+
+  // 🔁 Mini arrows rendering (inset scene)
+  if (arrowsScene && arrowsCamera) {
+    arrowsScene.quaternion.copy(camera.quaternion);
+
+    const size = 150;
+    const margin = 2;
+
+    // 📌 Bottom-left corner (or you can adjust for top-right)
+    const x = margin;
+    const y = margin + 80;
+
+    // Now set a smaller viewport just for the arrow scene
+    renderer.setViewport(x, y, size, size);
+    renderer.setScissor(x, y, size, size);
+    renderer.setScissorTest(true);
+    renderer.render(arrowsScene, arrowsCamera);
+  }
+}
+
+let isFinished = false;
 function startAnimation(startVal, endVal) {
   if (interval) clearInterval(interval);
 
@@ -1371,7 +1394,7 @@ function startAnimation(startVal, endVal) {
         clearInterval(interval);
         interval = null;
         resetParticles();
-        restartSimulation(); // if this resets your scene
+        count = 0.0;
 
         isPaused = true; // ✅ allow future play
         stopButton.disabled = true;
@@ -1379,23 +1402,19 @@ function startAnimation(startVal, endVal) {
         restart.disabled = false; // ✅ allow restarting
 
         count = startVal; // ✅ reset count for next run
-        currentTimeDisplay.textContent = 0.0;
-
+        if (selectedChunkNumber > 0) {
+          count = parseFloat(firstKey).toFixed(1);
+          currentTimeDisplay.textContent = count;
+        }
+        isFinished = true;
         return;
       }
+      //   console.log("count:", count, "simTimestep:", simTimestep);
 
-      count = parseFloat((count + simTimestep).toFixed(1));
+      count = parseFloat((parseFloat(count) + parseFloat(simTimestep)).toFixed(1));
     }
   }, playbackConfig.stepDuration);
 }
-function restartSimulation() {
-  if (selectedChunkNumber == 0) {
-    count = 0.0;
-  } else {
-    count = parseFloat(firstKey).toFixed(1);
-  }
-}
-
 function animateTimeRange_Connection(currentTime, targetSize) {
   const matchKey = parseFloat(currentTime).toFixed(1);
   const particleIds = Activitys[matchKey];
@@ -1420,27 +1439,27 @@ function animateParticles_Connection(particleIds, targetSize) {
   particleIds.forEach((particleId) => {
     if (ca3toca1connections[particleId]) {
       ca3toca1connections[particleId].forEach((ca1Id) => {
-        // setTimeout(() => {
-        const GIDindex = gIDsMap.get(ca1Id);
-        const index = GIDindex * 3;
-        sizes[GIDindex] = targetSize;
+        setTimeout(() => {
+          const GIDindex = gIDsMap.get(ca1Id);
+          const index = GIDindex * 3;
+          sizes[GIDindex] = targetSize;
 
-        // Toggle color logic
-        if (colors[index] === 1 && colors[index + 1] === 0 && colors[index + 2] === 0) {
-          colors[index] = 1;
-          colors[index + 1] = 1;
-          colors[index + 2] = 1;
-        } else {
-          colors[index] = 1;
-          colors[index + 1] = 1;
-          colors[index + 2] = 0;
-        }
+          // Toggle color logic
+          if (colors[index] === 1 && colors[index + 1] === 0 && colors[index + 2] === 0) {
+            colors[index] = 1;
+            colors[index + 1] = 1;
+            colors[index + 2] = 1;
+          } else {
+            colors[index] = 1;
+            colors[index + 1] = 1;
+            colors[index + 2] = 0;
+          }
 
-        geometry.attributes.size.needsUpdate = true;
-        geometry.attributes.color.needsUpdate = true;
-        // }, delay);
+          geometry.attributes.size.needsUpdate = true;
+          geometry.attributes.color.needsUpdate = true;
+        }, delay);
 
-        // delay += 0.1; // Increment delay (adjust for animation speed)
+        delay += 0.1; // Increment delay (adjust for animation speed)
       });
     }
 
@@ -1461,7 +1480,6 @@ function animateParticles_Connection(particleIds, targetSize) {
 
       geometry.attributes.size.needsUpdate = true;
       geometry.attributes.color.needsUpdate = true;
-      i += 1;
     }
   });
 }
@@ -1484,43 +1502,43 @@ function twoMilisecondStay_Connection(currentTime) {
         particleIds.forEach((particleId) => {
           if (ca3toca1connections[particleId]) {
             ca3toca1connections[particleId].forEach((ca1Id) => {
-              // setTimeout(() => {
-              const GIDindex = gIDsMap.get(ca1Id);
-              const index = GIDindex * 3;
-              sizes[GIDindex] = 30;
+              setTimeout(() => {
+                const GIDindex = gIDsMap.get(ca1Id);
+                const index = GIDindex * 3;
+                sizes[GIDindex] = 30;
 
-              // Apply color based on selected color index logic
-              if (colorSelectdg.selectedIndex > -1) {
-                colors[index] = dgRGB[0];
-                colors[index + 1] = dgRGB[1];
-                colors[index + 2] = dgRGB[2];
-              } else if (colorSelectca3.selectedIndex > -1) {
-                colors[index] = ca3RGB[0];
-                colors[index + 1] = ca3RGB[1];
-                colors[index + 2] = ca3RGB[2];
-              } else if (colorSelectca2.selectedIndex > -1) {
-                colors[index] = ca2RGB[0];
-                colors[index + 1] = ca2RGB[1];
-                colors[index + 2] = ca2RGB[2];
-              } else if (colorSelectca1.selectedIndex > -1) {
-                colors[index] = ca1RGB[0];
-                colors[index + 1] = ca1RGB[1];
-                colors[index + 2] = ca1RGB[2];
-              } else if (colorSelectcasub.selectedIndex > -1) {
-                colors[index] = subRGB[0];
-                colors[index + 1] = subRGB[1];
-                colors[index + 2] = subRGB[2];
-              } else if (colorSelectcaec.selectedIndex > -1) {
-                colors[index] = ecRGB[0];
-                colors[index + 1] = ecRGB[1];
-                colors[index + 2] = ecRGB[2];
-              }
+                // Apply color based on selected color index logic
+                if (colorSelectdg.selectedIndex > -1) {
+                  colors[index] = dgRGB[0];
+                  colors[index + 1] = dgRGB[1];
+                  colors[index + 2] = dgRGB[2];
+                } else if (colorSelectca3.selectedIndex > -1) {
+                  colors[index] = ca3RGB[0];
+                  colors[index + 1] = ca3RGB[1];
+                  colors[index + 2] = ca3RGB[2];
+                } else if (colorSelectca2.selectedIndex > -1) {
+                  colors[index] = ca2RGB[0];
+                  colors[index + 1] = ca2RGB[1];
+                  colors[index + 2] = ca2RGB[2];
+                } else if (colorSelectca1.selectedIndex > -1) {
+                  colors[index] = ca1RGB[0];
+                  colors[index + 1] = ca1RGB[1];
+                  colors[index + 2] = ca1RGB[2];
+                } else if (colorSelectcasub.selectedIndex > -1) {
+                  colors[index] = subRGB[0];
+                  colors[index + 1] = subRGB[1];
+                  colors[index + 2] = subRGB[2];
+                } else if (colorSelectcaec.selectedIndex > -1) {
+                  colors[index] = ecRGB[0];
+                  colors[index + 1] = ecRGB[1];
+                  colors[index + 2] = ecRGB[2];
+                }
 
-              geometry.attributes.size.needsUpdate = true;
-              geometry.attributes.color.needsUpdate = true;
-              // }, delay);
+                geometry.attributes.size.needsUpdate = true;
+                geometry.attributes.color.needsUpdate = true;
+              }, delay);
 
-              //  delay += 0.1; // Increment delay for smoother animation
+              delay += 0.1; // Increment delay for smoother animation
             });
           }
 
@@ -1541,7 +1559,6 @@ function twoMilisecondStay_Connection(currentTime) {
 
             geometry.attributes.size.needsUpdate = true;
             geometry.attributes.color.needsUpdate = true;
-            j += 1;
           }
         });
       }
@@ -1563,7 +1580,6 @@ function animateTimeRange_Without_Connection(currentTime, targetSize) {
     }
   }
 }
-let spikeTimes = new Map(); // gid -> time last spiked
 
 function animateParticles_Without_Connection(particleIds, targetSize) {
   const sizes = geometry.attributes.size.array;
@@ -1641,24 +1657,23 @@ function twoMilisecondStay_Without_Connection(currentTime) {
 }
 
 function resetParticles() {
-  // Check if particles exist and remove them
-  if (particles) {
-    scene.remove(particles);
-    particles.geometry.dispose();
-    particles.material.dispose();
+  if (!particles) return;
+
+  const geometry = particles.geometry;
+  const colors = geometry.attributes.color.array;
+  const originalColors = geometry.attributes.originalColor.array;
+  const sizes = geometry.attributes.size.array;
+
+  for (let i = 0; i < colors.length; i++) {
+    colors[i] = originalColors[i]; // restore R, G, B
   }
 
-  // Clear arrays for new data
-  positions = [];
-  sizes = [];
-  vertexColors = [];
-  gIDs = [];
-  neuron_class = [];
-  totalParticles = 0; // Initialize counter
+  for (let i = 0; i < sizes.length; i++) {
+    sizes[i] = parameters.SphereSize || 30;
+  }
 
-  // Reinitialize particle system
-  removeTable();
-  VisualizateNeurons();
+  geometry.attributes.color.needsUpdate = true;
+  geometry.attributes.size.needsUpdate = true;
 }
 
 function GetActivityData() {
@@ -1724,7 +1739,6 @@ function GetNetworkData(number_of_neuros = 0) {
 window.addEventListener("load", function () {
   const btnLoadAllLayers = document.getElementById("btnLoadAllLayers");
   btnLoadAllLayers.addEventListener("click", function () {
-    console.log('ciaone');
     document.getElementById("msgprogress").innerText = `Loading Hippocampal formation data, please wait...`;
 
     document.getElementById("progress-percentage").style.display = "none";
@@ -1820,10 +1834,6 @@ function SelectAllByRegion() {
     },
   ];
 
-  ///////// below checkboxesToLog sequence is for fetch json files from local machine
-
-  //   const checkboxesToLog = ["LECIV", "CA3SO", "MECII", "MECIII", "CA1SP", "SubSM", "MECVI", "MECIV", "CA3SP", "LECII", "CA3SLM", "CA1SO", "LECVI", "CA2SP", "DGH", "CA3SR", "DGSMi", "LECV", "MECV", "SubSP", "LECIII", "DGSMo", "LECI", "MECI", "CA1SLM", "CA1SR", "CA3SL", "DGSG"];
-
   // below checkboxesToLog sequence is for fetch json files from hcv server
 
   const checkboxesToLog = [
@@ -1856,38 +1866,6 @@ function SelectAllByRegion() {
     "CA2SP",
     "LECIII",
   ];
-
-  // below checkboxesToLog sequence is for fetch json files from ebrains collab drive server
-  //   const checkboxesToLog = [
-  //     "CA1SLM",
-  //     "CA1SO",
-  //     "CA1SP",
-  //     "CA1SR",
-  //     "CA2SP",
-  //     "CA3SL",
-  //     "CA3SLM",
-  //     "CA3SO",
-  //     "CA3SP",
-  //     "CA3SR",
-  //     "DGSG", //DG_Granule
-  //     "DGSMi",
-  //     "DGSMo",
-  //     "DGH",
-  //     "LECI",
-  //     "LECII",
-  //     "LECIII",
-  //     "LECIV",
-  //     "LECV",
-  //     "LECVI",
-  //     "MECI",
-  //     "MECII",
-  //     "MECIII",
-  //     "MECIV",
-  //     "MECV",
-  //     "MECVI",
-  //     "SubSM",
-  //     "SubSP",
-  //   ];
 
   const DGLayer = [14, 16, 21, 27];
   const CA3Layer = [10, 15, 26, 8, 1];
@@ -1933,93 +1911,6 @@ function SelectAllByRegion() {
 
           if (!(LEC.some((value) => selectedCheckboxByLayer.includes(value)) || MEC.some((value) => selectedCheckboxByLayer.includes(value)))) AllECRegSwitchCheck.disabled = false;
 
-          //unselected checkboxes by layers
-
-          //   if (index === 0) {
-          //     unselectCheckboxes([52, 53, 54, 55, 56, 57, 58, 60, 68, 79, 70, 71, 73, 74, 75, 85, 86, 87]);
-          //   }
-          //   if (index === 1) {
-          //     unselectCheckboxes([106, 107, 108]);
-          //   }
-          //   if (index === 2) {
-          //     unselectCheckboxes([96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122]);
-          //   }
-          //   if (index === 3) {
-          //     unselectCheckboxes([22, 28, 30, 31, 32, 33, 34, 35, 38, 39]);
-          //   }
-          //   if (index === 4) {
-          //     unselectCheckboxes([50, 57, 61, 63, 65, 66, 67, 77, 79, 82, 84]);
-          //   }
-          //   if (index === 5) {
-          //     unselectCheckboxes([19, 20, 23, 25, 26, 27, 32, 35, 38, 39]);
-          //   }
-          //   if (index === 6) {
-          //     unselectCheckboxes([92, 93]);
-          //   }
-          //   if (index === 7) {
-          //     unselectCheckboxes([106, 107, 108, 109, 110, 111, 112, 113]);
-          //   }
-          //   if (index === 8) {
-          //     unselectCheckboxes([97, 98, 100, 101, 104, 105, 106, 118, 121]);
-          //   }
-          //   if (index === 9) {
-          //     unselectCheckboxes([1, 2, 7, 8, 10, 11, 14, 15, 16]);
-          //   }
-          //   if (index === 10) {
-          //     unselectCheckboxes([29]);
-          //   }
-          //   if (index === 11) {
-          //     unselectCheckboxes([14, 17, 18]);
-          //   }
-          //   if (index === 12) {
-          //     unselectCheckboxes([21, 22, 34, 38, 39, 40, 41]);
-          //   }
-          //   if (index === 13) {
-          //     unselectCheckboxes([23, 24, 27, 35, 36, 37, 38, 39, 42, 43]);
-          //   }
-          //   if (index === 14) {
-          //     unselectCheckboxes([108, 113]);
-          //   }
-          //   if (index === 15) {
-          //     unselectCheckboxes([106, 107, 108, 111]);
-          //   }
-          //   if (index === 16) {
-          //     unselectCheckboxes([92, 93]);
-          //   }
-          //   if (index === 17) {
-          //     unselectCheckboxes([108, 114]);
-          //   }
-          //   if (index === 18) {
-          //     unselectCheckboxes([89, 90, 91]);
-          //   }
-          //   if (index === 19) {
-          //     unselectCheckboxes([91]);
-          //   }
-          //   if (index === 20) {
-          //     unselectCheckboxes([49, 51, 52, 55, 56, 57, 58, 60, 62, 64, 72, 76, 80, 83, 85, 87, 88]);
-          //   }
-          //   if (index === 21) {
-          //     unselectCheckboxes([106, 107, 108]);
-          //   }
-          //   if (index === 22) {
-          //     unselectCheckboxes([3, 9, 13, 14, 17]);
-          //   }
-          //   if (index === 23) {
-          //     unselectCheckboxes([4, 5, 6, 10, 11, 12]);
-          //   }
-          //   if (index === 24) {
-          //     unselectCheckboxes([96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122]);
-          //   }
-          //   if (index === 25) {
-          //     unselectCheckboxes([51, 55, 57, 58, 59, 60, 61, 62, 63, 64, 65, 72, 76, 77, 78, 79, 81, 82, 83, 84, 85, 87, 88]);
-          //   }
-          //   if (index === 26) {
-          //     unselectCheckboxes([44, 45, 46, 47, 48]);
-          //   }
-          //   if (index === 27) {
-          //     unselectCheckboxes([97, 98, 100, 101, 104, 105, 106, 118, 121]);
-          //   }
-
           const unselectMap = {
             0: [52, 53, 54, 55, 56, 57, 58, 60, 68, 79, 70, 71, 73, 74, 75, 85, 86, 87],
             1: [106, 107, 108],
@@ -2058,96 +1949,13 @@ function SelectAllByRegion() {
           AllNT.disabled = true;
           RankNT.disabled = true;
           CanonicalNT.disabled = true;
-          document.getElementById("typeHeading").style.visibility = "hidden";
+
+          document.getElementById("Neurons_firing_attributes").style.visibility = "hidden";
+          document.getElementById("networkspikes").style.visibility = "hidden";
           removeTable();
         }
 
         if (selectedCheckboxByLayer.length > 0) {
-          //   if (selectedCheckboxByLayer.includes(0)) {
-          //     selectCheckboxes([52, 53, 54, 55, 56, 57, 58, 60, 68, 79, 70, 71, 73, 74, 75, 85, 86, 87]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(1)) {
-          //     selectCheckboxes([106, 107, 108]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(2)) {
-          //     selectCheckboxes([96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(3)) {
-          //     selectCheckboxes([22, 28, 30, 31, 32, 33, 34, 35, 38, 39]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(4)) {
-          //     selectCheckboxes([50, 57, 61, 63, 65, 66, 67, 77, 79, 82, 84]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(5)) {
-          //     selectCheckboxes([19, 20, 23, 25, 26, 27, 32, 35, 38, 39]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(6)) {
-          //     selectCheckboxes([92, 93]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(7)) {
-          //     selectCheckboxes([106, 107, 108, 109, 110, 111, 112, 113]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(8)) {
-          //     selectCheckboxes([97, 98, 100, 101, 104, 105, 106, 118, 121]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(9)) {
-          //     selectCheckboxes([1, 2, 7, 8, 10, 11, 14, 15, 16]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(10)) {
-          //     selectCheckboxes([29]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(11)) {
-          //     selectCheckboxes([14, 17, 18]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(12)) {
-          //     selectCheckboxes([21, 22, 34, 38, 39, 40, 41]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(13)) {
-          //     selectCheckboxes([23, 24, 27, 35, 36, 37, 38, 39, 42, 43]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(14)) {
-          //     selectCheckboxes([108, 113]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(15)) {
-          //     selectCheckboxes([106, 107, 108, 111]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(16)) {
-          //     selectCheckboxes([92, 93]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(17)) {
-          //     selectCheckboxes([108, 114]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(18)) {
-          //     selectCheckboxes([89, 90, 91]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(19)) {
-          //     selectCheckboxes([91]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(20)) {
-          //     selectCheckboxes([49, 51, 52, 55, 56, 57, 58, 60, 62, 64, 72, 76, 80, 83, 85, 87, 88]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(21)) {
-          //     selectCheckboxes([106, 107, 108]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(22)) {
-          //     selectCheckboxes([3, 9, 13, 14, 17]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(23)) {
-          //     selectCheckboxes([4, 5, 6, 10, 11, 12]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(24)) {
-          //     selectCheckboxes([96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(25)) {
-          //     selectCheckboxes([51, 55, 57, 58, 59, 60, 61, 62, 63, 64, 65, 72, 76, 77, 78, 79, 81, 82, 83, 84, 85, 87, 88]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(26)) {
-          //     selectCheckboxes([44, 45, 46, 47, 48]);
-          //   }
-          //   if (selectedCheckboxByLayer.includes(27)) {
-          //     selectCheckboxes([97, 98, 100, 101, 104, 105, 106, 118, 121]);
-          //   }
-
           const selectMap = {
             0: [52, 53, 54, 55, 56, 57, 58, 60, 68, 79, 70, 71, 73, 74, 75, 85, 86, 87],
             1: [106, 107, 108],
@@ -2279,7 +2087,9 @@ function SelectAllByRegion() {
     VisualizateNeurons();
 
     updateSelectedCount(); // Call the function to update the count
-    document.getElementById("typeHeading").style.visibility = "hidden";
+
+    document.getElementById("Neurons_firing_attributes").style.visibility = "hidden";
+    document.getElementById("networkspikes").style.visibility = "hidden";
     removeTable();
   } else {
     if (
@@ -2488,14 +2298,6 @@ document.addEventListener("DOMContentLoaded", function () {
   CanonicalNT.addEventListener("change", SelectAllByRegion);
 
   SelectAllByRegion();
-
-  document.getElementById("simTimestep").addEventListener("change", (e) => {
-    updateSimTimestep(e.target.value);
-  });
-
-  document.getElementById("stepDuration").addEventListener("change", (e) => {
-    updateStepDuration(e.target.value);
-  });
 });
 
 function getAllCheckboxWithIds(selectAllCheckbox, checkbox_container, notSelectCheckboxId) {
@@ -2654,38 +2456,12 @@ function getTimestampDirectory() {
   return "NCV_" + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds()) + +ms;
 }
 
-function updateSimTimestep(value) {
-  playbackConfig.simTimestep = parseFloat(value);
-  autoRestartIfRunning(); // <== Restart with new config
-}
-
-function updateStepDuration(value) {
-  playbackConfig.stepDuration = parseFloat(value);
-  autoRestartIfRunning(); // <== Restart with new config
-}
-function autoRestartIfRunning() {
-  if (interval && !isPaused) {
-    clearInterval(interval);
-    startAnimation();
-  }
-}
-
 document.addEventListener("DOMContentLoaded", function () {
-  const sidebar = document.getElementById("mySidebar");
+  const playbackcontainer = document.getElementById("playbackcontainer");
   const btnOpen = document.getElementById("btnopen");
-  const btnClose = document.getElementById("btnclose");
 
   btnOpen.addEventListener("click", function () {
-    sidebar.style.display = "block"; // ✅ make it visible
-    sidebar.style.width = "220px"; // ✅ slide open
-  });
-
-  btnClose.addEventListener("click", function () {
-    sidebar.style.width = "0"; // ✅ slide close
-    setTimeout(() => {
-      sidebar.style.display = "none";
-      sidebar.style.transition = "0.9s";
-    }, 500); // match your CSS transition duration
+    playbackcontainer.style.display = "block"; // ✅ make it visible
   });
 });
 
@@ -2717,12 +2493,204 @@ function clearScene() {
   total_neurons = 0; // ✅ If you're displaying this anywhere
 
   // UI resets
-  document.getElementById("lblnetwork").innerText = "Network :";
-  document.getElementById("typeHeading").style.visibility = "hidden";
+  document.getElementById("lblnetwork").innerText = "# neurons :";
+
+  document.getElementById("Neurons_firing_attributes").style.visibility = "hidden";
+  document.getElementById("networkspikes").style.visibility = "hidden";
   removeTable();
-  chkpanle = false;
+  //   chkpanle = false;
+}
+
+window.addEventListener("resize", () => {
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height, false);
+});
+
+function centerCameraToObject(object) {
+  const box = new THREE.Box3().setFromObject(object);
+
+  if (box.isEmpty()) {
+    console.warn("Bounding box is empty. Cannot center camera.");
+    return;
+  }
+
+  const center = new THREE.Vector3();
+  box.getCenter(center);
+
+  const size = box.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+
+  const fov = camera.fov * (Math.PI / 270);
+  const distance = maxDim / (2 * Math.tan(fov / 2));
+
+  // Use current view direction from camera to controls target
+  const viewDir = new THREE.Vector3();
+  viewDir.subVectors(camera.position, controls.target).normalize();
+
+  const newPosition = center.clone().add(viewDir.multiplyScalar(distance * 1.2));
+  camera.position.copy(newPosition);
+  camera.lookAt(center);
+  camera.updateProjectionMatrix();
+
+  if (controls) {
+    controls.target.copy(center);
+    controls.update();
+  }
+}
+
+function resetAndDisableAllCheckboxes() {
+  const allCheckboxes = document.querySelectorAll(".form-check-input");
+
+  allCheckboxes.forEach((checkbox) => {
+    checkbox.checked = false;
+    checkbox.disabled = true;
+  });
+
+  // Also reset special category selectors
+  const specialSelectors = ["AllNT", "RankNT", "CanonicalNT", "SelectAll", "UnselectAll"];
+  specialSelectors.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.checked = false;
+      el.disabled = true;
+    }
+  });
+
+  // Reset selected ids
+  selectedCheckboxIds = [];
+  selectedCheckboxByLayer = [];
+
+  // Optional: Hide UI or refresh scene
+  updateSelectedCount();
+
+  document.getElementById("Neurons_firing_attributes").style.visibility = "hidden";
+  document.getElementById("networkspikes").style.visibility = "hidden";
+  removeTable();
 }
 
 CreateScene();
 disableAllElements();
+//createArrowOverlay();
 
+function updateSliderTrack(slider, value) {
+  const min = parseFloat(slider.min);
+  const max = parseFloat(slider.max);
+  const val = value !== undefined ? parseFloat(value) : parseFloat(slider.value);
+  const pct = ((val - min) / (max - min)) * 100;
+  slider.style.background = `linear-gradient(to right, #2a6b38 0%, #2a6b38 ${pct}%, #2b2727 ${pct}%, #2b2727 100%)`;
+}
+
+function setupPlaybackConfigListeners() {
+  const simSlider = document.getElementById("simTimestepRange");
+  const simInput = document.getElementById("simTimestepValue");
+  const stepSlider = document.getElementById("stepDurationRange");
+  const stepInput = document.getElementById("stepDurationValue");
+
+  // Sync simTimestep
+  simSlider.addEventListener("input", () => {
+    simInput.value = simSlider.value;
+    playbackConfig.simTimestep = parseFloat(simSlider.value);
+    updateSliderTrack(simSlider);
+  });
+
+  simInput.addEventListener("input", () => {
+    const val = parseFloat(simInput.value);
+    if (!isNaN(val)) {
+      simSlider.value = val;
+      playbackConfig.simTimestep = val;
+      updateSliderTrack(simSlider, val); // ✅ explicitly pass typed value
+    }
+  });
+
+  stepSlider.addEventListener("input", () => {
+    stepInput.value = stepSlider.value;
+    playbackConfig.stepDuration = parseInt(stepSlider.value);
+    updateSliderTrack(stepSlider);
+
+    // ✅ Restart animation with new stepDuration
+    if (interval) {
+      clearInterval(interval);
+      startAnimation(count, lasttime);
+    }
+  });
+
+  stepInput.addEventListener("input", () => {
+    const val = parseInt(stepInput.value);
+    if (!isNaN(val)) {
+      stepSlider.value = val;
+      playbackConfig.stepDuration = val;
+      updateSliderTrack(stepSlider, val);
+
+      // ✅ Restart animation with new stepDuration
+      if (interval) {
+        clearInterval(interval);
+        startAnimation(count, lasttime);
+      }
+    }
+  });
+
+  // Initial visual update
+  updateSliderTrack(simSlider);
+  updateSliderTrack(stepSlider);
+}
+
+window.addEventListener("DOMContentLoaded", setupPlaybackConfigListeners);
+
+function resetPlaybackConfig() {
+  // Set default values
+  const defaultSimTimestep = 0.1;
+  const defaultStepDuration = 0;
+
+  // Update config
+  playbackConfig.simTimestep = defaultSimTimestep;
+  playbackConfig.stepDuration = defaultStepDuration;
+
+  // Get elements
+  const simSlider = document.getElementById("simTimestepRange");
+  const simInput = document.getElementById("simTimestepValue");
+  const stepSlider = document.getElementById("stepDurationRange");
+  const stepInput = document.getElementById("stepDurationValue");
+
+  // Set UI values
+  simSlider.value = defaultSimTimestep;
+  simInput.value = defaultSimTimestep;
+  stepSlider.value = defaultStepDuration;
+  stepInput.value = defaultStepDuration;
+
+  // Update visual fill
+  updateSliderTrack(simSlider, defaultSimTimestep);
+  updateSliderTrack(stepSlider, defaultStepDuration);
+}
+
+function resetCamera() {
+  camera.position.set(0, 0, 1000); // Restore initial z position
+  camera.up.set(0, 1, 0); // Reset up direction
+  camera.lookAt(0, 0, 0); // Look at the origin or center point
+
+  document.getElementById("panel").style.display = "none";
+  document.getElementById("playbackcontainer").style.display = "none";
+  document.getElementById("histogramImage").style.display = "none";
+  if (controls) {
+    controls.reset(); // Reset TrackballControls
+    controls.update();
+  }
+}
+function resetTimeUI() {
+  // Reset visible time display
+  document.getElementById("current-time").textContent = "0.0";
+  document.getElementById("total-time").textContent = "0.0";
+
+  // Reset timebar slider
+  const timebar = document.getElementById("timebar");
+
+  timebar.min = 0;
+  timebar.max = 100; // You can change this dynamically after loading new data
+  timebar.value = 0;
+
+  // Reset start/end time inputs
+  document.getElementById("start-time").value = "";
+  document.getElementById("end-time").value = "";
+}

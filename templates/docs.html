@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+  {% load static %}
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HCV - User Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+      html,
+      body {
+        overflow-x: hidden;
+        font-family: "Segoe UI", Roboto, sans-serif;
+        background-color: #f9f9f9;
+        color: #333;
+        scroll-behavior: smooth;
+      }
+      .visualizer-title {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #ffffff;
+        margin: 0;
+        text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+        letter-spacing: 1px;
+        transition: all 0.3s ease-in-out;
+      }
+      @media (max-width: 768px) {
+        .visualizer-title {
+          font-size: 1.5rem;
+        }
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        color: #00563f;
+      }
+      code {
+        background: #eee;
+        padding: 2px 4px;
+        border-radius: 4px;
+      }
+      .section {
+        margin-bottom: 3rem;
+        opacity: 0;
+        transform: translateY(40px);
+        transition: opacity 0.8s ease, transform 0.8s ease;
+      }
+      .section.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .screenshot {
+        text-align: center;
+        margin-top: 1rem;
+        margin-bottom: 2rem;
+      }
+      .screenshot img {
+        max-width: 90%;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .screenshot img:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+      .highlight {
+        background: #e0f7ea;
+        padding: 1rem;
+        border-radius: 5px;
+        margin: 1rem 0;
+      }
+      a {
+        color: #00796b;
+      }
+      #backToTopBtn {
+        display: none;
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 999;
+        background-color: #2a6b38;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        transition: background 0.3s, transform 0.3s;
+      }
+      #backToTopBtn:hover {
+        background-color: #1d4e29;
+        transform: scale(1.1);
+      }
+
+      .legend-list {
+        list-style: none;
+        padding: 0;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+      }
+      .legend-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        margin-right: 10px;
+        display: inline-block;
+      }
+      .dot-blue {
+        background-color: blue;
+      }
+      .dot-red {
+        background-color: red;
+      }
+      .dot-yellow {
+        background-color: gold;
+      }
+      .dot-white {
+        background-color: white;
+        border: 1px solid #ccc;
+      }
+      .header-icon {
+        height: 24px;
+        margin-left: 10px;
+        vertical-align: middle;
+        transition: transform 0.2s ease;
+      }
+      .header-icon:first-child {
+        margin-left: 10; /* No margin for the first icon */
+      }
+      .header-icon-link:hover .header-icon {
+        transform: scale(1.2); /* Slight zoom effect on hover */
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Header -->
+    <div class="container-fluid g-0" style="position: fixed; top: 0; left: 0; right: 0; z-index: 1000">
+      <div class="row align-items-center py-3 px-2 header-row" style="background-color: #2a6b38">
+        <div class="col-12 col-md-3 text-center text-md-start mb-2 mb-md-0">
+          <img src="{% static 'img/logoEscritta.svg' %}" alt="Logo" style="max-height: 60px" />
+        </div>
+        <div class="col-12 col-md-6 text-center mb-2 mb-md-0">
+          <h2 class="visualizer-title">Neural Circuit Visualizer</h2>
+        </div>
+
+        <!-- Header Icons -->
+        <div class="col-12 col-md-3 text-center text-md-end mb-2 mb-md-0 pe-4">
+          <!-- Home: Go back to root (/) -->
+          <a href="../" class="header-icon-link">
+            <img src="{% static 'img/docs/home.svg' %}" alt="Home" class="header-icon" />
+          </a>
+
+          <!-- Info: Current page -->
+          <a href="index.html" class="header-icon-link">
+            <img src="{% static 'img/docs/file-info.svg' %}" alt="Info" class="header-icon" />
+          </a>
+
+          <!-- Video section on current page -->
+          <a href="#video" class="header-icon-link">
+            <img src="{% static 'img/docs/brand-youtube.svg' %}" alt="Video" class="header-icon" />
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container py-4">
+      <h1 style="margin-top: 6vw">Neural Circuit Visualizer (NCV) – User Guide</h1>
+      <p><em>Version 1.0, April 2025</em></p>
+
+      <!-- Sections -->
+      <div class="section" id="overview">
+        <h2>Overview</h2>
+        <p>
+          The
+          <strong>Neural Circuit Visualizer (NCV)</strong>
+          is a web-based application that enables users to interactively upload, visualize, and analyze large-scale hippocampal neuron circuits. The platform supports a streamlined workflow from network and activity file upload to dynamic 3D circuit visualization and spike playback.
+        </p>
+        <ol>
+          <li>
+            <strong>Data Upload</strong>
+            : Upload neural network and spike activity data in supported formats (CSV or HDF5).
+          </li>
+          <li>
+            <strong>3D Visualization</strong>
+            : Explore neuron distributions and network structure with anatomical orientation.
+          </li>
+          <li>
+            <strong>Playback and Analysis</strong>
+            : Animate spike activity over time and examine firing statistics across simulation chunks.
+          </li>
+        </ol>
+        <div class="screenshot"><img src="{% static 'img/docs/home.png' %}" alt="NCV Homepage Screenshot" /></div>
+      </div>
+
+      <div class="section" id="uploading">
+        <h2>Uploading Data</h2>
+        <h4>Supported Formats</h4>
+        <ul>
+          <li>
+            <strong>CSV files</strong>
+            : Separate
+            <code>.csv</code>
+            for Network and Activity.
+          </li>
+          <li>
+            <strong>HDF5 files</strong>
+            : Single
+            <code>.hdf5</code>
+            containing both datasets.
+          </li>
+        </ul>
+        <div class="highlight">
+          📝 Format:
+          <ul>
+            <li>Network file: Gid, X, Y, Z</li>
+            <li>Activity file: Gid, Time</li>
+          </ul>
+        </div>
+        <div class="screenshot"><img src="{% static 'img/docs/uploadData.png' %}" alt="Upload Data Screenshot" /></div>
+
+        <h3>Upload Process</h3>
+        <ol>
+          <li>
+            Click
+            <strong>UPLOAD DATA</strong>
+            on the sidebar.
+          </li>
+          <li>
+            Select either
+            <code>.csv</code>
+            or
+            <code>.hdf5</code>
+            upload button.
+          </li>
+          <li>Wait for upload and chunking to complete (progress bar displayed).</li>
+          <li>After processing, your 3D circuit visualization appears.</li>
+        </ol>
+        <div class="screenshot-row">
+          <div class="screenshot">
+            <img src="{% static 'img/docs/UploadProcess1.png' %}" alt="Upload Data" />
+          </div>
+          <div class="screenshot">
+            <img src="{% static 'img/docs/UploadProcess2.png' %}" alt="Upload Data Process" />
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="visualization">
+        <h2>Visualizing the Circuit</h2>
+        <p>
+          A
+          <strong>3D scatter plot</strong>
+          of neurons is generated, color-coded by type:
+        </p>
+
+        <ul class="legend-list">
+          <li class="legend-item">
+            <span class="legend-dot dot-blue"></span>
+            Excitatory Neurons (Blue)
+          </li>
+          <li class="legend-item">
+            <span class="legend-dot dot-red"></span>
+            Inhibitory Neurons (Red)
+          </li>
+          <li class="legend-item">
+            <span class="legend-dot dot-yellow"></span>
+            Firing Excitatory Neurons (Yellow)
+          </li>
+          <li class="legend-item">
+            <span class="legend-dot dot-white"></span>
+            Firing Inhibitory Neurons (White)
+          </li>
+        </ul>
+
+        <p>Axes:</p>
+        <ul>
+          <li>A (Anterior) - P (Posterior)</li>
+          <li>D (Dorsal) - V (Ventral)</li>
+          <li>M (Medial) - L (Lateral)</li>
+        </ul>
+
+        <div class="highlight">
+          🧭 Axes orientation is computed automatically via
+          <strong>Principal Component Analysis (PCA)</strong>
+          .
+        </div>
+
+        <div class="screenshot-row">
+          <div class="screenshot">
+            <img src="{% static 'img/docs/visualization.png' %}" alt="Visualization Screenshot" />
+          </div>
+        </div>
+
+        <h3>Neuron Count Summary Panel</h3>
+        <p>This panel presents a real-time summary of the neuron population currently loaded into the 3D circuit visualizer. The values are automatically computed upon network file upload and include the following:</p>
+        <ul>
+          <li>
+            <strong>Total Neurons</strong>
+            : The complete number of neurons parsed from the network file. This includes both excitatory and inhibitory types, regardless of whether they fire during simulation.
+          </li>
+          <li>
+            <strong>Excitatory Neurons</strong>
+            : Neurons that depolarize post-synaptic targets upon firing. In hippocampal circuits, these are typically glutamatergic principal cells such as pyramidal neurons or granule cells.
+          </li>
+          <li>
+            <strong>Inhibitory Neurons</strong>
+            : Neurons that hyperpolarize post-synaptic targets to suppress excitation. These are typically GABAergic interneurons.
+          </li>
+        </ul>
+        <p>These counts help users quickly assess the balance between excitation and inhibition in the visualized network — a key factor in analyzing neural dynamics, signal propagation, and circuit stability.</p>
+      </div>
+
+      <div class="section" id="controls">
+        <h2>Simulation Controls</h2>
+        <p>Use the toolbar at the top:</p>
+        <ul>
+          <li>
+            <strong>Chunk Selector</strong>
+            : Choose time windows
+          </li>
+          <li>
+            <strong>Start</strong>
+            ,
+            <strong>Pause</strong>
+            ,
+            <strong>Restart</strong>
+            buttons to control playback
+          </li>
+        </ul>
+        <div class="screenshot"><img src="{% static 'img/docs/simulationcontrols.png' %}" alt="Simulation Controls Screenshot" /></div>
+      </div>
+
+      <div class="section" id="statistics">
+        <h2>Firing Activity</h2>
+        <p>After upload:</p>
+        <ul>
+          <li>Chunk-based spike analysis is performed.</li>
+          <li>Histogram of spike counts over time is displayed.</li>
+          <li>Mean Firing Rate (MFR) is computed per chunk.</li>
+        </ul>
+        <ul class="legend-list">
+          <li class="legend-item">
+            <span class="legend-dot dot-yellow"></span>
+            Firing Excitatory Neurons (Yellow)
+          </li>
+          <li class="legend-item">
+            <span class="legend-dot dot-white"></span>
+            Firing Inhibitory Neurons (White)
+          </li>
+        </ul>
+        <div class="screenshot"><img src="{% static 'img/docs/firingactivity.png' %}" alt="Firing Activity Screenshot" /></div>
+      </div>
+
+      <div class="section" id="features">
+        <h2>Additional Features</h2>
+
+        <h3>Interactive Time Slider</h3>
+        <p>
+          The
+          <strong>Interactive Time Slider</strong>
+          allows users to control simulation playback over time:
+        </p>
+        <ul>
+          <li>
+            <strong>Current Time Display</strong>
+            : Shows the current simulation time
+            <code>t</code>
+            and total duration (in milliseconds).
+          </li>
+          <li>
+            <strong>Start / End Time Inputs</strong>
+            : Users can define a custom simulation window using the “Start” and “End” fields to restrict playback to a specific range.
+          </li>
+          <li>
+            <strong>Slider Handle</strong>
+            : Drag the blue circle along the timeline to scrub through the simulation manually.
+          </li>
+        </ul>
+        <p>This panel enables precise control over which portion of the spike activity timeline is visualized.</p>
+
+        <h3>Visualization Panel</h3>
+        <ul>
+          <li>
+            <strong>Background Color</strong>
+            : Customize the background of the 3D scene using a color picker. You can input a hex code or use the interactive selector to improve contrast.
+          </li>
+          <li>
+            <strong>Camera Controls</strong>
+            : Adjust the camera position in 3D space using
+            <code>x</code>
+            ,
+            <code>y</code>
+            , and
+            <code>z</code>
+            sliders. Each slider is accompanied by a numeric input for precision control.
+          </li>
+          <li>
+            <strong>Neuron Size</strong>
+            : Control the default size of all neurons using a range slider and manual input field.
+          </li>
+          <li>
+            <strong>Firing Neuron Size</strong>
+            : Set the enlarged size of neurons during spike animation separately for better visual emphasis.
+          </li>
+        </ul>
+
+        <h3>Playback Configuration</h3>
+        <ul>
+          <li>
+            <strong>Playback Speed</strong>
+            : Modify how fast spikes are animated by adjusting the time scale.
+          </li>
+          <!-- <li>
+            <strong>Simulation Window</strong>
+            : Choose the start and end time to control which part of the spike activity is visualized.
+          </li> -->
+          <li>
+            <strong>Step Duration</strong>
+            : Define the real-time delay (in milliseconds) between animation frames. Lower values result in faster playback, while higher values create slower, more controlled animations.
+          </li>
+        </ul>
+
+        <div class="screenshot"><img src="{% static 'img/docs/additionalfeatures.png' %}" alt="Additional Features Screenshot" /></div>
+      </div>
+
+      <div class="section" id="demo-circuits">
+        <h2>Visualizing Demo Circuits</h2>
+
+        <p>
+          If you do not have your own network and activity files yet, you can explore the platform by loading one of the provided
+          <strong>Demo Circuits</strong>
+          . This allows immediate 3D visualization without uploading your own data.
+        </p>
+
+        <h3>Human Circuit Demo</h3>
+        <p>
+          Under the
+          <strong>\"Human Circuit\"</strong>
+          tab, you can:
+        </p>
+        <ul>
+          <li>
+            Click the
+            <strong>Load Circuit</strong>
+            button to visualize the CA1 hippocampal network.
+          </li>
+          <li>
+            Use the
+            <strong>Select Activity</strong>
+            dropdown to load predefined spiking data for playback.
+          </li>
+          <li>Animate spikes and explore network dynamics through the simulation controls.</li>
+        </ul>
+        <div class="screenshot">
+          <img src="{% static 'img/docs/humancircuit.png' %}" alt="Demo Human Circuit Screenshot" />
+        </div>
+
+        <h3>Mouse Circuit Demo</h3>
+
+        <p>
+          The
+          <strong>Mice Circuit</strong>
+          provides an advanced demo mode, allowing users to selectively visualize specific hippocampal regions, layers, and neuron types before loading the network. The neuron type definitions and census data are curated based on the mice hippocampal neuron classifications available from
+          <a href="https://www.hippocampome.org/php/counts.php" target="_blank">Hippocampome.org</a>
+          . This ensures that the anatomical structure and cell-type representation in the demo circuits reflect up-to-date experimental knowledge from peer-reviewed literature.
+        </p>
+
+        <p>
+          The distribution of
+          <strong>glutamatergic</strong>
+          (excitatory, marked with an
+          <strong>X</strong>
+          ) and
+          <strong>GABAergic</strong>
+          (inhibitory) neurons of distinct types across each subregion and layer of the hippocampal formation is incorporated, based on Hippocampome.org data. This organization allows users to accurately explore the spatial arrangement of excitatory and inhibitory populations within different
+          anatomical subdivisions such as the Dentate Gyrus (DG), CA3, CA2, CA1, Subiculum, and Entorhinal Cortex (EC).
+        </p>
+
+        <p>The workflow is:</p>
+        <ol>
+          <li>
+            Expand the
+            <strong>Mice Circuit</strong>
+            tab.
+          </li>
+          <li>
+            Click
+            <strong>Load Circuit</strong>
+            before making selections to visualize only the selected neurons.
+          </li>
+          <li>(Optional) Build specific connections (e.g., CA3-PC to CA1-PC) before visualization if needed.</li>
+
+          <li>
+            Select the desired network part under
+            <strong>Hippocampal Formation</strong>
+            :
+          </li>
+          <ul>
+            <li>Toggle specific anatomical regions (e.g., DG, CA3, CA2, CA1, Subiculum, EC).</li>
+            <li>Further refine your selection by choosing specific hippocampal layers (e.g., SLM, SR, SP, SO).</li>
+            <li>
+              Enable/disable specific
+              <strong>Neuron Types</strong>
+              within each region (e.g., Granule cells, Basket cells, Mossy fibers).
+            </li>
+          </ul>
+
+          <li>
+            Select a corresponding
+            <strong>Activity</strong>
+            dataset if available to animate firing patterns.
+            <br />
+            <em>
+              Example: Activity visualization in CA3 based on simulations from Kopsick et al.,
+              <a href="https://www.biorxiv.org/content/10.1101/2024.03.27.586909v1.full.pdf" target="_blank">bioRxiv, 2024</a>
+              .
+            </em>
+          </li>
+        </ol>
+
+        <div class="screenshot">
+          <img src="{% static 'img/docs/miceregions.png' %}" alt="Demo mouse Circuit Region Selection Screenshot" />
+        </div>
+
+        <div class="screenshot">
+          <img src="{% static 'img/docs/ca3ca1spikes.png' %}" alt="Demo mouse Circuit Neuron Type Selection Screenshot" />
+        </div>
+      </div>
+
+      <div class="section" id="support">
+        <h2>Support</h2>
+        <p>
+          For any issues, please refresh and retry.
+          <br />
+          Contact support:
+          <a href="mailto:ncv-support@ebrains-italy.eu">ncv-support@ebrains-italy.eu</a>
+        </p>
+      </div>
+
+      <div class="section" id="url">
+        <h2>Platform URL</h2>
+        <p><a href="https://hcv.ebrains-italy.eu/" target="_blank">https://hcv.ebrains-italy.eu/</a></p>
+      </div>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button onclick="scrollToTop()" id="backToTopBtn" title="Back to top">↑</button>
+
+    <script>
+      // Fade in animation
+      const sections = document.querySelectorAll(".section");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) entry.target.classList.add("visible");
+          });
+        },
+        { threshold: 0.1 }
+      );
+      sections.forEach((section) => observer.observe(section));
+
+      // Back to top button
+      const backToTopBtn = document.getElementById("backToTopBtn");
+      window.onscroll = function () {
+        if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+          backToTopBtn.style.display = "block";
+        } else {
+          backToTopBtn.style.display = "none";
+        }
+      };
+      function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    </script>
+  </body>
+</html>

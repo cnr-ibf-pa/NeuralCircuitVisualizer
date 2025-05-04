@@ -37,7 +37,7 @@ def submit_job(request):
         working_dir = get_tmp_working_dir()
         request.session['working_dir'] = working_dir
 
-    zip_filename = os.path.join(get_tmp_dir(), f'{data['job_name']}.zip')
+    zip_filename = os.path.join(get_tmp_dir(), f'{data["job_name"]}.zip')
     if os.path.exists(zip_filename):
         logging.error(f'Job name "{data['job_name']}" already exists')
         return JsonResponse(status=BAD_REQUEST, data={'job_name': [{'message': messages.JOB_NAME_ALREADY_EXISTS}]})
