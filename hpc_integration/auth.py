@@ -11,27 +11,23 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
             email = claims.get('sub')
         return email
 
+    def get_mitreid_sub(self, claims):
+        mitreid_sub = claims.get('mitreid-sub')
+        return mitreid_sub
+
     def filter_users_by_claims(self, claims):
         """Create user with email base custom user model."""
         email = self.get_email(claims)
-        if not email:
+        mitreid_sub = self.get_mitreid_sub(claims)
+        if not mitreid_sub:
             return self.UserModel.objects.none()
         try:
-            return self.UserModel.objects.filter(email=email)
+            return self.UserModel.objects.filter(mitreid_sub=mitreid_sub)
         except self.UserModel.DoesNotExist:
             return self.UserModel.objects.none()
 
     def create_user(self, claims):
         """Create user with email base custom user model."""
         email = self.get_email(claims)
-        return self.UserModel.objects.create_user(email)
-
-    # def verify_claims(self, claims):
-    #     """Verify the provided claims to decide
-    #     if authentication should be allowed."""
-    #     scopes = self.get_settings('OIDC_RP_SCOPES')
-    #     if not scopes:
-    #         return False
-    #     elif 'offline' in scopes.split():
-    #         return 'offline' in claims
-    #     return False
+        mitreid_sub = self.get_mitreid_sub(claims)
+        return self.UserModel.objects.create_user(email=email, mitreid_sub=mitreid_sub)

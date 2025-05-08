@@ -44,7 +44,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     email = models.EmailField('email address', unique=True)
     name = models.CharField('name', max_length=128, blank=True)
-
+    mitreid_sub = models.CharField('mitreid_sub', max_length=32, unique=True)
 
     is_staff = models.BooleanField(
         'staff status',
@@ -62,17 +62,15 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'
+    MITREID_SUB_FIELD = 'mitreid_sub'
     REQUIRED_FIELDS = []
 
     class Meta:
         verbose_name = 'user'
         verbose_name_plural = 'users'
 
-    def email_user(self, subject, message, from_email=None, **kwargs):
-        """Send an email to this user."""
-        send_mail(subject, message, from_email, [self.email], **kwargs)
-
     @property
     def username(self):
         """Username proxy."""
-        return self.email
+        return self.mitreid_sub
+
