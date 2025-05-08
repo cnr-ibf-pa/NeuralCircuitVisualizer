@@ -135,19 +135,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Mozilla django oidc settings
-OIDC_OP_AUTHORIZATION_ENDPOINT = "https://iam.ebrains.eu/auth/realms/hbp/protocol/openid-connect/auth"
-OIDC_OP_TOKEN_ENDPOINT = "https://iam.ebrains.eu/auth/realms/hbp/protocol/openid-connect/token"
-OIDC_OP_USER_ENDPOINT = "https://iam.ebrains.eu/auth/realms/hbp/protocol/openid-connect/userinfo"
-OIDC_RP_SIGN_ALGO ="RS256"
-OIDC_OP_JWKS_ENDPOINT="https://iam.ebrains.eu/auth/realms/hbp/protocol/openid-connect/certs"
-LOGIN_REDIRECT_URL = '/'
-OIDC_STORE_ACCESS_TOKEN = True
-
-
-# Store secret somewhere on your system
-OIDC_RP_SCOPES="openid profile email"
 OIDC_RP_CLIENT_ID = env('OIDC_RP_CLIENT_ID')
 OIDC_RP_CLIENT_SECRET = env('OIDC_RP_CLIENT_SECRET')
+
+OIDC_OP_AUTHORIZATION_ENDPOINT = env('OIDC_OP_AUTHORIZATION_ENDPOINT')
+OIDC_OP_TOKEN_ENDPOINT = env('OIDC_OP_TOKEN_ENDPOINT')
+OIDC_OP_USER_ENDPOINT = env('OIDC_OP_USER_ENDPOINT')
+OIDC_RP_SIGN_ALGO = env('OIDC_RP_SIGN_ALGO')
+OIDC_OP_JWKS_ENDPOINT= env('OIDC_OP_JWKS_ENDPOINT')
+
+OIDC_RP_SCOPES="openid profile email"
+
+LOGIN_REDIRECT_URL = '/'
+OIDC_STORE_ACCESS_TOKEN = True
 
 LOGIN_URL = 'oidc_authentication_init'
 
