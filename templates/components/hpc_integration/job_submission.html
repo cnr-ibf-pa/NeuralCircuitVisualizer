@@ -19,6 +19,11 @@
             <div id="job-name-help" class="form-text">Enter the job name (max 32 characters).</div>
           </div>
           <div class="mb-3">
+            <label for="project" class="form-label">Project:</label>
+            <input type="text" class="form-control" id="project" name="project" maxlength="64" aria-describedby="project-help" />
+            <div id="project-help" class="form-text">Enter the project name.</div>
+          </div>
+          <div class="mb-3">
             <label for="runtime" class="form-label">Runtime (hours):</label>
             <input type="number" class="form-control" id="runtime" name="runtime" min="0.1" max="24" step="0.1" value="2.0" aria-describedby="runtime-help" />
             <div id="runtime-help" class="form-text">Set the runtime in hours.</div>
@@ -42,7 +47,7 @@
   <script>
     document.getElementById('optimization-settings-forms').addEventListener('submit', async function (event) {
       event.preventDefault()
-      document.querySelector(`#optimization-settings-forms input`).classList.remove('is-invalid');;
+      document.querySelectorAll(`#optimization-settings-forms input`).forEach(el => el.classList.remove('is-invalid'));
       const url = '/hpc-integration/submit-job';
       const formData = new FormData(this);
       const response = await fetch(url, {
@@ -57,4 +62,3 @@
     })
   </script>
 {% endblock %}
-

@@ -64,8 +64,8 @@ class JobHelper:
             the UNICORE job description.
         """
 
-        nodes = settings['node-num']
-        cores = settings['core-num']
+        nodes = settings['nodes']
+        cores = settings['cores']
         if nodes > 1:
             cores = cores // nodes
             if cores % 2 != 0:
@@ -166,7 +166,11 @@ class JobHelper:
         except requests.HTTPError as err:
             raise errors.HPCException(messages.HPC_CONNECTION_ERROR)
         except Exception as err:
-            if isinstance(err, requests.HTTPError):
+            if str(err).find('500') >= 0:
+                raise errors.HPCException(messages.HPC_NOT_AVAILABLE)
+            elif str(err).find('403') >= 0:
+                raise errors.ForbiddenException(err)
+            elif isinstance(err, requests.HTTPError):
                 raise errors.HPCException(messages.JOB_SUBMISSION_FAILED)
             raise errors.HPCException(messages.HPC_SYSTEM_ERROR)
 

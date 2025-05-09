@@ -45,6 +45,9 @@ def submit_job(request):
 
     try:
         JobHelper().submit_job(data["hpc"], zip_filename, data, request.session['oidc_access_token'])
+    except ForbiddenException as err:
+        logger.error(f'Error while fetching jobs: {err}')
+        return HttpResponseForbidden(content=str(err))
     except Exception as err:
         logger.error(f'Error while submitting job: {err}')
         return HttpResponseServerError(content=str(err))

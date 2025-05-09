@@ -41,10 +41,10 @@
           alertIcon = document.getElementById('info-icon')
           break
       }
-      alertIcon.classList.remove('d-none')
+      alertIcon.classList.remove('d-none');
       setTimeout(() => {
-        if (alert.classList.contains('hide')) return
-        alert.classList.add('hide')
+        alert.classList.add('hide');
+        alert.classList.remove('alert-success', 'alert-danger', 'alert-warning', 'alert-info');
         alertIcon.classList.add('d-none')
       }, 3000)
     }

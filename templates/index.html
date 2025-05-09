@@ -1963,7 +1963,7 @@
               console.log("Error data:", data);
               if (data && typeof data === 'object') {
                 let messages = [];
-                for (const key in data) {
+                for (const key in data) {\
                   document.querySelector(`input[name=${key}]`).classList.add('is-invalid');
                   showAlert(data[key][0].message, "error");
                 }
