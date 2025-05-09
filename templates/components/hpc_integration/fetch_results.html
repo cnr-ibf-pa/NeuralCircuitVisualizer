@@ -11,7 +11,12 @@
               <option value="CINECA - G100">CINECA - G100</option>
             </select>
           </div>
-          <button type="submit" class="btn btn-success w-100">Fetch jobs</button>
+          <button type="submit" class="btn btn-success w-100 d-flex-inline" id="fetch-job-button">
+            <div class="spinner-border spinner-border-sm d-none" role="status" id="fetch-job-spinner">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            Fetch jobs
+          </button>
         </form>
         <div id="fetchedJobsDiv" class="d-block d-none">
           <hr>
@@ -59,10 +64,12 @@
     }
 
     document.getElementById('fetch-jobs-form').addEventListener('submit', function (event) {
-      event.preventDefault()
+      event.preventDefault();
       const formData = new FormData(this);
       const url = new URL('/hpc-integration/fetch-jobs', window.location.origin);
       url.searchParams.set('hpc', formData.get('hpc'));
+      document.getElementById('fetch-job-spinner').classList.remove('d-none');
+      document.getElementById('fetch-job-button').setAttribute('disabled', true);
       fetch(url)
         .then(async (response) => {
           if (!response.ok) {
@@ -74,6 +81,9 @@
             Object.keys(data).forEach(jobId => addJobToList(jobId, data[jobId]));
             jobList.classList.remove('d-none');
           }
+        }).finally(() => {
+          document.getElementById('fetch-job-spinner').classList.add('d-none');
+          document.getElementById('fetch-job-button').removeAttribute('disabled');
         });
     });
   </script>

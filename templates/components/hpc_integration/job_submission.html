@@ -38,7 +38,12 @@
             <input type="number" class="form-control" id="core-number" name="cores" min="1" max="64"  value="10" aria-describedby="core-number-help" />
             <div id="core-number-help" class="form-text">Set the number of cores per node.</div>
           </div>
-          <button type="submit" class="btn btn-success w-100">Submit</button>
+          <button type="submit" class="btn btn-success w-100 d-flex-inline" id="submit-job-button">
+            <div class="spinner-border spinner-border-sm d-none" role="status" id="submit-job-spinner">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            Submit
+          </button>
         </form>
       </div>
     </div>
@@ -50,6 +55,10 @@
       document.querySelectorAll(`#optimization-settings-forms input`).forEach(el => el.classList.remove('is-invalid'));
       const url = '/hpc-integration/submit-job';
       const formData = new FormData(this);
+      const spinner = document.getElementById('submit-job-spinner');
+      spinner.classList.remove('d-none');
+      const button = document.getElementById('submit-job-button');
+      button.setAttribute('disabled', true);
       const response = await fetch(url, {
         method: 'POST',
         body: formData
@@ -59,6 +68,8 @@
       } else {
         getError(response);
       }
+      button.removeAttribute('disabled');
+      spinner.classList.add('d-none');
     })
   </script>
 {% endblock %}
