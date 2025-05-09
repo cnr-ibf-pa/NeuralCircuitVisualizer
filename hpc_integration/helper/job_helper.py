@@ -120,6 +120,8 @@ class JobHelper:
         except Exception as err:
             if str(err).find('500') >= 0:
                 raise errors.HPCException(messages.HPC_NOT_AVAILABLE)
+            elif str(err).find('403') >= 0:
+                raise errors.ForbiddenException(err)
         if not client:
             raise errors.UnicoreClientException
         if client.access_info()['role']['selected'] == 'anonymous':

@@ -1,0 +1,12 @@
+.my-alert {
+  height: auto !important;
+  width: max-content !important;
+  position: absolute !important;
+  bottom: 10px !important;
+  right: 25px !important;
+  transition: all ease-out 0.5s !important;
+}
+
+.my-alert.hide {
+  transform: translateX(150%) !important;
+}

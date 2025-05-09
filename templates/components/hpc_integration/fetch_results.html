@@ -64,12 +64,17 @@
       const url = new URL('/hpc-integration/fetch-jobs', window.location.origin);
       url.searchParams.set('hpc', formData.get('hpc'));
       fetch(url)
-        .then((response) => response.json())
-        .then((data) => {
-          document.getElementById('fetchedJobsDiv').classList.remove('d-none');
-          Object.keys(data).forEach(jobId => addJobToList(jobId, data[jobId]));
-        })
-        .catch((error) => console.error('Error:', error))
-    })
+        .then(async (response) => {
+          if (!response.ok) {
+            getError(response);
+          } else {
+            const data = await response.json();
+            const jobList = document.getElementById('fetchedJobsDiv');
+            jobList.innerHTML = '';
+            Object.keys(data).forEach(jobId => addJobToList(jobId, data[jobId]));
+            jobList.classList.remove('d-none');
+          }
+        });
+    });
   </script>
 {% endblock %}

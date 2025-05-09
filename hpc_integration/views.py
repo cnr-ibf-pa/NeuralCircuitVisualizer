@@ -3,15 +3,15 @@ import shutil
 import os
 from pyunicore.client import PathFile as UnicorePathFile
 
-from django.http import HttpResponseServerError
-from django.shortcuts import render
+from django.http import HttpResponseForbidden, HttpResponseServerError
 from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, HttpResponseNotAllowed
-from django.contrib.auth.decorators import login_required
 
 from hpc_integration import forms
 from hpc_integration.forms import HPC_LIST
 from hpc_integration.utils import messages, get_tmp_dir, get_tmp_working_dir
+from hpc_integration.utils.decorators import login_required
 from hpc_integration.helper.job_helper import JobHelper
+from hpc_integration.utils.errors import ForbiddenException
 
 import logging
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ def submit_job(request):
     form = forms.OptimizationSettingsForm(request.POST)
 
     if not form.is_valid():
-        logging.error(f'Invalid form: {form.errors}')
+        logging.error(f'Invalid form: {form.errors.get_json_data(escape_html=True)}')
         return JsonResponse(status=BAD_REQUEST, data=form.errors.get_json_data(escape_html=True), safe=False)
 
     data = form.cleaned_data
@@ -71,6 +71,9 @@ def fetch_jobs(request):
     try:
         jobs_list = JobHelper().fetch_jobs_list(hpc, request.session['oidc_access_token'])
         return JsonResponse(data=jobs_list)
+    except ForbiddenException as err:
+        logger.error(f'Error while fetching jobs: {err}')
+        return HttpResponseForbidden(content=str(err))
     except Exception as err:
         logger.error(f'Error while fetching jobs: {err}')
         return HttpResponseServerError(content=str(err))

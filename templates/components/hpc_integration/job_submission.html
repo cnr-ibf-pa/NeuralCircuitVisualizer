@@ -41,27 +41,18 @@
 
   <script>
     document.getElementById('optimization-settings-forms').addEventListener('submit', async function (event) {
-      console.log("Form submitted")
       event.preventDefault()
+      document.querySelector(`#optimization-settings-forms input`).classList.remove('is-invalid');;
       const url = '/hpc-integration/submit-job';
       const formData = new FormData(this);
-
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          body: formData
-        });
-        if (!response.ok) {
-          throw new Error(`${await response.text()}`);
-        }
-      } catch (error) {
-        const details = JSON.parse(error.message);
-        for (const key in details) {
-          const errorElement = document.querySelector(`#optimization-settings-forms input[name=${key}`);
-          errorElement.classList.add('is-invalid');
-          const errorMessage = details[key][0].message;
-          console.error(errorMessage);
-        }
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData
+      });
+      if (response.ok) {
+        showAlert("Job submitted successfully!", "success");
+      } else {
+        getError(response);
       }
     })
   </script>
