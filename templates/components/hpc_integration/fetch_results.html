@@ -57,7 +57,6 @@
       el.addEventListener('click', function () {
         const a = document.createElement('a');
         a.href = new URL(`/hpc-integration/download-job-results?job_id=${jobId}`, window.location.origin);
-        a.download = `${jobId}.zip`;
         a.style.display = 'none';
         document.body.appendChild(a);
         a.click();

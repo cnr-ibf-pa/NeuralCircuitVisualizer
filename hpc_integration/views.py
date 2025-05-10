@@ -98,7 +98,8 @@ def download_job_results(request):
         return HttpResponseServerError()
 
     download_dir = request.session.get('download_dir')
-    if not download_dir:
+    if not download_dir or not os.path.exists(download_dir):
+        logger.info('Download directory not found, creating a new one')
         download_dir = get_tmp_working_dir()
         request.session['download_dir'] = download_dir
 
@@ -106,11 +107,16 @@ def download_job_results(request):
         file_list = JobHelper().fetch_job_files(hpc, job_id, request.session['oidc_access_token'])
         for f in file_list.keys():
             if type(file_list[f]) == UnicorePathFile:
-                dst = os.path.join(download_dir, f)
-                file_list[f].download(dst)
+                file_list[f].download(os.path.join(download_dir, f))
         zip_filename = os.path.join(get_tmp_dir(), f'{job_id}_results.zip')
         shutil.make_archive(base_name=zip_filename.replace('.zip', ''), format='zip', root_dir=download_dir)
-        return HttpResponse(content=messages)
+        response = HttpResponse(content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename={os.path.split(zip_filename)[1]}'
+        with open(zip_filename, 'rb') as f:
+            response.write(f.read())
+        os.remove(zip_filename)
+        shutil.rmtree(download_dir)
+        return response
     except Exception as err:
         logger.error(f'Error while downloading results: {err}')
         return HttpResponseServerError(content=str(err))
