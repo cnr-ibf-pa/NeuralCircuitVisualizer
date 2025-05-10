@@ -225,7 +225,7 @@ class JobHelper:
         for raw_job in raw_jobs_list:
             props = raw_job.properties
             job = { raw_job.job_id: {
-                    'workflow_id': props['name'],
+                    'job_name': props['name'],
                     'status': props['status'],
                     'date': str_to_datetime(props['submissionTime']),
                     'message': props['statusMessage']
@@ -235,10 +235,7 @@ class JobHelper:
         return jobs
 
     def sort_jobs(self, jobs: dict) -> dict:
-        ordered_jobs = OrderedDict(sorted(jobs.items(),
-                                          key=lambda x: x[1]['date'],
-                                          reverse=True))
-        return {'jobs': ordered_jobs}
+        return OrderedDict(sorted(jobs.items(), key=lambda x: x[1]['date'], reverse=True))
 
     @classmethod
     @check_hpc_supported
