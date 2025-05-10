@@ -38,6 +38,16 @@
             <input type="number" class="form-control" id="core-number" name="cores" min="1" max="64"  value="10" aria-describedby="core-number-help" />
             <div id="core-number-help" class="form-text">Set the number of cores per node.</div>
           </div>
+          <div class="mb-3">
+            <label for="max-gen" class="form-label">Max generation:</label>
+            <input type="number" class="form-control" id="max-gen" name="max_gen" min="1" max="100" value="2" aria-describedby="max-gen-help" />
+            <div id="max-gen-help" class="form-text">Set the maximum number of generations.</div>
+          </div>
+          <div class="mb-3">
+            <label for="offspring" class="form-label">Offspring:</label>
+            <input type="number" class="form-control" id="offspring" name="offspring" min="1" max="100" value="10" aria-describedby="offspring-help" />
+            <div id="offspring-help" class="form-text">Set the number of offspring.</div>
+          </div>
           <button type="submit" class="btn btn-success w-100 d-flex-inline" id="submit-job-button">
             <div class="spinner-border spinner-border-sm d-none" role="status" id="submit-job-spinner">
               <span class="visually-hidden">Loading...</span>

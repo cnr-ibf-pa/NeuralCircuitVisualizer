@@ -13,3 +13,5 @@ class OptimizationSettingsForm(forms.Form):
     runtime = forms.FloatField(required=True, max_value=24, min_value=0.1)
     nodes = forms.IntegerField(required=True, max_value=64, min_value=1)
     cores = forms.IntegerField(required=True, max_value=64, min_value=1)
+    max_gen = forms.IntegerField(required=True, max_value=100, min_value=1)
+    offspring = forms.IntegerField(required=True, max_value=100, min_value=1)

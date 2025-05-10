@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import shutil
 import pyunicore.client as unicore_client
 from pyunicore.credentials import OIDCToken
 import os
@@ -14,8 +15,8 @@ class JobHelper:
     _G100_CINECA = 'CINECA - G100'
     _G100_URL = 'https://unicore.hpc.cineca.it:9111/CINECA-G100/rest/core'
 
-    _SBATCH_SCRIPT = BASE_DIR / 'hpc_integration/helper/jobs/resources/ipyparallel.sbatch'
-    _ZIP_SCRIPT = BASE_DIR / 'hpc_integration/helper/jobs/resources/zip_folder.py'
+    _SBATCH_SCRIPT = BASE_DIR / 'hpc_integration/resources/ipyparallel.sbatch'
+    _ZIP_SCRIPT = BASE_DIR / 'hpc_integration/resources/zip_folder.py'
 
 
     def _get_unicore_command(self, zip_name):
@@ -257,3 +258,19 @@ class JobHelper:
     def fetch_job_files(cls, hpc, job_id, token):
         job_handler = cls()
         return job_handler._get_unicore_job_results(hpc, token, job_id)
+
+    @classmethod
+    def make_scripts(cls, dst, settings):
+        with open(cls._SBATCH_SCRIPT, 'r') as sbatch_script:
+            content = sbatch_script.read()
+            content = content.replace('<max_gen>', str(settings['max_gen']))
+            content = content.replace('<offspring>', str(settings['offspring']))
+            content = content.replace('<job_name>', str(settings['job_name']))
+            with open(os.path.join(dst, 'ipyparallel.sbatch'), 'w') as f:
+                f.write(content)
+
+        with open(cls._ZIP_SCRIPT, 'r') as zip_script:
+            content = zip_script.read()
+            content = content.replace('<folder_name>', str(settings['job_name']))
+            with open(os.path.join(dst, 'zip_folder.py'), 'w') as f:
+                f.write(content)
