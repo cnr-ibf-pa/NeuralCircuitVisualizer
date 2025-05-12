@@ -226,7 +226,12 @@ def fetch_user_network_data(request):
 
             try:
                 CHUNK_SIZE = 100 * 1024 * 1024
-                csv_data = pd.read_csv(activity_file_path, header=None, names=['id', 't'])
+                try:
+                    csv_data = pd.read_csv(activity_file_path, header=None, names=['id', 't'], encoding='utf-8')
+                except UnicodeDecodeError:
+
+                    csv_data = pd.read_csv(activity_file_path, header=None, names=['id', 't'], encoding='latin1')
+
                 data_dict = csv_data.groupby('t')['id'].agg(list).to_dict()
 
                 chunk_number = 0
