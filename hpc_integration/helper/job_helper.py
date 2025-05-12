@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import shutil
 import pyunicore.client as unicore_client
 from pyunicore.credentials import OIDCToken
 import os
@@ -14,8 +15,8 @@ class JobHelper:
     _G100_CINECA = 'CINECA - G100'
     _G100_URL = 'https://unicore.hpc.cineca.it:9111/CINECA-G100/rest/core'
 
-    _SBATCH_SCRIPT = BASE_DIR / 'hpc_integration/helper/jobs/resources/ipyparallel.sbatch'
-    _ZIP_SCRIPT = BASE_DIR / 'hpc_integration/helper/jobs/resources/zip_folder.py'
+    _SBATCH_SCRIPT = BASE_DIR / 'hpc_integration/resources/ipyparallel.sbatch'
+    _ZIP_SCRIPT = BASE_DIR / 'hpc_integration/resources/zip_folder.py'
 
 
     def _get_unicore_command(self, zip_name):
@@ -64,8 +65,8 @@ class JobHelper:
             the UNICORE job description.
         """
 
-        nodes = settings['node-num']
-        cores = settings['core-num']
+        nodes = settings['nodes']
+        cores = settings['cores']
         if nodes > 1:
             cores = cores // nodes
             if cores % 2 != 0:
@@ -120,6 +121,8 @@ class JobHelper:
         except Exception as err:
             if str(err).find('500') >= 0:
                 raise errors.HPCException(messages.HPC_NOT_AVAILABLE)
+            elif str(err).find('403') >= 0:
+                raise errors.ForbiddenException(err)
         if not client:
             raise errors.UnicoreClientException
         if client.access_info()['role']['selected'] == 'anonymous':
@@ -164,7 +167,11 @@ class JobHelper:
         except requests.HTTPError as err:
             raise errors.HPCException(messages.HPC_CONNECTION_ERROR)
         except Exception as err:
-            if isinstance(err, requests.HTTPError):
+            if str(err).find('500') >= 0:
+                raise errors.HPCException(messages.HPC_NOT_AVAILABLE)
+            elif str(err).find('403') >= 0:
+                raise errors.ForbiddenException(err)
+            elif isinstance(err, requests.HTTPError):
                 raise errors.HPCException(messages.JOB_SUBMISSION_FAILED)
             raise errors.HPCException(messages.HPC_SYSTEM_ERROR)
 
@@ -219,7 +226,7 @@ class JobHelper:
         for raw_job in raw_jobs_list:
             props = raw_job.properties
             job = { raw_job.job_id: {
-                    'workflow_id': props['name'],
+                    'job_name': props['name'],
                     'status': props['status'],
                     'date': str_to_datetime(props['submissionTime']),
                     'message': props['statusMessage']
@@ -229,10 +236,7 @@ class JobHelper:
         return jobs
 
     def sort_jobs(self, jobs: dict) -> dict:
-        ordered_jobs = OrderedDict(sorted(jobs.items(),
-                                          key=lambda x: x[1]['date'],
-                                          reverse=True))
-        return {'jobs': ordered_jobs}
+        return OrderedDict(sorted(jobs.items(), key=lambda x: x[1]['date'], reverse=True))
 
     @classmethod
     @check_hpc_supported
@@ -254,3 +258,19 @@ class JobHelper:
     def fetch_job_files(cls, hpc, job_id, token):
         job_handler = cls()
         return job_handler._get_unicore_job_results(hpc, token, job_id)
+
+    @classmethod
+    def make_scripts(cls, dst, settings):
+        with open(cls._SBATCH_SCRIPT, 'r') as sbatch_script:
+            content = sbatch_script.read()
+            content = content.replace('<max_gen>', str(settings['max_gen']))
+            content = content.replace('<offspring>', str(settings['offspring']))
+            content = content.replace('<job_name>', str(settings['job_name']))
+            with open(os.path.join(dst, 'ipyparallel.sbatch'), 'w') as f:
+                f.write(content)
+
+        with open(cls._ZIP_SCRIPT, 'r') as zip_script:
+            content = zip_script.read()
+            content = content.replace('<folder_name>', str(settings['job_name']))
+            with open(os.path.join(dst, 'zip_folder.py'), 'w') as f:
+                f.write(content)

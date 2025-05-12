@@ -16,4 +16,4 @@ HPC_NOT_PROVIDED = 'HPC not provided!'
 HPC_NOT_VALID = 'HPC value not valid!'
 
 JOB_ID_NOT_PROVIDED = 'Job id not provided!'
-JOB_NAME_ALREADY_EXISTS = 'Job name already exists! Unable to submit job with the same name.'
+JOB_NAME_ALREADY_EXISTS = 'Job name already exists'

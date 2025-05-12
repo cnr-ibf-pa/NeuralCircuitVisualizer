@@ -11,7 +11,12 @@
               <option value="CINECA - G100">CINECA - G100</option>
             </select>
           </div>
-          <button type="submit" class="btn btn-success w-100">Fetch jobs</button>
+          <button type="submit" class="btn btn-success w-100 d-flex-inline" id="fetch-job-button">
+            <div class="spinner-border spinner-border-sm d-none" role="status" id="fetch-job-spinner">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            Fetch jobs
+          </button>
         </form>
         <div id="fetchedJobsDiv" class="d-block d-none">
           <hr>
@@ -37,20 +42,21 @@
   <script>
 
     function addJobToList(jobId, details) {
+      console.log('Adding job to list:', jobId, details);
       const el = document.createElement('button');
       el.classList.add('btn', 'job-button', 'border');
-      el.innerText = jobId;
-      if (details.status == 'success') {
+      el.innerText = details.job_name;
+      const status = details.status.toLowerCase();
+      if (status === 'success') {
         el.classList.add('job-success', 'btn-success');
-      } else if (details.status == 'failed') {
+      } else if (status === 'failed') {
         el.classList.add('job-failed', 'btn-danger');
-      } else if (details.status == 'pending') {
+      } else if (status === 'pending') {
         el.classList.add('job-pending', 'btn-info');
       }
       el.addEventListener('click', function () {
         const a = document.createElement('a');
         a.href = new URL(`/hpc-integration/download-job-results?job_id=${jobId}`, window.location.origin);
-        a.download = `${jobId}.zip`;
         a.style.display = 'none';
         document.body.appendChild(a);
         a.click();
@@ -59,17 +65,27 @@
     }
 
     document.getElementById('fetch-jobs-form').addEventListener('submit', function (event) {
-      event.preventDefault()
+      event.preventDefault();
+      document.getElementById('fetchedJobsDiv').classList.add('d-none');
       const formData = new FormData(this);
       const url = new URL('/hpc-integration/fetch-jobs', window.location.origin);
       url.searchParams.set('hpc', formData.get('hpc'));
+      document.getElementById('fetch-job-spinner').classList.remove('d-none');
+      document.getElementById('fetch-job-button').setAttribute('disabled', true);
       fetch(url)
-        .then((response) => response.json())
-        .then((data) => {
-          document.getElementById('fetchedJobsDiv').classList.remove('d-none');
-          Object.keys(data).forEach(jobId => addJobToList(jobId, data[jobId]));
-        })
-        .catch((error) => console.error('Error:', error))
-    })
+        .then(async (response) => {
+          if (!response.ok) {
+            getError(response);
+          } else {
+            const data = await response.json();
+            document.getElementById('fetched-jobs-list').innerHTML = '';
+            document.getElementById('fetchedJobsDiv').classList.remove('d-none');
+            Object.keys(data).forEach(jobId => addJobToList(jobId, data[jobId]));
+          }
+        }).finally(() => {
+          document.getElementById('fetch-job-spinner').classList.add('d-none');
+          document.getElementById('fetch-job-button').removeAttribute('disabled');
+        });
+    });
   </script>
 {% endblock %}
