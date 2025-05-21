@@ -47,7 +47,7 @@ def submit_job(request):
         shutil.make_archive(base_name=zip_filename.replace('.zip', ''), format='zip', root_dir=working_dir)
         JobHelper().submit_job(data["hpc"], zip_filename, data, request.session['oidc_access_token'])
     except ForbiddenException as err:
-        logger.error(f'Error while fetching jobs: {err}')
+        logger.error(f'Error while submitting job: {err}')
         return HttpResponseForbidden(content=str(err))
     except Exception as err:
         logger.error(f'Error while submitting job: {err}')
