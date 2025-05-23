@@ -80,7 +80,7 @@ class JobHelper:
             the job object containing the job submission instance.
         """
 
-        command = 'source /g100_work/EIRI_E_CNRIB2/launch_hippo_mouse.sh ' \
+        pre_command = '/g100_work/EIRI_E_CNRIB2/NeuralCircuitVisualizer/prepare_job.sh ' \
                 + str(settings['pyr2pyr']) + ' ' \
                 + str(settings['pyr2inh']) + ' ' \
                 + str(settings['inh2inh']) + ' ' \
@@ -88,12 +88,14 @@ class JobHelper:
                 + str(settings['stimulus_1_synapses_weight']) + ' ' \
                 + str(settings['simulation_duration'])
 
+        command = 'cd hippocampus_mouse/; . account.sh; sbatch --account=$HPC_ACCOUNT run_normal_galileo.sh'
+
+        post_command = 'cd hippocampus_mouse/; . account.sh; sbatch --account=$HPC_ACCOUNT run_post_process_galileo.sh; '
+
         job_descriptor = {
+            'User precommand': pre_command,
             'Executable': command,
-            'Resources': {
-                'Runtime': '60m',
-                'Cores': 48
-            },
+            'User postcommand': post_command,
             'Tags': UNICORE_JOB_TAGS
         }
 
