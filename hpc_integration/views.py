@@ -30,22 +30,8 @@ def submit_job(request):
 
     data = form.cleaned_data
 
-    # prepare zip file
-    working_dir = request.session.get('working_dir')
-    if not working_dir or not os.path.exists(working_dir):
-        logger.info('Working directory not found, creating a new one')
-        working_dir = get_tmp_working_dir()
-        request.session['working_dir'] = working_dir
-
-    zip_filename = os.path.join(get_tmp_dir(), f'{data["job_name"]}.zip')
-    if os.path.exists(zip_filename):
-        logging.error(f'Job name "{data["job_name"]}" already exists')
-        return JsonResponse(status=BAD_REQUEST, data={'job_name': [{'message': messages.JOB_NAME_ALREADY_EXISTS}]})
-
     try:
-        JobHelper().make_scripts(working_dir, data)
-        shutil.make_archive(base_name=zip_filename.replace('.zip', ''), format='zip', root_dir=working_dir)
-        JobHelper().submit_job(data["hpc"], zip_filename, data, request.session['oidc_access_token'])
+        JobHelper().submit_job(data.pop("hpc"), data, request.session['oidc_access_token'])
     except ForbiddenException as err:
         logger.error(f'Error while submitting job: {err}')
         return HttpResponseForbidden(content=str(err))

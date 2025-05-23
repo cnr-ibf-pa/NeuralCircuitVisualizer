@@ -14,10 +14,6 @@ class JobHelper:
     _G100_CINECA = 'CINECA - G100'
     _G100_URL = 'https://unicore.hpc.cineca.it:9111/CINECA-G100/rest/core'
 
-    _SBATCH_SCRIPT = BASE_DIR / 'hpc_integration/resources/ipyparallel.sbatch'
-    _ZIP_SCRIPT = BASE_DIR / 'hpc_integration/resources/zip_folder.py'
-
-
     def _initialize_unicore_client(self, hpc, token):
         """
         Initialize the UNICORE client using the user token
@@ -60,7 +56,7 @@ class JobHelper:
             raise errors.UnicoreClientException(messages.USER_LOGIN_ERROR)
         return client
 
-    def _submit_on_unicore(self, hpc, token, zip_file, settings):
+    def _submit_on_unicore(self, hpc, token, settings):
         """
         Submit the job on UNICORE system.
         To submit a job, first a UNICORE client is created using
@@ -75,22 +71,20 @@ class JobHelper:
             select which HPC to use.
         token : str
             user barer token.
-        zip_file : str
-            job input file as zip file path
         settings : dict
             job settings
 
         Returns
         -------
-        hhnb.core.response.ResponseUtil
-            the result of the submission as ResponseUtil object.
+        job: Job
+            the job object containing the job submission instance.
         """
 
         command = '. /g100_work/EIRI_E_CNRIB2/launch_hippo_mouse.sh ' \
                 + settings['pyr2pyr'] + ' ' \
-                + settings['py2inh'] + ' ' \
+                + settings['pyr2inh'] + ' ' \
                 + settings['inh2inh'] + ' ' \
-                + settings['inh2py2'] + ' ' \
+                + settings['inh2pyr'] + ' ' \
                 + settings['stimulus_1_synapses_weight'] + ' ' \
                 + settings['simulation_duration']
 
@@ -101,7 +95,7 @@ class JobHelper:
 
         try:
             client = self._initialize_unicore_client(hpc, token)
-            job = client.new_job(job_description=job_descriptor, inputs=[zip_file])
+            job = client.new_job(job_description=job_descriptor)
             return job
         except requests.HTTPError as err:
             raise errors.HPCException(messages.HPC_CONNECTION_ERROR)
@@ -179,10 +173,9 @@ class JobHelper:
 
     @classmethod
     @check_hpc_supported
-    def submit_job(cls, hpc, zip_file, settings, token):
+    def submit_job(cls, hpc, settings, token):
         job_handler = cls()
-        hpc = settings.pop('hpc')
-        return job_handler._submit_on_unicore(hpc, token, zip_file, settings)
+        return job_handler._submit_on_unicore(hpc, token, settings)
 
     @classmethod
     @check_hpc_supported
@@ -197,19 +190,3 @@ class JobHelper:
     def fetch_job_files(cls, hpc, job_id, token):
         job_handler = cls()
         return job_handler._get_unicore_job_results(hpc, token, job_id)
-
-    @classmethod
-    def make_scripts(cls, dst, settings):
-        with open(cls._SBATCH_SCRIPT, 'r') as sbatch_script:
-            content = sbatch_script.read()
-            content = content.replace('<max_gen>', str(settings['max_gen']))
-            content = content.replace('<offspring>', str(settings['offspring']))
-            content = content.replace('<job_name>', str(settings['job_name']))
-            with open(os.path.join(dst, 'ipyparallel.sbatch'), 'w') as f:
-                f.write(content)
-
-        with open(cls._ZIP_SCRIPT, 'r') as zip_script:
-            content = zip_script.read()
-            content = content.replace('<folder_name>', str(settings['job_name']))
-            with open(os.path.join(dst, 'zip_folder.py'), 'w') as f:
-                f.write(content)
