@@ -1202,7 +1202,6 @@ input[type="range"] {
   width: 15vw;
   max-width: 300px;
   min-width: 200px;
-  z-index: 9999;
   padding: 1rem;
   border: 2px solid #2a6b38;
   border-radius: 6px;
@@ -1374,3 +1373,25 @@ label {
 .job-failed {
   background-color: #ff6b6b !important;
 }
+
+
+
+.region-labels div {
+    font-size: 11px;
+    font-weight: 500;
+    color: #555;
+  }
+  
+
+  .color-select-mini {
+    font-size: 11px;
+    padding: 2px 4px;
+    height: 26px;
+    line-height: 1.1;
+    border-radius: 2px;
+  }
+  .color-select-mini option {
+    font-size: 8px;
+    padding: 2px;
+  }
+  

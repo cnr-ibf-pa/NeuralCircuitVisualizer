@@ -698,92 +698,191 @@ def count_csv_lines(file_path):
     with open(file_path, 'r') as f:
         return sum(1 for line in f)
 
-@lru_cache(maxsize=1)  # Cache with single entry to avoid recomputation
+# @lru_cache(maxsize=1)  # Cache with single entry to avoid recomputation
+# def compute_connections():
+#     # Perform all setup computations
+#     json_directory = os.path.join(settings.MEDIA_ROOT, "hip_form")
+#     json_path = os.path.join(json_directory, "connections.json")
+#     # print(json_directory)
+
+#     ca3_file_paths = [
+#         os.path.join(json_directory, 'CA3-sl.json'),
+#         os.path.join(json_directory, 'CA3-slm.json'),
+#         os.path.join(json_directory, 'CA3-so.json'),
+#         os.path.join(json_directory, 'CA3-sp.json'),
+#         os.path.join(json_directory, 'CA3-sr.json')
+#     ]
+#     ca1_file_paths = [
+#         os.path.join(json_directory, 'CA1-slm.json'),
+#         os.path.join(json_directory, 'CA1-so.json'),
+#         os.path.join(json_directory, 'CA1-sp.json'),
+#         os.path.join(json_directory, 'CA1-sr.json')
+#     ]
+
+#     ca3_neurons = pd.DataFrame(load_neurons_from_files(ca3_file_paths))
+#     ca1_neurons = pd.DataFrame(load_neurons_from_files(ca1_file_paths))
+
+#     ca3_pyramidal = ca3_neurons[ca3_neurons['ntype'] == 19].copy()
+#     ca1_pyramidal = ca1_neurons[ca1_neurons['ntype'] == 49].copy()
+
+#     MOUSE_VOLUME_SR = 2.83
+#     RAT_VOLUME_SR = 10.95
+#     MOUSE_VOLUME_SO = 1.5
+#     RAT_VOLUME_SO = 6.47
+
+#     SF_SR = calculate_scaling_factor(RAT_VOLUME_SR, MOUSE_VOLUME_SR)
+#     SF_SO = calculate_scaling_factor(RAT_VOLUME_SO, MOUSE_VOLUME_SO)
+
+#     L_SR_mouse = 4465.3 / SF_SR
+#     L_SO_mouse = 3795.59 / SF_SO
+#     L_SO_adjusted = L_SO_mouse / 2
+#     L_total_mouse = L_SR_mouse + L_SO_adjusted
+#     Inter_spine_distance = 1.09
+#     total_spines = L_total_mouse / Inter_spine_distance
+#     CA3_to_CA1_Per_Contacts = 1.62
+#     total_synapses = total_spines / CA3_to_CA1_Per_Contacts
+#     CA1PC_census = 159341
+#     CA3PC_census = 75376
+#     average_CA1_contacted_by_CA3 = total_synapses / (CA1PC_census / CA3PC_census)
+
+#     z_median_ca3 = ca3_neurons['z'].median()
+#     z_median_ca1 = ca1_neurons['z'].median()
+#     reference_point = np.array([ca3_neurons['x'].mean(), ca3_neurons['y'].mean()])
+
+#     ca3_pyramidal['dorsal_ventral'] = np.where(ca3_pyramidal['z'] > z_median_ca3, 'dorsal', 'ventral')
+#     ca3_pyramidal['prox_dist'] = np.where(np.linalg.norm(ca3_pyramidal[['x', 'y']].values - reference_point, axis=1) <
+#                                           np.median(np.linalg.norm(ca3_pyramidal[['x', 'y']].values - reference_point, axis=1)),
+#                                           'proximal', 'distal')
+
+#     ca1_pyramidal['dorsal_ventral'] = np.where(ca1_pyramidal['z'] > z_median_ca1, 'dorsal', 'ventral')
+#     ca1_pyramidal['prox_dist'] = np.where(np.linalg.norm(ca1_pyramidal[['x', 'y']].values - reference_point, axis=1) <
+#                                           np.median(np.linalg.norm(ca1_pyramidal[['x', 'y']].values - reference_point, axis=1)),
+#                                           'proximal', 'distal')
+
+#     # Connect CA3 and CA1 pyramidal cells
+#     connections = connect_all_pyramidal(ca3_pyramidal, ca1_pyramidal, average_CA1_contacted_by_CA3)
+#     # Save to JSON
+#     with open(json_path, 'w') as f:
+#         json.dump(connections, f)
+        
+#     return json_path
+
+
+
+@lru_cache(maxsize=1)
 def compute_connections():
-    # Perform all setup computations
     json_directory = os.path.join(settings.MEDIA_ROOT, "hip_form")
-    # print(json_directory)
+    json_path = os.path.join(json_directory, "connections.json")
 
     ca3_file_paths = [
-        os.path.join(json_directory, 'CA3-sl.json'),
-        os.path.join(json_directory, 'CA3-slm.json'),
-        os.path.join(json_directory, 'CA3-so.json'),
-        os.path.join(json_directory, 'CA3-sp.json'),
-        os.path.join(json_directory, 'CA3-sr.json')
+        os.path.join(json_directory, f"CA3-{layer}.json") for layer in ["sl", "slm", "so", "sp", "sr"]
     ]
     ca1_file_paths = [
-        os.path.join(json_directory, 'CA1-slm.json'),
-        os.path.join(json_directory, 'CA1-so.json'),
-        os.path.join(json_directory, 'CA1-sp.json'),
-        os.path.join(json_directory, 'CA1-sr.json')
+        os.path.join(json_directory, f"CA1-{layer}.json") for layer in ["slm", "so", "sp", "sr"]
     ]
 
     ca3_neurons = pd.DataFrame(load_neurons_from_files(ca3_file_paths))
     ca1_neurons = pd.DataFrame(load_neurons_from_files(ca1_file_paths))
 
+    # Select pyramidal cells
     ca3_pyramidal = ca3_neurons[ca3_neurons['ntype'] == 19].copy()
     ca1_pyramidal = ca1_neurons[ca1_neurons['ntype'] == 49].copy()
 
-    MOUSE_VOLUME_SR = 2.83
-    RAT_VOLUME_SR = 10.95
-    MOUSE_VOLUME_SO = 1.5
-    RAT_VOLUME_SO = 6.47
-
-    SF_SR = calculate_scaling_factor(RAT_VOLUME_SR, MOUSE_VOLUME_SR)
-    SF_SO = calculate_scaling_factor(RAT_VOLUME_SO, MOUSE_VOLUME_SO)
-
+    # Dendritic length-based synapse estimation
+    SF_SR = calculate_scaling_factor(rat_volume=10.95, mouse_volume=2.83)
+    SF_SO = calculate_scaling_factor(rat_volume=6.47, mouse_volume=1.5)
     L_SR_mouse = 4465.3 / SF_SR
-    L_SO_mouse = 3795.59 / SF_SO
-    L_SO_adjusted = L_SO_mouse / 2
-    L_total_mouse = L_SR_mouse + L_SO_adjusted
-    Inter_spine_distance = 1.09
-    total_spines = L_total_mouse / Inter_spine_distance
-    CA3_to_CA1_Per_Contacts = 1.62
-    total_synapses = total_spines / CA3_to_CA1_Per_Contacts
-    CA1PC_census = 159341
-    CA3PC_census = 75376
-    average_CA1_contacted_by_CA3 = total_synapses / (CA1PC_census / CA3PC_census)
+    L_SO_mouse = (3795.59 / SF_SO) / 2
+    L_total_mouse = L_SR_mouse + L_SO_mouse
 
+    total_spines = L_total_mouse / 1.09  # spine spacing
+    total_synapses = total_spines / 1.62  # avg. synapses per connection
+    avg_targets = total_synapses / (159341 / 75376)  # CA1/CA3 ratio from census
+
+    # Region classification
     z_median_ca3 = ca3_neurons['z'].median()
     z_median_ca1 = ca1_neurons['z'].median()
-    reference_point = np.array([ca3_neurons['x'].mean(), ca3_neurons['y'].mean()])
+    xy_ref = np.array([ca3_neurons['x'].mean(), ca3_neurons['y'].mean()])
 
     ca3_pyramidal['dorsal_ventral'] = np.where(ca3_pyramidal['z'] > z_median_ca3, 'dorsal', 'ventral')
-    ca3_pyramidal['prox_dist'] = np.where(np.linalg.norm(ca3_pyramidal[['x', 'y']].values - reference_point, axis=1) <
-                                          np.median(np.linalg.norm(ca3_pyramidal[['x', 'y']].values - reference_point, axis=1)),
-                                          'proximal', 'distal')
-
     ca1_pyramidal['dorsal_ventral'] = np.where(ca1_pyramidal['z'] > z_median_ca1, 'dorsal', 'ventral')
-    ca1_pyramidal['prox_dist'] = np.where(np.linalg.norm(ca1_pyramidal[['x', 'y']].values - reference_point, axis=1) <
-                                          np.median(np.linalg.norm(ca1_pyramidal[['x', 'y']].values - reference_point, axis=1)),
-                                          'proximal', 'distal')
 
-    # Connect CA3 and CA1 pyramidal cells
-    connections = connect_all_pyramidal(ca3_pyramidal, ca1_pyramidal, average_CA1_contacted_by_CA3)
-    return connections
+    ca3_pyramidal['prox_dist'] = np.where(
+        np.linalg.norm(ca3_pyramidal[['x', 'y']].values - xy_ref, axis=1) <
+        np.median(np.linalg.norm(ca3_pyramidal[['x', 'y']].values - xy_ref, axis=1)),
+        'proximal', 'distal'
+    )
+    ca1_pyramidal['prox_dist'] = np.where(
+        np.linalg.norm(ca1_pyramidal[['x', 'y']].values - xy_ref, axis=1) <
+        np.median(np.linalg.norm(ca1_pyramidal[['x', 'y']].values - xy_ref, axis=1)),
+        'proximal', 'distal'
+    )
+
+    # Build region-constrained connections using Gaussian sampling
+    connections = connect_all_pyramidal(ca3_pyramidal, ca1_pyramidal, avg_targets)
+
+    with open(json_path, 'w') as f:
+        json.dump(connections, f)
+
+    return json_path
+
+
+
+
+# @csrf_exempt
+# def fetchConnections(request):
+#     try:
+#         connections = compute_connections()  # Retrieve precomputed connections
+
+
+
+#         chunk_size = int(request.GET.get("chunk_size", 1000))
+#         page = int(request.GET.get("page", 1))
+
+#         keys = list(connections.keys())
+#         start = (page - 1) * chunk_size
+#         end = start + chunk_size
+#         chunk = {k: connections[k] for k in keys[start:end]}
+
+#         response_data = {'connections_chunk': chunk, 'page': page, 'has_more': end < len(keys)}
+#         return JsonResponse(response_data)
+
+#     except Exception as e:
+#         return JsonResponse({'error': str(e), 'connections': {}}, status=500)
 
 @csrf_exempt
 def fetchConnections(request):
     try:
-        connections = compute_connections()  # Retrieve precomputed connections
+        # Ensure file is generated
+        # json_path = compute_connections()
+        json_path = os.path.join(settings.MEDIA_ROOT, "hip_form", "connections.json")
+        # print("connections built...........")
 
+        # Load full data from file
+        with open(json_path, 'r') as f:
+            connections = json.load(f)
 
-
-        chunk_size = int(request.GET.get("chunk_size", 1000))
+        # Chunking logic
+        chunk_size = int(request.GET.get("chunk_size", 10000))
         page = int(request.GET.get("page", 1))
 
         keys = list(connections.keys())
+        total_pages = (len(keys) + chunk_size - 1) // chunk_size
         start = (page - 1) * chunk_size
         end = start + chunk_size
-        chunk = {k: connections[k] for k in keys[start:end]}
 
-        response_data = {'connections_chunk': chunk, 'page': page, 'has_more': end < len(keys)}
+        chunk = {k: connections[k] for k in keys[start:end]}
+        response_data = {
+            'connections_chunk': chunk,
+            'page': page,
+            'has_more': end < len(keys),
+            'total_pages': total_pages,
+            'total_keys': len(keys)
+        }
         return JsonResponse(response_data)
 
     except Exception as e:
-        Logger.error(f"An error occurred in fetchConnections: {e}")
         return JsonResponse({'error': str(e), 'connections': {}}, status=500)
-
 
 
 def load_neurons_from_files(file_paths):
@@ -843,19 +942,124 @@ def connect_all_pyramidal(ca3_neurons, ca1_neurons, average_CA1_contacted_by_CA3
 
     return connections
 
-# Helper function to connect neurons within the same region
+# # Helper function to connect neurons within the same region
+# def connect_regions_regionally(ca3_subset, ca1_subset, average_CA1_contacted_by_CA3):
+#     try:
+#         connections = {}
+#         # Each CA3 PC contacts approximately average_CA1_contacted_by_CA3 CA1 PCs
+#         for _, ca3_neuron in ca3_subset.iterrows():
+#             num_contacts = int(average_CA1_contacted_by_CA3)
+#             ca1_selected = ca1_subset.sample(n=num_contacts, replace=False)
+#             connections[ca3_neuron['gid']] = ca1_selected['gid'].tolist()
+#         return connections
+#     except Exception as e:
+#         print(f"Error in connect_regions_regionally: {e}")
+#         return {}
+
+
+
+def compute_sigma(ca1_subset, factor=0.3):
+    bbox_size = np.max(ca1_subset[['x', 'y', 'z']].values, axis=0) - np.min(ca1_subset[['x', 'y', 'z']].values, axis=0)
+    avg_extent = np.mean(bbox_size)
+    return factor * avg_extent  # Adaptive σ
+
 def connect_regions_regionally(ca3_subset, ca1_subset, average_CA1_contacted_by_CA3):
+    """
+    Connects neurons within the same anatomical region using Gaussian-weighted sampling.
+    """
     try:
         connections = {}
-        # Each CA3 PC contacts approximately average_CA1_contacted_by_CA3 CA1 PCs
+        sigma = compute_sigma(ca1_subset)  # Dynamic sigma
+        d_max = 500  # Optional: maximum radius in micrometers
         for _, ca3_neuron in ca3_subset.iterrows():
-            num_contacts = int(average_CA1_contacted_by_CA3)
-            ca1_selected = ca1_subset.sample(n=num_contacts, replace=False)
-            connections[ca3_neuron['gid']] = ca1_selected['gid'].tolist()
+            connected_ids = safe_gaussian_connection(
+                ca3_neuron, ca1_subset,
+                num_targets=int(average_CA1_contacted_by_CA3),
+                sigma=sigma,
+                d_max=d_max
+            )
+            connections[ca3_neuron['gid']] = connected_ids
         return connections
     except Exception as e:
         print(f"Error in connect_regions_regionally: {e}")
         return {}
+
+
+
+# def connect_regions_regionally(ca3_subset, ca1_subset, average_CA1_contacted_by_CA3):
+#     try:
+#         connections = {}
+#         for _, ca3_neuron in ca3_subset.iterrows():
+#             connected_ids = gaussian_weighted_connection(ca3_neuron, ca1_subset, num_targets=int(average_CA1_contacted_by_CA3), sigma=150)
+#             connections[ca3_neuron['gid']] = connected_ids
+#         return connections
+#     except Exception as e:
+#         print(f"Error in connect_regions_regionally: {e}")
+#         return {}
+
+# def gaussian_weighted_connection(ca3_neuron, ca1_subset, num_targets=10, sigma=200):
+#     """
+#     Selects CA1 neurons weighted by Gaussian probability based on distance from a CA3 neuron.
+#     """
+#     ca3_xyz = ca3_neuron[['x', 'y', 'z']].values.astype(float)
+#     ca1_xyz = ca1_subset[['x', 'y', 'z']].values.astype(float)
+
+#     distances = np.linalg.norm(ca1_xyz - ca3_xyz, axis=1)
+#     weights = np.exp(- (distances ** 2) / (2 * sigma ** 2))
+
+#     # Normalize to get probabilities
+#     probs = weights / np.sum(weights)
+
+#     # Randomly sample without replacement using the probabilities
+#     selected_indices = np.random.choice(ca1_subset.index, size=min(num_targets, len(ca1_subset)), replace=False, p=probs)
+#     return ca1_subset.loc[selected_indices, 'gid'].tolist()
+
+
+def safe_gaussian_connection(ca3_neuron, ca1_subset, num_targets=10, sigma=150, d_max=None):
+    """
+    Attempts probabilistic sampling; falls back to nearest-neighbors if necessary.
+    """
+    ca3_xyz = ca3_neuron[['x', 'y', 'z']].values.astype(float)
+    ca1_xyz = ca1_subset[['x', 'y', 'z']].values.astype(float)
+    
+    distances = np.linalg.norm(ca1_xyz - ca3_xyz, axis=1)
+    
+    # Optional cutoff to avoid distant targets
+    if d_max is not None:
+        mask = distances <= d_max
+        if not np.any(mask):
+            return []
+        ca1_xyz = ca1_xyz[mask]
+        distances = distances[mask]
+        ca1_subset = ca1_subset.iloc[mask]
+
+    # Compute Gaussian weights
+    weights = np.exp(- (distances ** 2) / (2 * sigma ** 2))
+    probs = weights / np.sum(weights)
+
+    try:
+        selected_indices = np.random.choice(
+            ca1_subset.index,
+            size=min(num_targets, len(ca1_subset)),
+            replace=False,
+            p=probs
+        )
+        return ca1_subset.loc[selected_indices, 'gid'].tolist()
+    except Exception as e:
+        # Fallback to nearest neighbors
+        print(f"[Fallback] Gaussian sampling failed: {e}")
+        ca1_subset = ca1_subset.copy()
+        ca1_subset['distance'] = distances
+        nearest = ca1_subset.nsmallest(num_targets, 'distance')
+        return nearest['gid'].tolist()
+
+
+
+
+
+
+
+
 
 def process_uploaded_file(file_path):
     # Determine paths and filenames
@@ -950,34 +1154,64 @@ def get_activity_indexes(data_dict, Gids):
 
     return activity_index_map
 
+# @csrf_exempt
+# def LoadHumanHipForm(request):
+#     try:
+#         json_directory = os.path.join(settings.MEDIA_ROOT, "hip_form", "human")
+#         final_json_file_path = os.path.join(json_directory, 'network.json')
+
+#         try:
+#             with open(final_json_file_path, 'r') as f:
+#                 networkdata = ujson.load(f)
+#                 total_neurons = len(networkdata)
+#                 total_size = os.path.getsize(final_json_file_path) / (1024 * 1024)  # in MB
+
+#                 # Return data directly (not wrapped in files array)
+#                 return JsonResponse({
+#                     'fileData': networkdata,
+#                     'total_neurons': total_neurons,
+#                     'total_size': total_size
+#                 })
+
+#         except ujson.JSONDecodeError as e:
+#             print(f"Error decoding JSON from file {final_json_file_path}: {e}")
+#         except Exception as e:
+#             print(f"Error reading file {final_json_file_path}: {e}")
+#             return JsonResponse({'error': str(e)}, status=500)
+
+#     except Exception as e:
+#         print(f"An error occurred: {e}")
+#         return JsonResponse({'error': 'An unexpected error occurred'}, status=500)
+
+
+
 @csrf_exempt
 def LoadHumanHipForm(request):
     try:
         json_directory = os.path.join(settings.MEDIA_ROOT, "hip_form", "human")
         final_json_file_path = os.path.join(json_directory, 'network.json')
 
-        try:
-            with open(final_json_file_path, 'r') as f:
-                networkdata = ujson.load(f)
-                total_neurons = len(networkdata)
-                total_size = os.path.getsize(final_json_file_path) / (1024 * 1024)  # in MB
+        with open(final_json_file_path, 'r') as f:
+            networkdata = ujson.load(f)
+            total_neurons = len(networkdata)
+            total_size = os.path.getsize(final_json_file_path) / (1024 * 1024)  # in MB
 
-                # Return data directly (not wrapped in files array)
-                return JsonResponse({
-                    'fileData': networkdata,
-                    'total_neurons': total_neurons,
-                    'total_size': total_size
-                })
+            mode = request.GET.get("mode", "full")
 
-        except ujson.JSONDecodeError as e:
-            print(f"Error decoding JSON from file {final_json_file_path}: {e}")
-        except Exception as e:
-            print(f"Error reading file {final_json_file_path}: {e}")
-            return JsonResponse({'error': str(e)}, status=500)
+            if mode == "half":
+                networkdata = networkdata[:total_neurons // 2]
 
+            return JsonResponse({
+                'fileData': networkdata,
+                'total_neurons': len(networkdata),
+                'total_size': total_size
+            })
+
+    except ujson.JSONDecodeError as e:
+        print(f"Error decoding JSON from file {final_json_file_path}: {e}")
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return JsonResponse({'error': 'An unexpected error occurred'}, status=500)
+        print(f"Error reading file {final_json_file_path}: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt
 def LoadHumanActivityData(request):
