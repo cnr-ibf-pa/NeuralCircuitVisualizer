@@ -1,5 +1,4 @@
 from collections import OrderedDict
-import shutil
 import pyunicore.client as unicore_client
 from pyunicore.credentials import OIDCToken
 import os
@@ -18,74 +17,6 @@ class JobHelper:
     _SBATCH_SCRIPT = BASE_DIR / 'hpc_integration/resources/ipyparallel.sbatch'
     _ZIP_SCRIPT = BASE_DIR / 'hpc_integration/resources/zip_folder.py'
 
-
-    def _get_unicore_command(self, zip_name):
-        """
-        Returns the UNICORE command to run the job.
-
-        Parameters
-        ----------
-        zip_name : str
-            zip file name of the job.
-
-        Returns
-        -------
-        str
-            UNICORE command.
-        """
-        program = None
-        if os.path.splitext(zip_name)[1] != '.zip':
-            program = 'tar -xf '
-            unzipped_folder = zip_name.split('.tar')[0]
-        else:
-            program = 'unzip '
-            unzipped_folder = zip_name.split('.zip')[0]
-
-        command = program + zip_name + '; cd ' + unzipped_folder \
-                + '; chmod +x *.sbatch; ./ipyparallel.sbatch'
-        return command
-
-    def _get_unicore_job_description(self, hpc, command, settings):
-        """
-        Returns the UNICORE job description.
-        The job description is a payload that is formed by the command
-        to run, the name of the job, and the resources list to
-        reserve for the job that are subtracted from the project.
-
-        Parameters
-        ----------
-        command : str
-            UNICORE command to run the job.
-        settings: dict
-            the optimization settings which contains the job information.
-
-        Returns
-        -------
-        dict
-            the UNICORE job description.
-        """
-
-        nodes = settings['nodes']
-        cores = settings['cores']
-        if nodes > 1:
-            cores = cores // nodes
-            if cores % 2 != 0:
-                cores += 1
-
-        job_descriptor = {
-            'Executable': command,
-            'Name': settings['job_name'],
-            'Resources': {
-                'Nodes': nodes,
-                'CPUsPerNode': cores,
-                'Runtime': '{}m'.format(int(float(settings['runtime']) * 60)),
-                'Project': settings['project'],
-            },
-            'Tags': UNICORE_JOB_TAGS
-        }
-        if hpc == self._G100_CINECA:
-            job_descriptor['Resources'].update({'Queue': 'g100_usr_prod'})
-        return job_descriptor
 
     def _initialize_unicore_client(self, hpc, token):
         """
@@ -154,15 +85,23 @@ class JobHelper:
         hhnb.core.response.ResponseUtil
             the result of the submission as ResponseUtil object.
         """
-        zip_name = os.path.split(zip_file)[1]
-        job_description = self._get_unicore_job_description(
-            hpc=hpc,
-            command=self._get_unicore_command(zip_name),
-            settings=settings
-        )
+
+        command = '. /g100_work/EIRI_E_CNRIB2/launch_hippo_mouse.sh ' \
+                + settings['pyr2pyr'] + ' ' \
+                + settings['py2inh'] + ' ' \
+                + settings['inh2inh'] + ' ' \
+                + settings['inh2py2'] + ' ' \
+                + settings['stimulus_1_synapses_weight'] + ' ' \
+                + settings['simulation_duration']
+
+        job_descriptor = {
+            'Executable': command,
+            'Tags': UNICORE_JOB_TAGS
+        }
+
         try:
             client = self._initialize_unicore_client(hpc, token)
-            job = client.new_job(job_description=job_description, inputs=[zip_file])
+            job = client.new_job(job_description=job_descriptor, inputs=[zip_file])
             return job
         except requests.HTTPError as err:
             raise errors.HPCException(messages.HPC_CONNECTION_ERROR)
@@ -197,7 +136,7 @@ class JobHelper:
         client = self._initialize_unicore_client(hpc, token)
         return client.get_jobs(tags=UNICORE_JOB_TAGS)
 
-    def     _get_unicore_job_results(self, hpc, token, job_id):
+    def _get_unicore_job_results(self, hpc, token, job_id):
         """
         Returns the output of the job as a list of files and directories.
 
