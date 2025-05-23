@@ -80,7 +80,7 @@ class JobHelper:
             the job object containing the job submission instance.
         """
 
-        command = '. /g100_work/EIRI_E_CNRIB2/launch_hippo_mouse.sh ' \
+        command = 'source /g100_work/EIRI_E_CNRIB2/launch_hippo_mouse.sh ' \
                 + str(settings['pyr2pyr']) + ' ' \
                 + str(settings['pyr2inh']) + ' ' \
                 + str(settings['inh2inh']) + ' ' \
@@ -90,6 +90,10 @@ class JobHelper:
 
         job_descriptor = {
             'Executable': command,
+            'Resources': {
+                'Runtime': '60m',
+                'Cores': 48
+            },
             'Tags': UNICORE_JOB_TAGS
         }
 

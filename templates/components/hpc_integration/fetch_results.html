@@ -54,13 +54,15 @@
       } else if (status === 'pending' || status === 'running' || status === 'queued') {
         el.classList.add('job-pending', 'btn-info');
       }
-      el.addEventListener('click', function () {
-        const a = document.createElement('a');
-        a.href = new URL(`/hpc-integration/download-job-results?job_id=${jobId}`, window.location.origin);
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-      })
+      if (status === 'successful') {
+        el.addEventListener('click', function () {
+          const a = document.createElement('a');
+          a.href = new URL(`/hpc-integration/download-job-results?job_id=${jobId}`, window.location.origin);
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+        })
+      }
       document.getElementById('fetched-jobs-list').appendChild(el);
     }
 
