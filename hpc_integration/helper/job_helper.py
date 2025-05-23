@@ -159,7 +159,6 @@ class JobHelper:
         for raw_job in raw_jobs_list:
             props = raw_job.properties
             job = { raw_job.job_id: {
-                    'job_name': props['name'],
                     'status': props['status'],
                     'date': str_to_datetime(props['submissionTime']),
                     'message': props['statusMessage']

@@ -45,7 +45,7 @@
       console.log('Adding job to list:', jobId, details);
       const el = document.createElement('button');
       el.classList.add('btn', 'job-button', 'border');
-      el.innerText = details.job_name;
+      el.innerText = jobId;
       const status = details.status.toLowerCase();
       if (status === 'successful') {
         el.classList.add('job-success', 'btn-success');
