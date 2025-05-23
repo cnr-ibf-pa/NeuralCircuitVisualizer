@@ -81,12 +81,12 @@ class JobHelper:
         """
 
         command = '. /g100_work/EIRI_E_CNRIB2/launch_hippo_mouse.sh ' \
-                + settings['pyr2pyr'] + ' ' \
-                + settings['pyr2inh'] + ' ' \
-                + settings['inh2inh'] + ' ' \
-                + settings['inh2pyr'] + ' ' \
-                + settings['stimulus_1_synapses_weight'] + ' ' \
-                + settings['simulation_duration']
+                + str(settings['pyr2pyr']) + ' ' \
+                + str(settings['pyr2inh']) + ' ' \
+                + str(settings['inh2inh']) + ' ' \
+                + str(settings['inh2pyr']) + ' ' \
+                + str(settings['stimulus_1_synapses_weight']) + ' ' \
+                + str(settings['simulation_duration'])
 
         job_descriptor = {
             'Executable': command,
