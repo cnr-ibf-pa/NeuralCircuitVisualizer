@@ -1,7 +1,6 @@
 import * as THREE from "three";
-import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
+import { TrackballControls } from "three/addons/controls/TrackballControls.js";
 import { GUI } from "three/addons/libs/lil-gui.module.min.js";
-
 
 let firstLastKeys;
 var chkpanle = false;
@@ -22,6 +21,7 @@ let lasttime;
 let timeRanges;
 let customRanges;
 let flag = false;
+let ishuman = false;
 let flagact = false;
 let count = 0.0;
 let x = 0.0;
@@ -96,7 +96,21 @@ const networkFileInput = document.getElementById("networkFileInput");
 const hdfFileInput = document.getElementById("activityFileInput");
 
 activitySelect.addEventListener("change", loadActivity);
+
 document.getElementById("activitySelect").disabled = true;
+document.getElementById("btnLoadConnection").disabled = true;
+
+const btnLoadConnection = document.getElementById("btnLoadConnection");
+btnLoadConnection.disabled = true;
+btnLoadConnection.addEventListener("click", function () {
+  // Initial UI setup
+  document.getElementById("msgprogress").innerText = "Building Connection, please wait...\nCA3-PC to CA1-PC";
+  document.getElementById("progress-percentage").style.display = "block";
+  document.getElementById("progress-percentage").innerText = "Loading connections: 0%";
+  document.getElementById("page-loader").style.display = "block";
+  fetchConnections();
+});
+
 HumanactivitySelect.addEventListener("change", loadHumanActivity);
 
 async function loadActivity() {
@@ -115,11 +129,27 @@ async function LoadActivityData(file_id) {
 
     const formData = new FormData();
 
-    if (geometry && geometry.attributes.gid.array.length > 0) {
-      const gIDs = Array.from(geometry.attributes.gid.array); // Convert to array
-      formData.append("gIDs", JSON.stringify(gIDs)); // Send gIDs as JSON string
+    const ca3checkbox = document.getElementById("AllCA3RegSwitchCheck");
+    const eccheckbox = document.getElementById("AllECRegSwitchCheck");
+    const selectedActivity = activitySelect.options[activitySelect.selectedIndex].text;
+
+    if (selectedActivity.includes("CA3") && !ca3checkbox.checked) {
+      alert("You selected a CA3 activity file. Please enable the CA3 region in the network.");
+      activitySelect.selectedIndex = 0;
+      return;
+    }
+
+    if (selectedActivity.includes("EC") && !eccheckbox.checked) {
+      alert("You selected an EC activity file. Please enable the EC region in the network.");
+      activitySelect.selectedIndex = 0;
+      return;
+    }
+
+    if (ca3checkbox.checked || eccheckbox.checked) {
+      const gIDs = Array.from(geometry.attributes.gid.array);
+      formData.append("gIDs", JSON.stringify(gIDs));
     } else {
-      alert("Please select the Network data to visualize.");
+      alert("Select spike region from network.");
       activitySelect.selectedIndex = 0;
       return;
     }
@@ -285,6 +315,7 @@ async function LoadHipForm() {
     }
 
     document.getElementById("page-loader").style.display = "none";
+    btnLoadConnection.disabled = false;
 
     document.getElementById("activitySelect").disabled = false;
   } catch (error) {
@@ -293,7 +324,25 @@ async function LoadHipForm() {
   }
 }
 
-async function LoadHumanHipForm() {
+window.addEventListener("load", function () {
+  const btnLoadHumanNetwork_full = document.getElementById("btnLoadHumanNetwork_full");
+  btnLoadHumanNetwork_full.addEventListener("click", function () {
+    document.getElementById("msgprogress").innerText = `Loading full circuit, please wait...`;
+    document.getElementById("progress-percentage").style.display = "none";
+    document.getElementById("page-loader").style.display = "block";
+    LoadHumanHipForm("full"); // Pass "full"
+  });
+
+  const btnLoadHumanNetwork_half = document.getElementById("btnLoadHumanNetwork_half");
+  btnLoadHumanNetwork_half.addEventListener("click", function () {
+    document.getElementById("msgprogress").innerText = `Loading half circuit, please wait...`;
+    document.getElementById("progress-percentage").style.display = "none";
+    document.getElementById("page-loader").style.display = "block";
+    LoadHumanHipForm("half"); // Pass "half"
+  });
+});
+
+async function LoadHumanHipForm(mode = "full") {
   try {
     document.getElementById("activitySelect").selectedIndex = 0;
 
@@ -301,7 +350,8 @@ async function LoadHumanHipForm() {
     resetPlaybackConfig();
     resetTimeUI();
     clearScene();
-    const response = await fetch(`${baseURL}/api/LoadHumanHipForm/`);
+
+    const response = await fetch(`${baseURL}/api/LoadHumanHipForm/?mode=${mode}`);
     const data = await response.json();
 
     const fileData = data.fileData;
@@ -312,7 +362,10 @@ async function LoadHumanHipForm() {
     resetAndDisableAllCheckboxes();
     flag = true;
 
+    ishuman = true;
     VisualizateNeurons();
+    resetCamera();
+    centerCameraToObject(particles);
     document.getElementById("HumanactivitySelect").disabled = false;
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -323,32 +376,45 @@ async function LoadHumanHipForm() {
 async function fetchConnections() {
   let page = 1;
   let hasMore = true;
+  let totalKeys = 1; // fallback to avoid division by zero
+  let loadedKeys = 0;
 
   try {
     while (hasMore) {
-      const response = await fetch(`${baseURL}/api/fetchConnections/?page=${page}&chunk_size=1000`);
+      const response = await fetch(`${baseURL}/api/fetchConnections/?page=${page}&chunk_size=10000`);
       const jsonData = await response.json();
 
       if (jsonData && jsonData.connections_chunk) {
         Object.assign(ca3toca1connections, jsonData.connections_chunk);
-        // console.log(
-        //   `Received chunk for page ${page}:`,
-        //   jsonData.connections_chunk
-        // );
+
+        // On first page, get totalKeys
+        if (page === 1) {
+          totalKeys = jsonData.total_keys || 1;
+        }
+
+        loadedKeys += Object.keys(jsonData.connections_chunk).length;
+
+        // Calculate precise % based on keys loaded
+        const percentage = Math.min(Math.round((loadedKeys / totalKeys) * 100), 100);
+        document.getElementById("progress-percentage").innerText = `${percentage}%`;
+
         hasMore = jsonData.has_more;
         page++;
       } else {
-        console.log("No more data to fetch.");
         hasMore = false;
       }
     }
 
-    // console.log("All connections loaded:", ca3toca1connections);
-    isConnection = true;
+    // Final 100% after full load
+    document.getElementById("progress-percentage").innerText = `100%`;
+    await new Promise((resolve) => setTimeout(resolve, 500));
     document.getElementById("page-loader").style.display = "none";
+
+    isConnection = true;
   } catch (error) {
     console.error("Error fetching data:", error);
     document.getElementById("page-loader").style.display = "none";
+    document.getElementById("progress-percentage").innerText = `Error loading connections`;
   }
 }
 
@@ -365,6 +431,8 @@ networkFileInput.addEventListener("change", async (event) => {
   resetPlaybackConfig();
   resetTimeUI();
   clearScene();
+
+  resetAndDisableAllCheckboxes();
 
   const progressBar = document.getElementById("progress-percentage");
   const loader = document.getElementById("page-loader");
@@ -476,6 +544,8 @@ networkFileInput.addEventListener("change", async (event) => {
 
       flag = true;
       VisualizateNeurons();
+      resetCamera();
+      centerCameraToObject(particles);
     } else {
       console.log("No files found in the response.");
     }
@@ -494,6 +564,8 @@ hdfFileInput.addEventListener("change", async (event) => {
   resetPlaybackConfig();
   resetTimeUI();
   clearScene();
+  resetAndDisableAllCheckboxes();
+
   const files = event.target.files;
   if (files.length > 0) {
     try {
@@ -578,6 +650,8 @@ hdfFileInput.addEventListener("change", async (event) => {
 
         flag = true;
         VisualizateNeurons();
+        resetCamera();
+        centerCameraToObject(particles);
 
         if (parseInt(data.flag_check) === 1) {
           document.getElementById("lblspikes").innerText = "# spikes :" + data.lstresponse.total_lines;
@@ -934,21 +1008,24 @@ function CreateScene() {
     canvas: canvas,
     powerPreference: "high-performance",
     alpha: true,
-    // antialias: true,
+    antialias: true,
   });
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap at 2 for performance
   renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+  renderer.setClearColor(0x000000, 0); // Transparent background
+  renderer.autoClear = false; // So we can render both scenes
 
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.01, 10000);
   camera.position.z = 1000;
+  //   camera.position.set(-1090, 0, 1450);
 
   renderer.toneMapping = THREE.ReinhardToneMapping;
   renderer.toneMappingExposure = 1000;
 
   controls = new TrackballControls(camera, canvas);
-  controls.rotateSpeed = 5.0;
+  controls.rotateSpeed = 9.0;
   controls.zoomSpeed = 5;
   controls.panSpeed = 0.8;
 
@@ -1079,6 +1156,7 @@ function computePCA(positions) {
 
 function createArrowOverlayFromPCA(pcaAxes) {
   arrowsScene = new THREE.Scene();
+  arrowsScene.background = null; // ✅ ensure transparent background
   arrowsCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
   arrowsCamera.position.set(0, 0, 5);
   arrowsCamera.lookAt(0, 0, 0);
@@ -1116,29 +1194,52 @@ function VisualizateNeurons() {
   totalY = 0;
   totalZ = 0;
 
-  let DG = [...Array(19).keys()].map((i) => i + 1);
-  let CA3 = [...Array(25).keys()].map((i) => i + 19);
-  let CA2 = [...Array(5).keys()].map((i) => i + 44);
-  let CA1 = [...Array(40).keys()].map((i) => i + 49);
+  let DG = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+  let CA3 = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43];
+  let CA2 = [44, 45, 46, 47, 48];
+  let CA1 = [49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88];
   let SUB = [89, 90, 91];
-  let EC = [...Array(31).keys()].map((i) => i + 92);
+  let EC = [92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122];
 
   if (flag) {
-    NetworkArray.forEach((net) => {
-      net.forEach((p) => {
-        const x = p.x * scalingFactor;
-        const y = p.y * scalingFactor;
-        const z = p.z * scalingFactor;
-        positions.push(x, y, z);
-        sizes.push(30);
-        gIDs.push(p.id);
-        p.id < 261845 ? (vertexColors.push(0, 0, 1), total_excitatory++) : (vertexColors.push(1, 0, 0), total_inhibitory++);
-        totalX += x;
-        totalY += y;
-        totalZ += z;
+    if (ishuman) {
+      NetworkArray.forEach((net) => {
+        net.forEach((p) => {
+          const x = p.x * scalingFactor;
+          const y = p.y * scalingFactor;
+          const z = p.z * scalingFactor;
+          positions.push(x, y, z);
+          sizes.push(30);
+          gIDs.push(p.id);
+
+          p.id > 120000 ? (vertexColors.push(0, 0, 1), total_excitatory++) : (vertexColors.push(1, 0, 0), total_inhibitory++);
+
+          totalX += x;
+          totalY += y;
+          totalZ += z;
+        });
+        totalParticles += net.length;
       });
-      totalParticles += net.length;
-    });
+      ishuman = false;
+    } else {
+      NetworkArray.forEach((net) => {
+        net.forEach((p) => {
+          const x = p.x * scalingFactor;
+          const y = p.y * scalingFactor;
+          const z = p.z * scalingFactor;
+          positions.push(x, y, z);
+          sizes.push(30);
+          gIDs.push(p.id);
+
+          p.id < 261845 ? (vertexColors.push(0, 0, 1), total_excitatory++) : (vertexColors.push(1, 0, 0), total_inhibitory++);
+
+          totalX += x;
+          totalY += y;
+          totalZ += z;
+        });
+        totalParticles += net.length;
+      });
+    }
   } else if (selectedCheckboxIds.length > 0) {
     NetworkArray.forEach((net) => {
       const filteredParticles = net.filter((p) => selectedCheckboxIds.includes(p.ntype.toString()));
@@ -1205,14 +1306,25 @@ function VisualizateNeurons() {
     vertexColors: true,
     depthTest: true,
     depthWrite: true,
-    blending: THREE.NormalBlending,
+    blending: THREE.NoBlending,
+    // uniforms,
+    // vertexShader: document.getElementById("vertexshader").textContent,
+    // fragmentShader: document.getElementById("fragmentshader").textContent,
+    // transparent: true,
+    // vertexColors: true,
+    // depthTest: true,
+    // depthWrite: true,
+    // blending: THREE.NormalBlending,
   });
   material.uniforms.uBrightness = { value: 7.0 };
   particles = new THREE.Points(geometry, material);
   scene.add(particles);
-  resetCamera();
-  centerCameraToObject(particles);
 
+  if (loadmouseflag) {
+    resetCamera();
+    centerCameraToObject(particles);
+    loadmouseflag = false;
+  }
   scene.background = new THREE.Color(params.Backgound);
 
   if (!chkpanle) {
@@ -1234,16 +1346,6 @@ function VisualizateNeurons() {
         var gui = new GUI({ autoPlace: false });
         gui.domElement.id = "gui";
         panel.appendChild(gui.domElement);
-
-        gui.addColor(params, "Backgound").onChange((value) => {
-          scene.background.set(value);
-        });
-
-        const cameraFolder = gui.addFolder("Camera");
-        cameraFolder.add(camera.position, "x", 0, 1000).listen();
-        cameraFolder.add(camera.position, "y", 0, 1000).listen();
-        cameraFolder.add(camera.position, "z", 0, 1000).listen();
-
         const pm = gui.addFolder("Sphere Material");
         pm.add(parameters, "Neuron_Size", 1, 200).onChange((value) => {
           const sizes = geometry.attributes.size.array;
@@ -1267,6 +1369,18 @@ function VisualizateNeurons() {
           geometry.attributes.color.needsUpdate = true;
           spikeNeuronSize = value;
         });
+
+        const bgcolor = gui.addFolder("Background");
+        bgcolor.addColor(params, "Backgound").onChange((value) => {
+          scene.background.set(value);
+        });
+        bgcolor.close();
+
+        const cameraFolder = gui.addFolder("Camera");
+        cameraFolder.add(camera.position, "x", 0, 1000).listen();
+        cameraFolder.add(camera.position, "y", 0, 1000).listen();
+        cameraFolder.add(camera.position, "z", 0, 1000).listen();
+        cameraFolder.close();
 
         guiCreated = true;
       } else {
@@ -1293,7 +1407,6 @@ function VisualizateNeurons() {
 
   animate();
 }
-
 function generateTable(total_neuros, total_excitatory, total_inhibitory) {
   const containerDiv = document.createElement("div");
   containerDiv.className = "container-fluid px-2 mt-3";
@@ -1354,6 +1467,7 @@ function animate() {
 
   // 🔁 Mini arrows rendering (inset scene)
   if (arrowsScene && arrowsCamera) {
+    renderer.clearDepth(); // allow rendering over existing scene
     arrowsScene.quaternion.copy(camera.quaternion);
 
     const size = 150;
@@ -1459,7 +1573,7 @@ function animateParticles_Connection(particleIds, targetSize) {
           geometry.attributes.color.needsUpdate = true;
         }, delay);
 
-        delay += 0.1; // Increment delay (adjust for animation speed)
+        delay += 0.01; // Increment delay (adjust for animation speed)
       });
     }
 
@@ -1538,7 +1652,7 @@ function twoMilisecondStay_Connection(currentTime) {
                 geometry.attributes.color.needsUpdate = true;
               }, delay);
 
-              delay += 0.1; // Increment delay for smoother animation
+              delay += 0.01; // Increment delay for smoother animation
             });
           }
 
@@ -1735,7 +1849,7 @@ function GetNetworkData(number_of_neuros = 0) {
       });
   }
 }
-
+let loadmouseflag = false;
 window.addEventListener("load", function () {
   const btnLoadAllLayers = document.getElementById("btnLoadAllLayers");
   btnLoadAllLayers.addEventListener("click", function () {
@@ -1746,30 +1860,7 @@ window.addEventListener("load", function () {
     document.getElementById("page-loader").style.display = "block";
     LoadHipForm();
     enableAllElements();
-  });
-});
-
-window.addEventListener("load", function () {
-  const btnLoadConnection = document.getElementById("btnLoadConnection");
-  btnLoadConnection.addEventListener("click", function () {
-    document.getElementById("msgprogress").innerText = `Building Connection, please wait... \n CA3-PC to CA1-PC `;
-
-    document.getElementById("progress-percentage").style.display = "none";
-
-    document.getElementById("page-loader").style.display = "block";
-    fetchConnections();
-  });
-});
-
-window.addEventListener("load", function () {
-  const btnLoadHumanNetwork = document.getElementById("btnLoadHumanNetwork");
-  btnLoadHumanNetwork.addEventListener("click", function () {
-    document.getElementById("msgprogress").innerText = `Loading data for visualization, please wait...`;
-
-    document.getElementById("progress-percentage").style.display = "none";
-
-    document.getElementById("page-loader").style.display = "block";
-    LoadHumanHipForm();
+    loadmouseflag = true;
   });
 });
 
@@ -1835,37 +1926,39 @@ function SelectAllByRegion() {
   ];
 
   // below checkboxesToLog sequence is for fetch json files from hcv server
+  //   const checkboxesToLog = [
+  //     "CA1SO",
+  //     "MECIV",
+  //     "MECII",
+  //     "CA3SL",
+  //     "CA1SLM",
+  //     "CA3SP",
+  //     "LECI",
+  //     "MECV",
+  //     "LECII",
+  //     "DGSG", //DG_Granule
+  //     "CA3SLM",
+  //     "DGSMo",
+  //     "CA3SR",
+  //     "CA3SO",
+  //     "MECVI",
+  //     "LECV",
+  //     "MECI",
+  //     "LECVI",
+  //     "SubSP",
+  //     "SubSM",
+  //     "CA1SP",
+  //     "LECIV",
+  //     "DGSMi",
+  //     "DGH",
+  //     "MECIII",
+  //     "CA1SR",
+  //     "CA2SP",
+  //     "LECIII",
+  //   ];
 
-  const checkboxesToLog = [
-    "CA1SO",
-    "MECIV",
-    "MECII",
-    "CA3SL",
-    "CA1SLM",
-    "CA3SP",
-    "LECI",
-    "MECV",
-    "LECII",
-    "DGSG", //DG_Granule
-    "CA3SLM",
-    "DGSMo",
-    "CA3SR",
-    "CA3SO",
-    "MECVI",
-    "LECV",
-    "MECI",
-    "LECVI",
-    "SubSP",
-    "SubSM",
-    "CA1SP",
-    "LECIV",
-    "DGSMi",
-    "DGH",
-    "MECIII",
-    "CA1SR",
-    "CA2SP",
-    "LECIII",
-  ];
+  // below checkboxesToLog sequence is for fetch json files from local machine
+  const checkboxesToLog = ["LECIV", "CA3SO", "MECII", "MECIII", "CA1SP", "SubSM", "MECVI", "MECIV", "CA3SP", "LECII", "CA3SLM", "CA1SO", "LECVI", "CA2SP", "DGH", "CA3SR", "DGSMi", "LECV", "MECV", "SubSP", "LECIII", "DGSMo", "LECI", "MECI", "CA1SLM", "CA1SR", "CA3SL", "DGSG"];
 
   const DGLayer = [14, 16, 21, 27];
   const CA3Layer = [10, 15, 26, 8, 1];
@@ -1911,39 +2004,91 @@ function SelectAllByRegion() {
 
           if (!(LEC.some((value) => selectedCheckboxByLayer.includes(value)) || MEC.some((value) => selectedCheckboxByLayer.includes(value)))) AllECRegSwitchCheck.disabled = false;
 
-          const unselectMap = {
-            0: [52, 53, 54, 55, 56, 57, 58, 60, 68, 79, 70, 71, 73, 74, 75, 85, 86, 87],
-            1: [106, 107, 108],
-            2: [96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122],
-            3: [22, 28, 30, 31, 32, 33, 34, 35, 38, 39],
-            4: [50, 57, 61, 63, 65, 66, 67, 77, 79, 82, 84],
-            5: [19, 20, 23, 25, 26, 27, 32, 35, 38, 39],
-            6: [92, 93],
-            7: [106, 107, 108, 109, 110, 111, 112, 113],
-            8: [97, 98, 100, 101, 104, 105, 106, 118, 121],
-            9: [1, 2, 7, 8, 10, 11, 14, 15, 16],
-            10: [29],
-            11: [14, 17, 18],
-            12: [21, 22, 34, 38, 39, 40, 41],
-            13: [23, 24, 27, 35, 36, 37, 38, 39, 42, 43],
-            14: [108, 113],
-            15: [106, 107, 108, 111],
-            16: [92, 93],
-            17: [108, 114],
-            18: [89, 90, 91],
-            19: [91],
-            20: [49, 51, 52, 55, 56, 57, 58, 60, 62, 64, 72, 76, 80, 83, 85, 87, 88],
-            21: [106, 107, 108],
-            22: [3, 9, 13, 14, 17],
-            23: [4, 5, 6, 10, 11, 12],
-            24: [96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122],
-            25: [51, 55, 57, 58, 59, 60, 61, 62, 63, 64, 65, 72, 76, 77, 78, 79, 81, 82, 83, 84, 85, 87, 88],
-            26: [44, 45, 46, 47, 48],
-            27: [97, 98, 100, 101, 104, 105, 106, 118, 121],
-          };
+          //unselected checkboxes by layers
 
-          if (unselectMap[index]) {
-            unselectCheckboxes(unselectMap[index]);
+          if (index === 0) {
+            unselectCheckboxes([52, 53, 54, 55, 56, 57, 58, 60, 68, 79, 70, 71, 73, 74, 75, 85, 86, 87]);
+          }
+          if (index === 1) {
+            unselectCheckboxes([106, 107, 108]);
+          }
+          if (index === 2) {
+            unselectCheckboxes([96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122]);
+          }
+          if (index === 3) {
+            unselectCheckboxes([22, 28, 30, 31, 32, 33, 34, 35, 38, 39]);
+          }
+          if (index === 4) {
+            unselectCheckboxes([50, 57, 61, 63, 65, 66, 67, 77, 79, 82, 84]);
+          }
+          if (index === 5) {
+            unselectCheckboxes([19, 20, 23, 25, 26, 27, 32, 35, 38, 39]);
+          }
+          if (index === 6) {
+            unselectCheckboxes([92, 93]);
+          }
+          if (index === 7) {
+            unselectCheckboxes([106, 107, 108, 109, 110, 111, 112, 113]);
+          }
+          if (index === 8) {
+            unselectCheckboxes([97, 98, 100, 101, 104, 105, 106, 118, 121]);
+          }
+          if (index === 9) {
+            unselectCheckboxes([1, 2, 7, 8, 10, 11, 14, 15, 16]);
+          }
+          if (index === 10) {
+            unselectCheckboxes([29]);
+          }
+          if (index === 11) {
+            unselectCheckboxes([14, 17, 18]);
+          }
+          if (index === 12) {
+            unselectCheckboxes([21, 22, 34, 38, 39, 40, 41]);
+          }
+          if (index === 13) {
+            unselectCheckboxes([23, 24, 27, 35, 36, 37, 38, 39, 42, 43]);
+          }
+          if (index === 14) {
+            unselectCheckboxes([108, 113]);
+          }
+          if (index === 15) {
+            unselectCheckboxes([106, 107, 108, 111]);
+          }
+          if (index === 16) {
+            unselectCheckboxes([92, 93]);
+          }
+          if (index === 17) {
+            unselectCheckboxes([108, 114]);
+          }
+          if (index === 18) {
+            unselectCheckboxes([89, 90, 91]);
+          }
+          if (index === 19) {
+            unselectCheckboxes([91]);
+          }
+          if (index === 20) {
+            unselectCheckboxes([49, 51, 52, 55, 56, 57, 58, 60, 62, 64, 72, 76, 80, 83, 85, 87, 88]);
+          }
+          if (index === 21) {
+            unselectCheckboxes([106, 107, 108]);
+          }
+          if (index === 22) {
+            unselectCheckboxes([3, 9, 13, 14, 17]);
+          }
+          if (index === 23) {
+            unselectCheckboxes([4, 5, 6, 10, 11, 12]);
+          }
+          if (index === 24) {
+            unselectCheckboxes([96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122]);
+          }
+          if (index === 25) {
+            unselectCheckboxes([51, 55, 57, 58, 59, 60, 61, 62, 63, 64, 65, 72, 76, 77, 78, 79, 81, 82, 83, 84, 85, 87, 88]);
+          }
+          if (index === 26) {
+            unselectCheckboxes([44, 45, 46, 47, 48]);
+          }
+          if (index === 27) {
+            unselectCheckboxes([97, 98, 100, 101, 104, 105, 106, 118, 121]);
           }
 
           AllNT.disabled = true;
@@ -1956,42 +2101,90 @@ function SelectAllByRegion() {
         }
 
         if (selectedCheckboxByLayer.length > 0) {
-          const selectMap = {
-            0: [52, 53, 54, 55, 56, 57, 58, 60, 68, 79, 70, 71, 73, 74, 75, 85, 86, 87],
-            1: [106, 107, 108],
-            2: [96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122],
-            3: [22, 28, 30, 31, 32, 33, 34, 35, 38, 39],
-            4: [50, 57, 61, 63, 65, 66, 67, 77, 79, 82, 84],
-            5: [19, 20, 23, 25, 26, 27, 32, 35, 38, 39],
-            6: [92, 93],
-            7: [106, 107, 108, 109, 110, 111, 112, 113],
-            8: [97, 98, 100, 101, 104, 105, 106, 118, 121],
-            9: [1, 2, 7, 8, 10, 11, 14, 15, 16],
-            10: [29],
-            11: [14, 17, 18],
-            12: [21, 22, 34, 38, 39, 40, 41],
-            13: [23, 24, 27, 35, 36, 37, 38, 39, 42, 43],
-            14: [108, 113],
-            15: [106, 107, 108, 111],
-            16: [92, 93],
-            17: [108, 114],
-            18: [89, 90, 91],
-            19: [91],
-            20: [49, 51, 52, 55, 56, 57, 58, 60, 62, 64, 72, 76, 80, 83, 85, 87, 88],
-            21: [106, 107, 108],
-            22: [3, 9, 13, 14, 17],
-            23: [4, 5, 6, 10, 11, 12],
-            24: [96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122],
-            25: [51, 55, 57, 58, 59, 60, 61, 62, 63, 64, 65, 72, 76, 77, 78, 79, 81, 82, 83, 84, 85, 87, 88],
-            26: [44, 45, 46, 47, 48],
-            27: [97, 98, 100, 101, 104, 105, 106, 118, 121],
-          };
-
-          selectedCheckboxByLayer.forEach((idx) => {
-            if (selectMap[idx]) {
-              selectCheckboxes(selectMap[idx]);
-            }
-          });
+          if (selectedCheckboxByLayer.includes(0)) {
+            selectCheckboxes([52, 53, 54, 55, 56, 57, 58, 60, 68, 79, 70, 71, 73, 74, 75, 85, 86, 87]);
+          }
+          if (selectedCheckboxByLayer.includes(1)) {
+            selectCheckboxes([106, 107, 108]);
+          }
+          if (selectedCheckboxByLayer.includes(2)) {
+            selectCheckboxes([96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122]);
+          }
+          if (selectedCheckboxByLayer.includes(3)) {
+            selectCheckboxes([22, 28, 30, 31, 32, 33, 34, 35, 38, 39]);
+          }
+          if (selectedCheckboxByLayer.includes(4)) {
+            selectCheckboxes([50, 57, 61, 63, 65, 66, 67, 77, 79, 82, 84]);
+          }
+          if (selectedCheckboxByLayer.includes(5)) {
+            selectCheckboxes([19, 20, 23, 25, 26, 27, 32, 35, 38, 39]);
+          }
+          if (selectedCheckboxByLayer.includes(6)) {
+            selectCheckboxes([92, 93]);
+          }
+          if (selectedCheckboxByLayer.includes(7)) {
+            selectCheckboxes([106, 107, 108, 109, 110, 111, 112, 113]);
+          }
+          if (selectedCheckboxByLayer.includes(8)) {
+            selectCheckboxes([97, 98, 100, 101, 104, 105, 106, 118, 121]);
+          }
+          if (selectedCheckboxByLayer.includes(9)) {
+            selectCheckboxes([1, 2, 7, 8, 10, 11, 14, 15, 16]);
+          }
+          if (selectedCheckboxByLayer.includes(10)) {
+            selectCheckboxes([29]);
+          }
+          if (selectedCheckboxByLayer.includes(11)) {
+            selectCheckboxes([14, 17, 18]);
+          }
+          if (selectedCheckboxByLayer.includes(12)) {
+            selectCheckboxes([21, 22, 34, 38, 39, 40, 41]);
+          }
+          if (selectedCheckboxByLayer.includes(13)) {
+            selectCheckboxes([23, 24, 27, 35, 36, 37, 38, 39, 42, 43]);
+          }
+          if (selectedCheckboxByLayer.includes(14)) {
+            selectCheckboxes([108, 113]);
+          }
+          if (selectedCheckboxByLayer.includes(15)) {
+            selectCheckboxes([106, 107, 108, 111]);
+          }
+          if (selectedCheckboxByLayer.includes(16)) {
+            selectCheckboxes([92, 93]);
+          }
+          if (selectedCheckboxByLayer.includes(17)) {
+            selectCheckboxes([108, 114]);
+          }
+          if (selectedCheckboxByLayer.includes(18)) {
+            selectCheckboxes([89, 90, 91]);
+          }
+          if (selectedCheckboxByLayer.includes(19)) {
+            selectCheckboxes([91]);
+          }
+          if (selectedCheckboxByLayer.includes(20)) {
+            selectCheckboxes([49, 51, 52, 55, 56, 57, 58, 60, 62, 64, 72, 76, 80, 83, 85, 87, 88]);
+          }
+          if (selectedCheckboxByLayer.includes(21)) {
+            selectCheckboxes([106, 107, 108]);
+          }
+          if (selectedCheckboxByLayer.includes(22)) {
+            selectCheckboxes([3, 9, 13, 14, 17]);
+          }
+          if (selectedCheckboxByLayer.includes(23)) {
+            selectCheckboxes([4, 5, 6, 10, 11, 12]);
+          }
+          if (selectedCheckboxByLayer.includes(24)) {
+            selectCheckboxes([96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122]);
+          }
+          if (selectedCheckboxByLayer.includes(25)) {
+            selectCheckboxes([51, 55, 57, 58, 59, 60, 61, 62, 63, 64, 65, 72, 76, 77, 78, 79, 81, 82, 83, 84, 85, 87, 88]);
+          }
+          if (selectedCheckboxByLayer.includes(26)) {
+            selectCheckboxes([44, 45, 46, 47, 48]);
+          }
+          if (selectedCheckboxByLayer.includes(27)) {
+            selectCheckboxes([97, 98, 100, 101, 104, 105, 106, 118, 121]);
+          }
 
           VisualizateNeurons();
           updateSelectedCount(); // Call the function to update the count
@@ -2572,6 +2765,7 @@ function resetAndDisableAllCheckboxes() {
 }
 
 CreateScene();
+
 disableAllElements();
 //createArrowOverlay();
 
@@ -2666,7 +2860,7 @@ function resetPlaybackConfig() {
 }
 
 function resetCamera() {
-  camera.position.set(0, 0, 1000); // Restore initial z position
+  camera.position.set(90, 354, 1450); // Restore initial z position
   camera.up.set(0, 1, 0); // Reset up direction
   camera.lookAt(0, 0, 0); // Look at the origin or center point
 
