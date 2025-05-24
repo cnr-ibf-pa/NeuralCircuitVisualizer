@@ -855,7 +855,7 @@ def fetchConnections(request):
     try:
         # Ensure file is generated
         # json_path = compute_connections()
-        json_path = os.path.join(settings.MEDIA_ROOT, "hip_form", "connections.json")
+        json_path = os.path.join(settings.MEDIA_ROOT, "hip_form","connections", "connections.json")
         # print("connections built...........")
 
         # Load full data from file
@@ -1153,36 +1153,6 @@ def get_activity_indexes(data_dict, Gids):
                 print(f"Skipping invalid activity_id '{activity_id}': {e}")
 
     return activity_index_map
-
-# @csrf_exempt
-# def LoadHumanHipForm(request):
-#     try:
-#         json_directory = os.path.join(settings.MEDIA_ROOT, "hip_form", "human")
-#         final_json_file_path = os.path.join(json_directory, 'network.json')
-
-#         try:
-#             with open(final_json_file_path, 'r') as f:
-#                 networkdata = ujson.load(f)
-#                 total_neurons = len(networkdata)
-#                 total_size = os.path.getsize(final_json_file_path) / (1024 * 1024)  # in MB
-
-#                 # Return data directly (not wrapped in files array)
-#                 return JsonResponse({
-#                     'fileData': networkdata,
-#                     'total_neurons': total_neurons,
-#                     'total_size': total_size
-#                 })
-
-#         except ujson.JSONDecodeError as e:
-#             print(f"Error decoding JSON from file {final_json_file_path}: {e}")
-#         except Exception as e:
-#             print(f"Error reading file {final_json_file_path}: {e}")
-#             return JsonResponse({'error': str(e)}, status=500)
-
-#     except Exception as e:
-#         print(f"An error occurred: {e}")
-#         return JsonResponse({'error': 'An unexpected error occurred'}, status=500)
-
 
 
 @csrf_exempt
