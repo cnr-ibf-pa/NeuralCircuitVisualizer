@@ -80,22 +80,25 @@ class JobHelper:
             the job object containing the job submission instance.
         """
 
-        pre_command = '/g100_work/EIRI_E_CNRIB2/NeuralCircuitVisualizer/prepare_job.sh ' \
-                + str(settings['pyr2pyr']) + ' ' \
-                + str(settings['pyr2inh']) + ' ' \
-                + str(settings['inh2inh']) + ' ' \
-                + str(settings['inh2pyr']) + ' ' \
-                + str(settings['stimulus_1_synapses_weight']) + ' ' \
-                + str(settings['simulation_duration'])
-
-        command = 'cd hippocampus_mouse/; . account.sh; sbatch --account=$HPC_ACCOUNT run_normal_galileo.sh'
-
-        post_command = 'cd hippocampus_mouse/; . account.sh; sbatch --account=$HPC_ACCOUNT run_post_process_galileo.sh; '
+        pre_command = '/g100_work/EIRI_E_CNRIB2/NeuralCircuitVisualizer/prepare_job.sh'
+        command = './run_job.sh'
+        post_command = './postprocessing.sh'
+        args = [str(settings[ss]) for ss in list(settings.keys())]
 
         job_descriptor = {
             'User precommand': pre_command,
             'Executable': command,
+            'Arguments': args,
             'User postcommand': post_command,
+            'Name': 'my_test',
+            'Resources': {
+                'Project': 'EIRI_E_CNRIB2',
+                'Nodes': 2,
+                'TotalCPUs': 48,
+                'CPUsPerNode': 24,
+                'Runtime': '3h',
+                'Queue': 'g100_usr_smem'
+            },
             'Tags': UNICORE_JOB_TAGS
         }
 
