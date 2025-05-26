@@ -206,7 +206,7 @@
 
                         <!-- Mice Circuit -->
                         <div class="accordion-item">
-                            
+
                           <h2 class="accordion-header" id="headingMice">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMice" aria-expanded="false" aria-controls="collapseMice">Mouse Circuit</button>
                           </h2>
@@ -248,7 +248,7 @@
               </div>
             </div>
           </div>
-          
+
                             <div class="accordion-body p-1 m-0">
                               <!-- Content for Mice Circuit -->
 
@@ -256,7 +256,7 @@
                               <div id="flush-collapseThree" class="accordion-collapse" aria-labelledby="flush-headingThree" data-bs-parent="#accordionFlushExample">
                                 <div class="accordion-body p-0 m-0">
                                   <div class="accordion accordion-flush border border-success" id="accordionFlushRegions">
-                                   
+
 
 
 
@@ -269,7 +269,7 @@
     </h2>
     <div id="collapseRegion" class="accordion-collapse collapse" aria-labelledby="Region-heading" data-bs-parent="#accordionFlushRegions">
       <div class="accordion-body p-0 m-0">
-       
+
 
 
         <div class="container">
@@ -295,7 +295,7 @@
                 </div>
               </div>
             </div>
-          
+
             <div class="row pb-3">
               <div class="col-md-4">
                 <div class="form-check form-switch">
@@ -316,7 +316,7 @@
                 </div>
               </div>
             </div>
-          
+
             <!-- Region Labels -->
             <div class="row text-center mb-1 small text-muted region-labels">
               <div class="col-md-2">DG</div>
@@ -326,7 +326,7 @@
               <div class="col-md-2">Sub</div>
               <div class="col-md-2">EC</div>
             </div>
-          
+
             <!-- Color Pickers -->
             <div class="row select-row">
               <div class="col-md-2 border p-0">
@@ -397,7 +397,7 @@
               </div>
             </div>
           </div>
-          
+
 
 
 
@@ -445,8 +445,8 @@
       </div>
     </div>
   </div>
-  
-                                      
+
+
 
 <!-- Layers Accordion Item -->
 <div class="accordion-item">
@@ -458,13 +458,13 @@
     <div id="collapseLayer" class="accordion-collapse collapse" aria-labelledby="Layer-heading" data-bs-parent="#accordionFlushRegions">
       <div class="accordion-body p-0 m-0">
         <div class="container">
-  
+
           <!-- Headers -->
           <div class="row p-0">
             <div class="col-12 col-md-4 border headings"><span>Regions</span></div>
             <div class="col-12 col-md border headings">Layers</div>
           </div>
-  
+
           <!-- DG Layers -->
           <div class="row p-0">
             <div class="col-4 border">
@@ -479,7 +479,7 @@
               </div>
             </div>
           </div>
-  
+
           <!-- CA3 Layers -->
           <div class="row p-0">
             <div class="col-4 border">
@@ -495,7 +495,7 @@
               </div>
             </div>
           </div>
-  
+
           <!-- CA2 Layers -->
           <div class="row p-0">
             <div class="col-4 border">
@@ -507,7 +507,7 @@
               </div>
             </div>
           </div>
-  
+
           <!-- CA1 Layers -->
           <div class="row p-0">
             <div class="col-4 border">
@@ -522,7 +522,7 @@
               </div>
             </div>
           </div>
-  
+
           <!-- Subiculum Layers -->
           <div class="row p-0">
             <div class="col-4 border">
@@ -535,7 +535,7 @@
               </div>
             </div>
           </div>
-  
+
           <!-- EC Layers: LEC and MEC -->
           <div class="row p-0">
             <div class="col-4 border">
@@ -552,7 +552,7 @@
               </div>
             </div>
           </div>
-  
+
           <div class="row p-0">
             <div class="col-4 border">
               <label class="form-check-label1">Entorhinal Cortex (MEC)</label>
@@ -568,7 +568,7 @@
               </div>
             </div>
           </div>
-  
+
           <!-- Neuron Type Radio Buttons -->
           <div class="row p-2">
             <div class="form-check form-switch pl-0">
@@ -584,14 +584,14 @@
               <label class="form-check-label" for="CanonicalNT">All v1.x canonical neuron types</label>
             </div>
           </div>
-  
-    
-  
+
+
+
         </div>
       </div>
     </div>
   </div>
-                                    
+
 
 
 
@@ -1684,7 +1684,10 @@
                     </div>
                   </div>
                 </div>
-                {% include "components/hpc_integration/job_submission.html" %} {% include "components/hpc_integration/fetch_results.html" %}
+                {% comment %}
+                {% include "components/hpc_integration/job_submission.html" %}
+                {% include "components/hpc_integration/fetch_results.html" %}
+                {% endcomment %}
               </div>
             </div>
 
