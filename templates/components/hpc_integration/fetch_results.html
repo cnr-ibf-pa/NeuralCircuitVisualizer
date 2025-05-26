@@ -55,6 +55,8 @@
         el.classList.add('job-pending', 'btn-info');
       }
       if (status === 'successful') {
+        el.addEventListener('click', downloadActivityNetworkFromJob(jobId));
+      } else {
         el.addEventListener('click', function () {
           const a = document.createElement('a');
           a.href = new URL(`/hpc-integration/download-job-results?job_id=${jobId}`, window.location.origin);

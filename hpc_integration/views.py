@@ -3,7 +3,7 @@ import shutil
 import os
 from pyunicore.client import PathFile as UnicorePathFile
 
-from django.http import HttpResponseForbidden, HttpResponseServerError
+from django.http import FileResponse, HttpResponseForbidden, HttpResponseServerError
 from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, HttpResponseNotAllowed
 
 from hpc_integration import forms
@@ -12,6 +12,9 @@ from hpc_integration.utils import messages, get_tmp_dir, get_tmp_working_dir
 from hpc_integration.utils.decorators import login_required
 from hpc_integration.helper.job_helper import JobHelper
 from hpc_integration.utils.errors import ForbiddenException
+
+from neural_circuit_visualizer.settings import MEDIA_ROOT
+
 
 import logging
 logger = logging.getLogger(__name__)
@@ -107,3 +110,44 @@ def download_job_results(request):
     except Exception as err:
         logger.error(f'Error while downloading results: {err}')
         return HttpResponseServerError(content=str(err))
+
+
+
+@login_required
+def download_activity_network(request):
+    if request.method != 'GET':
+        return HttpResponseNotAllowed('GET')
+
+    job_id = request.GET.get('job_id')
+
+    if not job_id:
+        return HttpResponseBadRequest(content=messages.JOB_ID_NOT_PROVIDED)
+
+    hpc = request.session.get('hpc')
+    if not hpc:
+        logger.error('HPC not found in session')
+        return HttpResponseServerError()
+
+    download_dir = os.path.join(str(MEDIA_ROOT), request.user.mitreid_sub, job_id)
+    if not os.path.exists(download_dir):
+        try:
+            os.makedirs(download_dir)
+        except Exception as err:
+            logger.error(f'Error creating download directory: {err}')
+            return HttpResponseServerError(content=str(err))
+
+    activity_file = os.path.join(download_dir, 'activity_network.hdf5')
+    if not os.path.exists(activity_file):
+        try:
+            file_list = JobHelper().fetch_job_files(hpc, job_id, request.session['oidc_access_token'])
+            for f in file_list:
+                if isinstance(f, UnicorePathFile):
+                    if f.name == 'activity_network.hdf5':
+                        f.download(activity_file)
+        except Exception as err:
+            logger.error(f'Error while downloading results: {err}')
+            return HttpResponseServerError(content=str(err))
+
+    response = FileResponse(open(activity_file, 'rb'), content_type='application/octet-stream')
+    response['Content-Disposition'] = 'attachment; filename="activity_network.hdf5"'
+    return response

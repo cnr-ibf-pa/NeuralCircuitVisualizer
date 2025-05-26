@@ -567,6 +567,7 @@ hdfFileInput.addEventListener("change", async (event) => {
   resetAndDisableAllCheckboxes();
 
   const files = event.target.files;
+  console.log(files);
   if (files.length > 0) {
     try {
       const chunkSize = 10 * 1024 * 1024; // 10 MB
@@ -588,6 +589,9 @@ hdfFileInput.addEventListener("change", async (event) => {
       }
 
       for (const file of files) {
+        console.log("Processing file:", file.name);
+        console.log("Processing file:", file);
+
         const fileType = file.name.split(".").pop().toLowerCase(); // csv or hdf5
         const totalChunks = Math.ceil(file.size / chunkSize);
 
@@ -617,7 +621,6 @@ hdfFileInput.addEventListener("change", async (event) => {
       }
 
       await Promise.all(uploadPromises);
-
       // ✅ Simulated fetch progress bar
       progressBar.innerText = "0%";
       msg.innerText = "Processing your data for visualizing Circuit, please wait...";
@@ -696,6 +699,86 @@ hdfFileInput.addEventListener("change", async (event) => {
     }
   }
 });
+
+async function fetchUserNetworkData(uniqueDirectory) {
+  const progressBar = document.getElementById("progress-percentage");
+  const loader = document.getElementById("page-loader");
+  const msg = document.getElementById("msgprogress");
+
+  progressBar.innerText = "0%";
+  loader.style.display = "block";
+  msg.innerText = "Uploading your file, please wait...";
+
+  // ✅ Simulated fetch progress bar
+  progressBar.innerText = "0%";
+  msg.innerText = "Processing your data for visualizing Circuit, please wait...";
+  let fetchProgress = 0;
+
+  const percentInterval = setInterval(() => {
+    if (fetchProgress < 99) {
+      fetchProgress += 1;
+      progressBar.innerText = `${fetchProgress}%`;
+    }
+  }, 100); // ~10 seconds to simulate fetch
+
+  const response = await fetch(`${baseURL}/api/fetch_user_network_data/?dir=${uniqueDirectory}`);
+  const data = await response.json();
+
+  clearInterval(percentInterval);
+  progressBar.innerText = "100%";
+  msg.innerText = "Data loaded successfully! Visualizing neurons...";
+
+  if (data.files.length > 0) {
+    document.getElementById("Neurons_firing_attributes").style.visibility = "visible";
+    document.getElementById("networkspikes").style.visibility = "visible";
+
+    vertexColors = [];
+    NetworkArray = [];
+    data.files.forEach((file) => {
+      NetworkArray.push(file.fileData);
+      total_neurons += file.total_neuros;
+    });
+
+    flag = true;
+    VisualizateNeurons();
+    resetCamera();
+    centerCameraToObject(particles);
+
+    if (parseInt(data.flag_check) === 1) {
+      document.getElementById("lblspikes").innerText = "# spikes :" + data.lstresponse.total_lines;
+
+      total_activity_files = data.lstresponse.total_activity_files;
+      firstLastKeys = data.lstresponse.first_last_keys;
+
+      if (!data.lstresponse.chunk_mfr_list || data.lstresponse.chunk_mfr_list.length === 0) {
+        return;
+      }
+
+      const dropdown = document.getElementById("ddactivity_chunks");
+      dropdown.innerHTML = "";
+
+      const defaultOption = document.createElement("option");
+      defaultOption.textContent = "Activity windows";
+      dropdown.appendChild(defaultOption);
+
+      data.lstresponse.chunk_mfr_list.forEach((chunk) => {
+        const option = document.createElement("option");
+        option.value = chunk.chunk_number;
+
+        const chunkNum = String(chunk.chunk_number);
+        const timeRange = `[${chunk.first_key} - ${chunk.last_key}]ms`;
+        const mfr = `MFR: ${chunk.MFR} Hz`;
+        option.textContent = `Chunk ${chunkNum}\u2003 ${timeRange}\u2003\u2003 ${mfr}`;
+
+        dropdown.appendChild(option);
+      });
+    } else {
+      console.log("No activity data available.");
+    }
+  } else {
+    console.log("No files found in the response.");
+  }
+}
 
 dropdown.addEventListener("change", async function () {
   resetSpikeState();
@@ -2887,4 +2970,26 @@ function resetTimeUI() {
   // Reset start/end time inputs
   document.getElementById("start-time").value = "";
   document.getElementById("end-time").value = "";
+}
+
+document.getElementById("mockActivityButton").addEventListener("click", mockActivity);
+
+function downloadActivityNetworkFromJob(jobId) {
+  // used in "fetched_results" component
+  console.log('Mock activity triggered');
+  fetch('hpc-integration/download-activity-network?job_id=' + jobId)
+    .then(response => {
+      if (!response.ok) {
+        getError(response);
+      }
+      return response.blob();
+    }).then(blob => {
+      const file = new File([blob], 'activity_network.hdf5', { type: 'application/octet-stream' });
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      hdfFileInput.files = dataTransfer.files;
+      hdfFileInput.dispatchEvent(new Event('change'));
+    }).catch(error => {
+      console.error('Error fetching mock activity:', error);
+    });
 }
