@@ -206,7 +206,7 @@
 
                         <!-- Mice Circuit -->
                         <div class="accordion-item">
-                            
+
                           <h2 class="accordion-header" id="headingMice">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMice" aria-expanded="false" aria-controls="collapseMice">Mouse Circuit</button>
                           </h2>
@@ -248,7 +248,7 @@
               </div>
             </div>
           </div>
-          
+
                             <div class="accordion-body p-1 m-0">
                               <!-- Content for Mice Circuit -->
 
@@ -256,7 +256,7 @@
                               <div id="flush-collapseThree" class="accordion-collapse" aria-labelledby="flush-headingThree" data-bs-parent="#accordionFlushExample">
                                 <div class="accordion-body p-0 m-0">
                                   <div class="accordion accordion-flush border border-success" id="accordionFlushRegions">
-                                   
+
 
 
 
@@ -269,7 +269,7 @@
     </h2>
     <div id="collapseRegion" class="accordion-collapse collapse" aria-labelledby="Region-heading" data-bs-parent="#accordionFlushRegions">
       <div class="accordion-body p-0 m-0">
-       
+
 
 
         <div class="container">
@@ -295,7 +295,7 @@
                 </div>
               </div>
             </div>
-          
+
             <div class="row pb-3">
               <div class="col-md-4">
                 <div class="form-check form-switch">
@@ -316,7 +316,7 @@
                 </div>
               </div>
             </div>
-          
+
             <!-- Region Labels -->
             <div class="row text-center mb-1 small text-muted region-labels">
               <div class="col-md-2">DG</div>
@@ -326,7 +326,7 @@
               <div class="col-md-2">Sub</div>
               <div class="col-md-2">EC</div>
             </div>
-          
+
             <!-- Color Pickers -->
             <div class="row select-row">
               <div class="col-md-2 border p-0">
@@ -397,7 +397,7 @@
               </div>
             </div>
           </div>
-          
+
 
 
 
@@ -445,8 +445,8 @@
       </div>
     </div>
   </div>
-  
-                                      
+
+
 
 <!-- Layers Accordion Item -->
 <div class="accordion-item">
@@ -458,17 +458,147 @@
     <div id="collapseLayer" class="accordion-collapse collapse" aria-labelledby="Layer-heading" data-bs-parent="#accordionFlushRegions">
       <div class="accordion-body p-0 m-0">
         <div class="container">
-                                          
 
-              
+          <!-- Headers -->
+          <div class="row p-0">
+            <div class="col-12 col-md-4 border headings"><span>Regions</span></div>
+            <div class="col-12 col-md border headings">Layers</div>
+          </div>
+
+          <!-- DG Layers -->
+          <div class="row p-0">
+            <div class="col-4 border">
+              <label class="form-check-label1">Dentate Gyrus</label>
+            </div>
+            <div class="col-8">
+              <div class="row">
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="DGSMo" /><label class="form-check-label" for="DGSMo">SMo</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="DGSMi" /><label class="form-check-label" for="DGSMi">SMi</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="DGSG" /><label class="form-check-label" for="DGSG">SG</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="DGH" /><label class="form-check-label" for="DGH">H</label></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CA3 Layers -->
+          <div class="row p-0">
+            <div class="col-4 border">
+              <label class="form-check-label1">CA3</label>
+            </div>
+            <div class="col-8">
+              <div class="row">
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA3SLM" /><label class="form-check-label" for="CA3SLM">SLM</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA3SR" /><label class="form-check-label" for="CA3SR">SR</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA3SL" /><label class="form-check-label" for="CA3SL">SL</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA3SP" /><label class="form-check-label" for="CA3SP">SP</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA3SO" /><label class="form-check-label" for="CA3SO">SO</label></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CA2 Layers -->
+          <div class="row p-0">
+            <div class="col-4 border">
+              <label class="form-check-label1">CA2</label>
+            </div>
+            <div class="col-8">
+              <div class="row">
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA2SP" /><label class="form-check-label" for="CA2SP">SP</label></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CA1 Layers -->
+          <div class="row p-0">
+            <div class="col-4 border">
+              <label class="form-check-label1">CA1</label>
+            </div>
+            <div class="col-8">
+              <div class="row">
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA1SLM" /><label class="form-check-label" for="CA1SLM">SLM</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA1SR" /><label class="form-check-label" for="CA1SR">SR</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA1SP" /><label class="form-check-label" for="CA1SP">SP</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA1SO" /><label class="form-check-label" for="CA1SO">SO</label></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Subiculum Layers -->
+          <div class="row p-0">
+            <div class="col-4 border">
+              <label class="form-check-label1">Subiculum</label>
+            </div>
+            <div class="col-8">
+              <div class="row">
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="SubSM" /><label class="form-check-label" for="SubSM">SM</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="SubSP" /><label class="form-check-label" for="SubSP">SP</label></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- EC Layers: LEC and MEC -->
+          <div class="row p-0">
+            <div class="col-4 border">
+              <label class="form-check-label1">Entorhinal Cortex (LEC)</label>
+            </div>
+            <div class="col-8">
+              <div class="row">
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="LECI" /><label class="form-check-label" for="LECI">I</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="LECII" /><label class="form-check-label" for="LECII">II</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="LECIII" /><label class="form-check-label" for="LECIII">III</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="LECIV" /><label class="form-check-label" for="LECIV">IV</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="LECV" /><label class="form-check-label" for="LECV">V</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="LECVI" /><label class="form-check-label" for="LECVI">VI</label></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row p-0">
+            <div class="col-4 border">
+              <label class="form-check-label1">Entorhinal Cortex (MEC)</label>
+            </div>
+            <div class="col-8">
+              <div class="row">
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="MECI" /><label class="form-check-label" for="MECI">I</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="MECII" /><label class="form-check-label" for="MECII">II</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="MECIII" /><label class="form-check-label" for="MECIII">III</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="MECIV" /><label class="form-check-label" for="MECIV">IV</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="MECV" /><label class="form-check-label" for="MECV">V</label></div>
+                <div class="col border p-0"><input class="form-check-input" type="checkbox" id="MECVI" /><label class="form-check-label" for="MECVI">VI</label></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Neuron Type Radio Buttons -->
+          <div class="row p-2">
+            <div class="form-check form-switch pl-0">
+              <input class="form-check-input" type="radio" name="neuronType" id="AllNT" />
+              <label class="form-check-label" for="AllNT">All v1.x neuron types</label>
+            </div>
+            <div class="form-check form-switch pl-0">
+              <input class="form-check-input" type="radio" name="neuronType" id="RankNT" />
+              <label class="form-check-label" for="RankNT">All v1.x rank 1-3 neuron types</label>
+            </div>
+            <div class="form-check form-switch pl-0">
+              <input class="form-check-input" type="radio" name="neuronType" id="CanonicalNT" />
+              <label class="form-check-label" for="CanonicalNT">All v1.x canonical neuron types</label>
+            </div>
+          </div>
+
+
+
+        </div>
+
+
+
 
 
             <div class="CAReg_checkbox_container">
-             
+
 
               <!-- layers adjusting -->
               <div class="CALayer_checkbox_container">
-              
+
                 <!-- DG -->
 
                 <div class="row p-0">
@@ -769,12 +899,12 @@
               </div>
             </div>
 
-           
+
           </div>
       </div>
     </div>
   </div>
-                                    
+
 
 
 
@@ -1867,7 +1997,10 @@
                     </div>
                   </div>
                 </div>
-                {% include "components/hpc_integration/job_submission.html" %} {% include "components/hpc_integration/fetch_results.html" %}
+                {% comment %}
+                {% include "components/hpc_integration/job_submission.html" %}
+                {% include "components/hpc_integration/fetch_results.html" %}
+                {% endcomment %}
               </div>
             </div>
 

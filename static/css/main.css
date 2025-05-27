@@ -1359,19 +1359,29 @@ label {
   width: 100%;
   padding: .75rem !important;
   text-align: center;
-  border: solid lightgray 2px !important;
+  border: solid darkgray 2px !important;
+  background-color: lightgray !important;
 }
 
 .job-success {
-  background-color: #8dff8d !important;
+  background-color: #a5ffa5 !important;
+}
+.job-success:hover {
+  background-color: #12da12 !important;
 }
 
 .job-pending {
-  background-color: #ffff8d !important;
+  background-color: #fff4a3 !important;
+}
+.job-pending:hover {
+  background-color: #e0c91d !important;
 }
 
 .job-failed {
   background-color: #ff6b6b !important;
+}
+.job-failed:hover {
+  background-color: #d91313 !important;
 }
 
 
@@ -1381,7 +1391,7 @@ label {
     font-weight: 500;
     color: #555;
   }
-  
+
 
   .color-select-mini {
     font-size: 11px;
@@ -1394,4 +1404,3 @@ label {
     font-size: 8px;
     padding: 2px;
   }
-  
