@@ -333,6 +333,7 @@ window.addEventListener("load", function () {
     document.getElementById("progress-percentage").style.display = "none";
     document.getElementById("page-loader").style.display = "block";
     LoadHumanHipForm("full"); // Pass "full"
+    dropdown.innerHTML = "";
   });
 
   const btnLoadHumanNetwork_half = document.getElementById("btnLoadHumanNetwork_half");
@@ -341,6 +342,7 @@ window.addEventListener("load", function () {
     document.getElementById("progress-percentage").style.display = "none";
     document.getElementById("page-loader").style.display = "block";
     LoadHumanHipForm("half"); // Pass "half"
+    dropdown.innerHTML = "";
   });
 });
 
@@ -527,7 +529,7 @@ networkFileInput.addEventListener("change", async (event) => {
         total_activity_files = data.lstresponse.total_activity_files;
         firstLastKeys = data.lstresponse.first_last_keys;
 
-        const dropdown = document.getElementById("ddactivity_chunks");
+        // const dropdown = document.getElementById("ddactivity_chunks");
         dropdown.innerHTML = "";
 
         const defaultOption = document.createElement("option");
@@ -670,7 +672,7 @@ hdfFileInput.addEventListener("change", async (event) => {
             return;
           }
 
-          const dropdown = document.getElementById("ddactivity_chunks");
+          //   const dropdown = document.getElementById("ddactivity_chunks");
           dropdown.innerHTML = "";
 
           const defaultOption = document.createElement("option");
@@ -1868,6 +1870,7 @@ window.addEventListener("load", function () {
     LoadHipForm();
     enableAllElements();
     loadmouseflag = true;
+    dropdown.innerHTML = "";
   });
 });
 
