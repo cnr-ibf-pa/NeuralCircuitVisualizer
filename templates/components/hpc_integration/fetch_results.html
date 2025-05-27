@@ -47,11 +47,11 @@
       el.classList.add('btn', 'job-button', 'border');
       el.innerText = details.job_name;
       const status = details.status.toLowerCase();
-      if (status === 'success') {
+      if (status === 'successful') {
         el.classList.add('job-success', 'btn-success');
       } else if (status === 'failed') {
         el.classList.add('job-failed', 'btn-danger');
-      } else if (status === 'pending') {
+      } else if (status === 'pending' || status === 'running' || status === 'queued') {
         el.classList.add('job-pending', 'btn-info');
       }
       el.addEventListener('click', function () {
