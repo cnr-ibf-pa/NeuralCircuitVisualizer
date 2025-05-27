@@ -471,11 +471,37 @@
               <label class="form-check-label1">Dentate Gyrus</label>
             </div>
             <div class="col-8">
-              <div class="row">
+              {% comment %} <div class="row">
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="DGSMo" /><label class="form-check-label" for="DGSMo">SMo</label></div>
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="DGSMi" /><label class="form-check-label" for="DGSMi">SMi</label></div>
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="DGSG" /><label class="form-check-label" for="DGSG">SG</label></div>
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="DGH" /><label class="form-check-label" for="DGH">H</label></div>
+              </div> {% endcomment %}
+              <div class="row">
+                <div class="col-6 col-sm-4 col-md-3 border p-1">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="DGSMo" />
+                    <label class="form-check-label" for="DGSMo">SMo</label>
+                  </div>
+                </div>
+                <div class="col-6 col-sm-4 col-md-3 border p-1">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="DGSMi" />
+                    <label class="form-check-label" for="DGSMi">SMi</label>
+                  </div>
+                </div>
+                <div class="col-6 col-sm-4 col-md-3 border p-1">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="DGSG" />
+                    <label class="form-check-label" for="DGSG">SG</label>
+                  </div>
+                </div>
+                <div class="col-6 col-sm-4 col-md-3 border p-1">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="DGH" />
+                    <label class="form-check-label" for="DGH">H</label>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -486,13 +512,57 @@
               <label class="form-check-label1">CA3</label>
             </div>
             <div class="col-8">
-              <div class="row">
+              {% comment %} <div class="row">
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA3SLM" /><label class="form-check-label" for="CA3SLM">SLM</label></div>
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA3SR" /><label class="form-check-label" for="CA3SR">SR</label></div>
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA3SL" /><label class="form-check-label" for="CA3SL">SL</label></div>
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA3SP" /><label class="form-check-label" for="CA3SP">SP</label></div>
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA3SO" /><label class="form-check-label" for="CA3SO">SO</label></div>
-              </div>
+              </div> {% endcomment %}
+
+              <div class="row p-0">
+                                                      <div class="col border p-0">
+                                                        <div class="form-check">
+                                                          <label class="form-check-label" for="CA3SLM">SLM</label>
+                                                          <input class="form-check-input" type="checkbox" id="CA3SLM" />
+
+                                                          <!-- <label class="form-check-label" for="UnselectAll" >CA2</label> -->
+                                                        </div>
+                                                      </div>
+                                                      <div class="col border p-0">
+                                                        <div class="form-check">
+                                                          <label class="form-check-label" for="CA3SR">SR</label>
+                                                          <input class="form-check-input" type="checkbox" id="CA3SR" />
+
+                                                          <!-- <label class="form-check-label" for="UnselectAll" >CA1</label> -->
+                                                        </div>
+                                                      </div>
+                                                      <div class="col border p-0">
+                                                        <div class="form-check">
+                                                          <label class="form-check-label" for="CA3SL">SL</label>
+                                                          <input class="form-check-input" type="checkbox" id="CA3SL" />
+
+                                                          <!-- <label class="form-check-label" for="UnselectAll" >DG</label> -->
+                                                        </div>
+                                                      </div>
+                                                      <div class="col border p-0">
+                                                        <div class="form-check">
+                                                          <label class="form-check-label" for="CA3SP">SP</label>
+                                                          <input class="form-check-input" type="checkbox" id="CA3SP" />
+
+                                                          <!-- <label class="form-check-label" for="UnselectAll" >DG</label> -->
+                                                        </div>
+                                                      </div>
+
+                                                      <div class="col border p-0">
+                                                        <div class="form-check">
+                                                          <label class="form-check-label" for="CA3SO">SO</label>
+                                                          <input class="form-check-input" type="checkbox" id="CA3SO" />
+
+                                                          <!-- <label class="form-check-label" for="UnselectAll" >DG</label> -->
+                                                        </div>
+                                                      </div>
+                                                    </div>
             </div>
           </div>
   
@@ -502,9 +572,20 @@
               <label class="form-check-label1">CA2</label>
             </div>
             <div class="col-8">
-              <div class="row">
+              {% comment %} <div class="row">
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA2SP" /><label class="form-check-label" for="CA2SP">SP</label></div>
-              </div>
+              </div> {% endcomment %}
+            
+            
+               
+                                                    <div class="form-check">
+                                                      <label class="form-check-label" for="CA2SP">SP</label>
+                                                      <input class="form-check-input" type="checkbox" id="CA2SP" />
+
+                                                      <!-- <label class="form-check-label" for="UnselectAll" >CA2</label> -->
+                                                    </div>
+                                                  
+            
             </div>
           </div>
   
@@ -514,11 +595,47 @@
               <label class="form-check-label1">CA1</label>
             </div>
             <div class="col-8">
-              <div class="row">
+              {% comment %} <div class="row">
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA1SLM" /><label class="form-check-label" for="CA1SLM">SLM</label></div>
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA1SR" /><label class="form-check-label" for="CA1SR">SR</label></div>
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA1SP" /><label class="form-check-label" for="CA1SP">SP</label></div>
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="CA1SO" /><label class="form-check-label" for="CA1SO">SO</label></div>
+              </div> {% endcomment %}
+              <div class="row p-0">
+                <div class="col border p-0">
+                  <div class="form-check">
+                    <label class="form-check-label" for="CA1SLM">SLM</label>
+                    <input class="form-check-input" type="checkbox" id="CA1SLM" />
+
+                    <!-- <label class="form-check-label" for="UnselectAll" >CA2</label> -->
+                  </div>
+                </div>
+                <div class="col border p-0">
+                  <div class="form-check">
+                    <label class="form-check-label" for="CA1SR">SR</label>
+                    <input class="form-check-input" type="checkbox" id="CA1SR" />
+
+                    <!-- <label class="form-check-label" for="UnselectAll" >CA1</label> -->
+                  </div>
+                </div>
+
+                <div class="col border p-0">
+                  <div class="form-check">
+                    <label class="form-check-label" for="CA1SP">SP</label>
+                    <input class="form-check-input" type="checkbox" id="CA1SP" />
+
+                    <!-- <label class="form-check-label" for="UnselectAll" >DG</label> -->
+                  </div>
+                </div>
+
+                <div class="col border p-0">
+                  <div class="form-check">
+                    <label class="form-check-label" for="CA1SO">SO</label>
+                    <input class="form-check-input" type="checkbox" id="CA1SO" />
+
+                    <!-- <label class="form-check-label" for="UnselectAll" >DG</label> -->
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -529,10 +646,27 @@
               <label class="form-check-label1">Subiculum</label>
             </div>
             <div class="col-8">
-              <div class="row">
+              {% comment %} <div class="row">
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="SubSM" /><label class="form-check-label" for="SubSM">SM</label></div>
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="SubSP" /><label class="form-check-label" for="SubSP">SP</label></div>
+              </div> {% endcomment %}
+
+
+              <div class="row">
+              <div class="col border p-0">
+                <div class="form-check">
+                  <label class="form-check-label" for="SubSM">SM</label>
+                  <input class="form-check-input" type="checkbox" id="SubSM" />
+                </div>
               </div>
+
+              <div class="col border p-0">
+                <div class="form-check">
+                  <label class="form-check-label" for="SubSP">SP</label>
+                  <input class="form-check-input" type="checkbox" id="SubSP" />
+                </div>
+              </div>
+            </div>
             </div>
           </div>
   
@@ -541,7 +675,7 @@
             <div class="col-4 border">
               <label class="form-check-label1">Entorhinal Cortex (LEC)</label>
             </div>
-            <div class="col-8">
+            {% comment %} <div class="col-8">
               <div class="row">
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="LECI" /><label class="form-check-label" for="LECI">I</label></div>
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="LECII" /><label class="form-check-label" for="LECII">II</label></div>
@@ -550,14 +684,48 @@
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="LECV" /><label class="form-check-label" for="LECV">V</label></div>
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="LECVI" /><label class="form-check-label" for="LECVI">VI</label></div>
               </div>
-            </div>
+            </div> {% endcomment %}
+
+            <div class="col-8">
+                <div class="row">
+                  <div class="col border p-0">
+                    <input class="form-check-input" type="checkbox" id="LECI" />
+                    <label class="form-check-label" for="LECI">I</label>
+                  </div>
+                  <div class="col border p-0">
+                    <input class="form-check-input" type="checkbox" id="LECII" />
+                    <label class="form-check-label" for="LECII">II</label>
+                  </div>
+                  <div class="col border p-0">
+                    <input class="form-check-input" type="checkbox" id="LECIII" />
+                    <label class="form-check-label" for="LECIII">III</label>
+                  </div>
+                  <div class="col border p-0">
+                    <input class="form-check-input" type="checkbox" id="LECIV" />
+                    <label class="form-check-label" for="LECIV">IV</label>
+                  </div>
+                  <div class="col border p-0">
+                    <input class="form-check-input" type="checkbox" id="LECV" />
+                    <label class="form-check-label" for="LECV">V</label>
+                  </div>
+                  <div class="col border p-0">
+                    <input class="form-check-input" type="checkbox" id="LECVI" />
+                    <label class="form-check-label" for="LECVI">VI</label>
+                  </div>
+                </div>
+              </div>
+
+
+
+
+
           </div>
   
           <div class="row p-0">
             <div class="col-4 border">
               <label class="form-check-label1">Entorhinal Cortex (MEC)</label>
             </div>
-            <div class="col-8">
+            {% comment %} <div class="col-8">
               <div class="row">
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="MECI" /><label class="form-check-label" for="MECI">I</label></div>
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="MECII" /><label class="form-check-label" for="MECII">II</label></div>
@@ -566,7 +734,36 @@
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="MECV" /><label class="form-check-label" for="MECV">V</label></div>
                 <div class="col border p-0"><input class="form-check-input" type="checkbox" id="MECVI" /><label class="form-check-label" for="MECVI">VI</label></div>
               </div>
-            </div>
+            </div> {% endcomment %}
+
+            <div class="col-8">
+                <div class="row">
+                  <div class="col border p-0">
+                    <input class="form-check-input" type="checkbox" id="MECI" />
+                    <label class="form-check-label" for="MECI">I</label>
+                  </div>
+                  <div class="col border p-0">
+                    <input class="form-check-input" type="checkbox" id="MECII" />
+                    <label class="form-check-label" for="MECII">II</label>
+                  </div>
+                  <div class="col border p-0">
+                    <input class="form-check-input" type="checkbox" id="MECIII" />
+                    <label class="form-check-label" for="MECIII">III</label>
+                  </div>
+                  <div class="col border p-0">
+                    <input class="form-check-input" type="checkbox" id="MECIV" />
+                    <label class="form-check-label" for="MECIV">IV</label>
+                  </div>
+                  <div class="col border p-0">
+                    <input class="form-check-input" type="checkbox" id="MECV" />
+                    <label class="form-check-label" for="MECV">V</label>
+                  </div>
+                  <div class="col border p-0">
+                    <input class="form-check-input" type="checkbox" id="MECVI" />
+                    <label class="form-check-label" for="MECVI">VI</label>
+                  </div>
+                </div>
+              </div>
           </div>
   
           <!-- Neuron Type Radio Buttons -->

@@ -1368,7 +1368,7 @@ function VisualizateNeurons() {
               g = colors[i + 1],
               b = colors[i + 2];
             const neuronIndex = i / 3;
-            if (r === 1 && g === 1 && b === 0) {
+            if ((r === 1 && g === 1 && b === 0) || (r === 1 && g === 1 && b === 1)) {
               sizes[neuronIndex] = value;
             }
           }
