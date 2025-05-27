@@ -1936,39 +1936,39 @@ function SelectAllByRegion() {
   ];
 
   // below checkboxesToLog sequence is for fetch json files from hcv server
-  //   const checkboxesToLog = [
-  //     "CA1SO",
-  //     "MECIV",
-  //     "MECII",
-  //     "CA3SL",
-  //     "CA1SLM",
-  //     "CA3SP",
-  //     "LECI",
-  //     "MECV",
-  //     "LECII",
-  //     "DGSG", //DG_Granule
-  //     "CA3SLM",
-  //     "DGSMo",
-  //     "CA3SR",
-  //     "CA3SO",
-  //     "MECVI",
-  //     "LECV",
-  //     "MECI",
-  //     "LECVI",
-  //     "SubSP",
-  //     "SubSM",
-  //     "CA1SP",
-  //     "LECIV",
-  //     "DGSMi",
-  //     "DGH",
-  //     "MECIII",
-  //     "CA1SR",
-  //     "CA2SP",
-  //     "LECIII",
-  //   ];
+  const checkboxesToLog = [
+    "CA1SO",
+    "MECIV",
+    "MECII",
+    "CA3SL",
+    "CA1SLM",
+    "CA3SP",
+    "LECI",
+    "MECV",
+    "LECII",
+    "DGSG", //DG_Granule
+    "CA3SLM",
+    "DGSMo",
+    "CA3SR",
+    "CA3SO",
+    "MECVI",
+    "LECV",
+    "MECI",
+    "LECVI",
+    "SubSP",
+    "SubSM",
+    "CA1SP",
+    "LECIV",
+    "DGSMi",
+    "DGH",
+    "MECIII",
+    "CA1SR",
+    "CA2SP",
+    "LECIII",
+  ];
 
   //   // below checkboxesToLog sequence is for fetch json files from local machine
-  const checkboxesToLog = ["LECIV", "CA3SO", "MECII", "MECIII", "CA1SP", "SubSM", "MECVI", "MECIV", "CA3SP", "LECII", "CA3SLM", "CA1SO", "LECVI", "CA2SP", "DGH", "CA3SR", "DGSMi", "LECV", "MECV", "SubSP", "LECIII", "DGSMo", "LECI", "MECI", "CA1SLM", "CA1SR", "CA3SL", "DGSG"];
+  //   const checkboxesToLog = ["LECIV", "CA3SO", "MECII", "MECIII", "CA1SP", "SubSM", "MECVI", "MECIV", "CA3SP", "LECII", "CA3SLM", "CA1SO", "LECVI", "CA2SP", "DGH", "CA3SR", "DGSMi", "LECV", "MECV", "SubSP", "LECIII", "DGSMo", "LECI", "MECI", "CA1SLM", "CA1SR", "CA3SL", "DGSG"];
 
   const DGLayer = [14, 16, 21, 27];
   const CA3Layer = [10, 15, 26, 8, 1];
