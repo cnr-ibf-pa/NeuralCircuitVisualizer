@@ -234,20 +234,20 @@
 
 
                                         <!-- Select/Unselect All -->
-          <div class="row  pt-1">
-            <div class="col-6 d-flex justify-content-center">
-              <div class="form-check">
-                <input class="form-check-input" type="radio" id="SelectAll" name="NT" />
-                <label class="form-check-label" for="SelectAll">Select All</label>
-              </div>
-            </div>
-            <div class="col-6 d-flex justify-content-center">
-              <div class="form-check">
-                <input class="form-check-input" type="radio" id="UnselectAll" name="NT" />
-                <label class="form-check-label" for="UnselectAll">Unselect All</label>
-              </div>
-            </div>
-          </div>
+                                <div class="row  pt-1">
+                                    <div class="col-6 d-flex justify-content-center">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" id="SelectAll" name="NT" />
+                                        <label class="form-check-label" for="SelectAll">Select All</label>
+                                    </div>
+                                    </div>
+                                    <div class="col-6 d-flex justify-content-center">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" id="UnselectAll" name="NT" />
+                                        <label class="form-check-label" for="UnselectAll">Unselect All</label>
+                                    </div>
+                                    </div>
+                                </div>
 
                             <div class="accordion-body p-1 m-0">
                               <!-- Content for Mice Circuit -->
@@ -259,192 +259,143 @@
 
 
 
-
                              <!-- Regions Accordion Item -->
-<div class="accordion-item">
-    <h2 class="accordion-header small-head" id="Region-heading">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRegion" aria-expanded="false" aria-controls="collapseRegion">
-        Regions
-      </button>
-    </h2>
-    <div id="collapseRegion" class="accordion-collapse collapse" aria-labelledby="Region-heading" data-bs-parent="#accordionFlushRegions">
-      <div class="accordion-body p-0 m-0">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header small-head" id="Region-heading">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRegion" aria-expanded="false" aria-controls="collapseRegion">
+                                        Regions
+                                    </button>
+                                    </h2>
+                                    <div id="collapseRegion" class="accordion-collapse collapse" aria-labelledby="Region-heading" data-bs-parent="#accordionFlushRegions">
+                                    <div class="accordion-body p-0 m-0">
+                                            <div class="container">
 
+                                                <!-- Region Switches -->
+                                                <div class="row py-2">
+                                                <div class="col-md-4">
+                                                    <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="AllDGRegSwitchCheck" />
+                                                    <label class="form-check-label" for="AllDGRegSwitchCheck">Dentate Gyrus (DG)</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="AllCA3RegSwitchCheck" />
+                                                    <label class="form-check-label" for="AllCA3RegSwitchCheck">CA3</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="AllCA2RegSwitchCheck" />
+                                                    <label class="form-check-label" for="AllCA2RegSwitchCheck">CA2</label>
+                                                    </div>
+                                                </div>
+                                                </div>
 
+                                                <div class="row pb-3">
+                                                <div class="col-md-4">
+                                                    <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="AllCA1RegSwitchCheck" />
+                                                    <label class="form-check-label" for="AllCA1RegSwitchCheck">CA1</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="AllSubRegSwitchCheck" />
+                                                    <label class="form-check-label" for="AllSubRegSwitchCheck">Subiculum (Sub)</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="AllECRegSwitchCheck" />
+                                                    <label class="form-check-label" for="AllECRegSwitchCheck">Entorhinal Cortex (EC)</label>
+                                                    </div>
+                                                </div>
+                                                </div>
 
-        <div class="container">
+                                                <!-- Region Labels -->
+                                                <div class="row text-center mb-1 small text-muted region-labels">
+                                                <div class="col-md-2">DG</div>
+                                                <div class="col-md-2">CA3</div>
+                                                <div class="col-md-2">CA2</div>
+                                                <div class="col-md-2">CA1</div>
+                                                <div class="col-md-2">Sub</div>
+                                                <div class="col-md-2">EC</div>
+                                                </div>
 
-            <!-- Region Switches -->
-            <div class="row py-2">
-              <div class="col-md-4">
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="AllDGRegSwitchCheck" />
-                  <label class="form-check-label" for="AllDGRegSwitchCheck">Dentate Gyrus (DG)</label>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="AllCA3RegSwitchCheck" />
-                  <label class="form-check-label" for="AllCA3RegSwitchCheck">CA3</label>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="AllCA2RegSwitchCheck" />
-                  <label class="form-check-label" for="AllCA2RegSwitchCheck">CA2</label>
-                </div>
-              </div>
-            </div>
-
-            <div class="row pb-3">
-              <div class="col-md-4">
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="AllCA1RegSwitchCheck" />
-                  <label class="form-check-label" for="AllCA1RegSwitchCheck">CA1</label>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="AllSubRegSwitchCheck" />
-                  <label class="form-check-label" for="AllSubRegSwitchCheck">Subiculum (Sub)</label>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="AllECRegSwitchCheck" />
-                  <label class="form-check-label" for="AllECRegSwitchCheck">Entorhinal Cortex (EC)</label>
-                </div>
-              </div>
-            </div>
-
-            <!-- Region Labels -->
-            <div class="row text-center mb-1 small text-muted region-labels">
-              <div class="col-md-2">DG</div>
-              <div class="col-md-2">CA3</div>
-              <div class="col-md-2">CA2</div>
-              <div class="col-md-2">CA1</div>
-              <div class="col-md-2">Sub</div>
-              <div class="col-md-2">EC</div>
-            </div>
-
-            <!-- Color Pickers -->
-            <div class="row select-row">
-              <div class="col-md-2 border p-0">
-                <select id="colorSelectdg" class="form-select form-select-sm color-select-mini">
-                  <option value="0,0,1">Blue</option>
-                  <option value="1,0,0">Red</option>
-                  <option value="0,1,0">Green</option>
-                  <option value="1,1,0">Yellow</option>
-                  <option value="0,1,1">Cyan</option>
-                  <option value="1,0,1">Magenta</option>
-                  <option value="1,1,1">White</option>
-                </select>
-              </div>
-              <div class="col-md-2 border p-0">
-                <select id="colorSelectca3" class="form-select form-select-sm color-select-mini">
-                  <option value="0,0,1">Blue</option>
-                  <option value="1,0,0">Red</option>
-                  <option value="0,1,0">Green</option>
-                  <option value="1,1,0">Yellow</option>
-                  <option value="0,1,1">Cyan</option>
-                  <option value="1,0,1">Magenta</option>
-                  <option value="1,1,1">White</option>
-                </select>
-              </div>
-              <div class="col-md-2 border p-0">
-                <select id="colorSelectca2" class="form-select form-select-sm color-select-mini">
-                  <option value="0,0,1">Blue</option>
-                  <option value="1,0,0">Red</option>
-                  <option value="0,1,0">Green</option>
-                  <option value="1,1,0">Yellow</option>
-                  <option value="0,1,1">Cyan</option>
-                  <option value="1,0,1">Magenta</option>
-                  <option value="1,1,1">White</option>
-                </select>
-              </div>
-              <div class="col-md-2 border p-0">
-                <select id="colorSelectca1" class="form-select form-select-sm color-select-mini">
-                  <option value="0,0,1">Blue</option>
-                  <option value="1,0,0">Red</option>
-                  <option value="0,1,0">Green</option>
-                  <option value="1,1,0">Yellow</option>
-                  <option value="0,1,1">Cyan</option>
-                  <option value="1,0,1">Magenta</option>
-                  <option value="1,1,1">White</option>
-                </select>
-              </div>
-              <div class="col-md-2 border p-0">
-                <select id="colorSelectsub" class="form-select form-select-sm color-select-mini">
-                  <option value="0,0,1">Blue</option>
-                  <option value="1,0,0">Red</option>
-                  <option value="0,1,0">Green</option>
-                  <option value="1,1,0">Yellow</option>
-                  <option value="0,1,1">Cyan</option>
-                  <option value="1,0,1">Magenta</option>
-                  <option value="1,1,1">White</option>
-                </select>
-              </div>
-              <div class="col-md-2 border p-0">
-                <select id="colorSelectec" class="form-select form-select-sm color-select-mini">
-                  <option value="0,0,1">Blue</option>
-                  <option value="1,0,0">Red</option>
-                  <option value="0,1,0">Green</option>
-                  <option value="1,1,0">Yellow</option>
-                  <option value="0,1,1">Cyan</option>
-                  <option value="1,0,1">Magenta</option>
-                  <option value="1,1,1">White</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      </div>
-    </div>
-  </div>
+                                                <!-- Color Pickers -->
+                                ∏                <div class="row select-row">
+                                                <div class="col-md-2 border p-0">
+                                                    <select id="colorSelectdg" class="form-select form-select-sm color-select-mini">
+                                                    <option value="0,0,1">Blue</option>
+                                                    <option value="1,0,0">Red</option>
+                                                    <option value="0,1,0">Green</option>
+                                                    <option value="1,1,0">Yellow</option>
+                                                    <option value="0,1,1">Cyan</option>
+                                                    <option value="1,0,1">Magenta</option>
+                                                    <option value="1,1,1">White</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2 border p-0">
+                                                    <select id="colorSelectca3" class="form-select form-select-sm color-select-mini">
+                                                    <option value="0,0,1">Blue</option>
+                                                    <option value="1,0,0">Red</option>
+                                                    <option value="0,1,0">Green</option>
+                                                    <option value="1,1,0">Yellow</option>
+                                                    <option value="0,1,1">Cyan</option>
+                                                    <option value="1,0,1">Magenta</option>
+                                                    <option value="1,1,1">White</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2 border p-0">
+                                                    <select id="colorSelectca2" class="form-select form-select-sm color-select-mini">
+                                                    <option value="0,0,1">Blue</option>
+                                                    <option value="1,0,0">Red</option>
+                                                    <option value="0,1,0">Green</option>
+                                                    <option value="1,1,0">Yellow</option>
+                                                    <option value="0,1,1">Cyan</option>
+                                                    <option value="1,0,1">Magenta</option>
+                                                    <option value="1,1,1">White</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2 border p-0">
+                                                    <select id="colorSelectca1" class="form-select form-select-sm color-select-mini">
+                                                    <option value="0,0,1">Blue</option>
+                                                    <option value="1,0,0">Red</option>
+                                                    <option value="0,1,0">Green</option>
+                                                    <option value="1,1,0">Yellow</option>
+                                                    <option value="0,1,1">Cyan</option>
+                                                    <option value="1,0,1">Magenta</option>
+                                                    <option value="1,1,1">White</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2 border p-0">
+                                                    <select id="colorSelectsub" class="form-select form-select-sm color-select-mini">
+                                                    <option value="0,0,1">Blue</option>
+                                                    <option value="1,0,0">Red</option>
+                                                    <option value="0,1,0">Green</option>
+                                                    <option value="1,1,0">Yellow</option>
+                                                    <option value="0,1,1">Cyan</option>
+                                                    <option value="1,0,1">Magenta</option>
+                                                    <option value="1,1,1">White</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2 border p-0">
+                                                    <select id="colorSelectec" class="form-select form-select-sm color-select-mini">
+                                                    <option value="0,0,1">Blue</option>
+                                                    <option value="1,0,0">Red</option>
+                                                    <option value="0,1,0">Green</option>
+                                                    <option value="1,1,0">Yellow</option>
+                                                    <option value="0,1,1">Cyan</option>
+                                                    <option value="1,0,1">Magenta</option>
+                                                    <option value="1,1,1">White</option>
+                                                    </select>
+                                                </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
 
 
@@ -1684,10 +1635,7 @@
                     </div>
                   </div>
                 </div>
-                {% comment %}
-                {% include "components/hpc_integration/job_submission.html" %}
-                {% include "components/hpc_integration/fetch_results.html" %}
-                {% endcomment %}
+                {% include "components/hpc_integration/job_submission.html" %} {% include "components/hpc_integration/fetch_results.html" %}
               </div>
             </div>
 
