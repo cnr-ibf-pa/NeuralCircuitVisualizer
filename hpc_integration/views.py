@@ -136,18 +136,16 @@ def download_activity_network(request):
             logger.error(f'Error creating download directory: {err}')
             return HttpResponseServerError(content=str(err))
 
-    activity_file = os.path.join(download_dir, 'activity_network.hdf5')
-    if not os.path.exists(activity_file):
+    activity_file_name = 'activity_network.hdf5'
+    activity_file_path = os.path.join(download_dir, activity_file_name)
+    if not os.path.exists(activity_file_path):
         try:
             file_list = JobHelper().fetch_job_files(hpc, job_id, request.session['oidc_access_token'])
-            for f in file_list:
-                if isinstance(f, UnicorePathFile):
-                    if f.name == 'activity_network.hdf5':
-                        f.download(activity_file)
+            file_list[activity_file_name].download(activity_file_path)
         except Exception as err:
             logger.error(f'Error while downloading results: {err}')
             return HttpResponseServerError(content=str(err))
 
-    response = FileResponse(open(activity_file, 'rb'), content_type='application/octet-stream')
-    response['Content-Disposition'] = 'attachment; filename="activity_network.hdf5"'
+    response = FileResponse(open(activity_file_path, 'rb'), content_type='application/octet-stream')
+    response['Content-Disposition'] = f'attachment; filename="{activity_file_name}"'
     return response
