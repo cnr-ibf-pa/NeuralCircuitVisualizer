@@ -3,7 +3,7 @@ import shutil
 import os
 from pyunicore.client import PathFile as UnicorePathFile
 
-from django.http import HttpResponseForbidden, HttpResponseServerError
+from django.http import FileResponse, HttpResponseForbidden, HttpResponseServerError
 from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, HttpResponseNotAllowed
 
 from hpc_integration import forms
@@ -12,6 +12,9 @@ from hpc_integration.utils import messages, get_tmp_dir, get_tmp_working_dir
 from hpc_integration.utils.decorators import login_required
 from hpc_integration.helper.job_helper import JobHelper
 from hpc_integration.utils.errors import ForbiddenException
+
+from neural_circuit_visualizer.settings import MEDIA_ROOT
+
 
 import logging
 logger = logging.getLogger(__name__)
@@ -30,22 +33,8 @@ def submit_job(request):
 
     data = form.cleaned_data
 
-    # prepare zip file
-    working_dir = request.session.get('working_dir')
-    if not working_dir or not os.path.exists(working_dir):
-        logger.info('Working directory not found, creating a new one')
-        working_dir = get_tmp_working_dir()
-        request.session['working_dir'] = working_dir
-
-    zip_filename = os.path.join(get_tmp_dir(), f'{data["job_name"]}.zip')
-    if os.path.exists(zip_filename):
-        logging.error(f'Job name "{data["job_name"]}" already exists')
-        return JsonResponse(status=BAD_REQUEST, data={'job_name': [{'message': messages.JOB_NAME_ALREADY_EXISTS}]})
-
     try:
-        JobHelper().make_scripts(working_dir, data)
-        shutil.make_archive(base_name=zip_filename.replace('.zip', ''), format='zip', root_dir=working_dir)
-        JobHelper().submit_job(data["hpc"], zip_filename, data, request.session['oidc_access_token'])
+        JobHelper().submit_job(data.pop("hpc"), data, request.session['oidc_access_token'])
     except ForbiddenException as err:
         logger.error(f'Error while submitting job: {err}')
         return HttpResponseForbidden(content=str(err))
@@ -121,3 +110,42 @@ def download_job_results(request):
     except Exception as err:
         logger.error(f'Error while downloading results: {err}')
         return HttpResponseServerError(content=str(err))
+
+
+
+@login_required
+def download_activity_network(request):
+    if request.method != 'GET':
+        return HttpResponseNotAllowed('GET')
+
+    job_id = request.GET.get('job_id')
+
+    if not job_id:
+        return HttpResponseBadRequest(content=messages.JOB_ID_NOT_PROVIDED)
+
+    hpc = request.session.get('hpc')
+    if not hpc:
+        logger.error('HPC not found in session')
+        return HttpResponseServerError()
+
+    download_dir = os.path.join(str(MEDIA_ROOT), request.user.mitreid_sub, job_id)
+    if not os.path.exists(download_dir):
+        try:
+            os.makedirs(download_dir)
+        except Exception as err:
+            logger.error(f'Error creating download directory: {err}')
+            return HttpResponseServerError(content=str(err))
+
+    activity_file_name = 'activity_network.hdf5'
+    activity_file_path = os.path.join(download_dir, activity_file_name)
+    if not os.path.exists(activity_file_path):
+        try:
+            file_list = JobHelper().fetch_job_files(hpc, job_id, request.session['oidc_access_token'])
+            file_list[activity_file_name].download(activity_file_path)
+        except Exception as err:
+            logger.error(f'Error while downloading results: {err}')
+            return HttpResponseServerError(content=str(err))
+
+    response = FileResponse(open(activity_file_path, 'rb'), content_type='application/octet-stream')
+    response['Content-Disposition'] = f'attachment; filename="{activity_file_name}"'
+    return response
