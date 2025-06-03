@@ -1,0 +1,22 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploying changes in production
+    runs-on: ubuntu-latest
+    steps:
+    - name: updating code from ssh
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USERNAME }}
+        key: ${{ secrets.PRODUCTION_KEY }}
+        script_stop: true
+        script: |
+          $HOME/bin/update-and-restart-ncv.sh

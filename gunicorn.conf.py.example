@@ -1,0 +1,27 @@
+import multiprocessing
+
+
+# base conf
+
+wsgi_app = 'neural_circuit_visualizer.wsgi:application'
+bind = '127.0.0.1:9000'
+
+workers = multiprocessing.cpu_count() * 2 + 1
+worker_class = 'sync'
+
+timeout = 3600
+
+
+# log conf
+
+loglevel = 'info'
+
+accesslog = 'gunicorn_access.log'
+errorlog = 'gunicorn_error.log'
+
+
+# system conf
+
+proc_name = 'ncv_gunicorn'
+# user = "www-data"
+# group = "www-data"
