@@ -10,7 +10,9 @@
       <link rel="stylesheet" href="{% static 'css/main.css' %}" />
       <link rel="stylesheet" href="{% static 'css/alert.css' %}" />
 
-      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous" />
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous" />
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
 
       <style>
         .lil-gui .gui-stats {
@@ -70,36 +72,36 @@
       </div>
 
         <div class="container-fluid main-container g-0">
-            <div class="row align-items-center py-3 px-2 header-row" style="background-color: #2a6b38">
-            <!-- Logo -->
-            <div class="col-12 col-md-3 text-center text-md-start mb-2 mb-md-0">
-                    <!-- <object data="img/logoEscritta.svg" class="img-fluid" type="image/svg+xml" style="max-height: 60px"></object> -->
-                    <img src="{% static 'img/logoEscritta.svg' %}" alt="Logo" style="max-height: 60px" />
+            <div class="row align-items-center py-3 px-2 header-row" style="background-color: #2f3542">
+                <!-- Logo -->
+                <div class="col-12 col-md-3 text-center text-md-start mb-2 mb-md-0">
+                        <!-- <object data="img/logoEscritta.svg" class="img-fluid" type="image/svg+xml" style="max-height: 60px"></object> -->
+                        <img src="{% static 'img/logoEscritta.svg' %}" alt="Logo" style="max-height: 60px" />
+                </div>
+
+                <!-- Title -->
+                <div class="col-12 col-md-6 text-center mb-2 mb-md-0 text-white">
+                        <h2 class="visualizer-title">Neural Circuit Visualizer</h2>
+                </div>
+
+                <!-- Header Icons -->
+                <div class="col-12 col-md-3 d-flex align-items-center justify-content-end text-center text-md-end mb-2 mb-md-0 pe-4">
+                    <a href="/" class="header-icon-link text-decoration-none me-4">
+                        <img src="{% static 'img/docs/home.svg' %}" alt="Home" class="header-icon" />
+                    </a>
+                    <a href="/docs" target="_blank" class="header-icon-link text-decoration-none me-4">
+                        <img src="{% static 'img/docs/file-info.svg' %}" alt="Info" class="header-icon" />
+                    </a>
+                    <a href="/docs#video" class="header-icon-link text-decoration-none me-4">
+                        <img src="{% static 'img/docs/brand-youtube.svg' %}" alt="Video" class="header-icon" />
+                    </a>
+                    {% include "components/login_logout.html" %}
+                </div>
             </div>
 
-            <!-- Title -->
-            <div class="col-12 col-md-6 text-center mb-2 mb-md-0 text-white">
-                    <h2 class="visualizer-title">Neural Circuit Visualizer</h2>
-            </div>
-
-            <!-- Header Icons -->
-            <div class="col-12 col-md-3 d-flex align-items-center justify-content-end text-center text-md-end mb-2 mb-md-0 pe-4">
-                <a href="/" class="header-icon-link text-decoration-none me-4">
-                    <img src="{% static 'img/docs/home.svg' %}" alt="Home" class="header-icon" />
-                </a>
-                <a href="/docs" target="_blank" class="header-icon-link text-decoration-none me-4">
-                    <img src="{% static 'img/docs/file-info.svg' %}" alt="Info" class="header-icon" />
-                </a>
-                <a href="/docs#video" class="header-icon-link text-decoration-none me-4">
-                    <img src="{% static 'img/docs/brand-youtube.svg' %}" alt="Video" class="header-icon" />
-                </a>
-                {% include "components/login_logout.html" %}
-            </div>
-        </div>
-
-            <div class="row min-vh-100" g-0 tyle="overflow-y: auto; max-height: 100vh">
+            <div class="row min-vh-100 m-1" g-0>
             <div class="col-12 col-md-4 col-lg-3 d-flex flex-column" style="overflow-y: auto; max-height: 100vh">
-                <div class="accordion accordion-flush border border-success" id="accordionFlushExample">
+                <div class="accordion accordion-flush border" id="accordionFlushExample">
                     <div class="accordion-item">
                         <h2 class="accordion-header border-bottom heading" id="flush-headingOne">
                             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="true" aria-controls="flush-collapseOne">UPLOAD DATA</button>
@@ -171,8 +173,8 @@
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">VISUALIZE DEMO CIRCUIT</button>
                     </h2>
 
-                    <div class="col-12 col-md-4 col-lg-12 d-flex flex-column p-0" style="overflow-y: auto; max-height: 100vh">
-                    <div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo" data-bs-parent="#accordionFlushExample">
+                    <div class="col-12 col-md-4 col-lg-12 d-flex flex-column p-0 " style="overflow-y: auto; max-height: 100vh">
+                     <div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo" data-bs-parent="#accordionFlushExample">
                         <div class="accordion-body">
                         <!-- Sub Accordion Starts Here -->
                             <div class="accordion accordion-flush" id="accordionSubCircuits">
@@ -1593,7 +1595,7 @@
                         <!-- Sub Accordion Ends Here -->
                 </div>
                 </div>
-            </div>
+                </div>
                         {% include "components/hpc_integration/job_submission.html" %} {% include "components/hpc_integration/fetch_results.html" %}
             </div>
                         </div>
@@ -1628,7 +1630,7 @@
                         </div>
                         </div>
 
-                        <img id="histogramImage" />
+                        <img class="rounded shadow-sm" id="histogramImage" />
                         <!-- <img id="rasterImage" style="display:none; width: 100;" /> -->
 
                         <!-- The Modal -->
@@ -1639,81 +1641,106 @@
                         </div>
                     </div>
 
-                    <div id="container" class="col-12 col-md-8 col-lg-9 d-flex flex-column min-vh-80">
-                        <div class="row border position-sticky top-0" style="background-color: #2a6b38">
-                        <select id="ddactivity_chunks" class="select col-9 col-md-4 col-lg-2 border border-light border-left-0 p-1" aria-label="activities_chunks" style="background-color: #2a6b38">
-                            <option selected>Activity windows</option>
-                        </select>
+                    <div id="" class="col-12 col-md-12 col-lg-9 d-flex flex-column">
+                        
+                        <div class="row control-panel align-items-center custom-header ">
+                          {% comment %} <div class="row " style="background-color: #a8a8aa; border-color:#abaaa0" > {% endcomment %}
+                            {% comment %} <select id="ddactivity_chunks" class="select col-9 col-md-4 col-lg-2" aria-label="activities_chunks">
+                                <option selected>Activity windows</option>
+                            </select> {% endcomment %}
 
-                        <!-- Timestamp Buttons -->
-
-                        <!-- Start Button -->
-                        <div class="col-6 col-sm-3 col-md-2 col-lg-1 p-2 border border-light">
-                            <button type="button" class="btn border w-100" id="startbtn">Start</button>
-                        </div>
-
-                        <!-- Pause Button -->
-                        <div class="col-6 col-sm-3 col-md-2 col-lg-1 p-2 border border-light">
-                            <button type="button" class="btn border w-100" id="pause">Pause</button>
-                        </div>
-                        <!-- Reset Button -->
-                        <div class="col-6 col-sm-3 col-md-2 col-lg-1 p-2 border border-light">
-                            <button type="button" class="btn border w-100" id="restart">Restart</button>
-                        </div>
-
-                        <!-- Time Display -->
-                        <div class="col-12 col-sm-6 col-md-4 col-lg-4 border border-light">
-                            <div class="simulation-container">
-                            <!-- Top display row: time + start/end -->
-                            <div class="time-display d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                <div id="time">
-                                t =
-                                <span id="current-time">0.0</span>
-                                /
-                                <span id="total-time">0.0</span>
-                                ms
+                            <!-- Dropdown -->
+                                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-2 mb-lg-0 p-2" >
+                                <select id="ddactivity_chunks" class="form-select" style="background-color:#b8b8b7">
+                                    <option selected>Activity windows</option>
+                                </select>
                                 </div>
-                                <div class="input-group-container">
-                                <label class="styled-label">
-                                    Start:
-                                    <input type="number" class="styled-input" id="start-time" min="0" step="0.1" />
-                                </label>
-                                <label class="styled-label">
-                                    End:
-                                    <input type="number" class="styled-input" id="end-time" min="0" step="0.1" />
-                                </label>
+
+
+
+                            <!-- Start Button -->
+
+<div class="col-12 col-sm-6 col-md-6 col-lg-2 p-2">
+  <div class="ncv-button-group d-flex flex-wrap justify-content-center gap-4">
+  <button id="startbtn" class="ncv-btn" title="Play">
+    <i class="bi bi-play-fill"></i>
+  </button>
+
+
+  <button id="pause" class="ncv-btn" title="Pause">
+    <i class="bi bi-pause-fill"></i>
+  </button>
+  <button id="restart" class="ncv-btn" title="Restart">
+    <i class="bi bi-arrow-clockwise"></i>
+  </button>
+</div>
+</div>
+
+                            {% comment %} <div class="col-6 col-sm-3 col-md-2 col-lg-1 p-2">
+                                <button type="button" class="btn border w-100" id="start">Start</button>
+                            </div>
+
+                            <!-- Pause Button -->
+                            <div class="col-6 col-sm-3 col-md-2 col-lg-1 p-2">
+                                <button type="button" class="btn border w-100" id="pause">Pause</button>
+                            </div>
+                            <!-- Reset Button -->
+                            <div class="col-6 col-sm-3 col-md-2 col-lg-1 p-2">
+                                <button type="button" class="btn border w-100" id="restart">Restart</button>
+                            </div>
+ {% endcomment %}
+
+
+
+
+                            <!-- Time Display -->
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-4">
+                                <div class="simulation-container">
+                                <!-- Top display row: time + start/end -->
+                                <div class="time-display d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    <div id="time">
+                                    t =
+                                    <span id="current-time">0.0</span>
+                                    /
+                                    <span id="total-time">0.0</span>
+                                    ms
+                                    </div>
+                                    <div class="input-group-container">
+                                    <label class="styled-label">
+                                        Start:
+                                        <input type="number" class="styled-input" id="start-time" min="0" step="0.1" />
+                                    </label>
+                                    <label class="styled-label">
+                                        End:
+                                        <input type="number" class="styled-input" id="end-time" min="0" step="0.1" />
+                                    </label>
+                                    </div>
+                                </div>
+
+                                <!-- Time range slider -->
+                                <input type="range" id="timebar" step="0.1" value="0" style="width: 100%; margin-top: 5px" />
                                 </div>
                             </div>
 
-                            <!-- Time range slider -->
-                            <input type="range" id="timebar" step="0.1" value="0" style="width: 100%; margin-top: 5px" />
-                            </div>
+                           
                         </div>
 
-                        <button id="togglePanelBtn">☰ Visualization Controls</button>
 
-                        <div id="panel" style="display: none"></div>
-
-                        <button class="openbtn" id="btnopen">☰ Playback Configuration</button>
-
-                        <!-- working on playback -->
-
-                        <!-- Dynamic Stats -->
-                        <div id="networkspikes" class="col-12 col-md-3 d-flex justify-content-center justify-content-md-end gap-3">
-                            <span id="lblnetwork" class="badge rounded-pill bg-dark text-light shadow-sm px-3 py-2"># neurons: 0</span>
-                            <span id="lblspikes" class="badge rounded-pill bg-dark text-light shadow-sm px-3 py-2"># spikes: 0</span>
+                        <div class="row mt-1 min-vh-100" style="background-color:black;" >
+                            <canvas id="neuronCanvas"></canvas>
                         </div>
-
-                        <div class="progressbar">
-                            <div class="progress" id="progress"></div>
-                        </div>
-                        <!-- Progress Bar -->
-                        </div>
-                        <canvas id="neuronCanvas"></canvas>
                     </div>
+                    
             </div>
         </div>
 
+         
+                            <div class="progressbar">
+                                <div class="progress" id="progress"></div>
+                            </div>
+                            <!-- Progress Bar -->
+
+        <button class="openbtn" id="btnopen">☰ Playback Configuration</button>
         <div class="playback-container" id="playbackcontainer">
             <div class="config-row">
             <label for="simTimestepRange">Playback Timestep (ms)</label>
@@ -1731,6 +1758,13 @@
             </div>
             </div>
         </div>
+
+        
+
+        <button id="togglePanelBtn">☰ Visualization Controls</button>
+        <div id="panel" style="display: none"></div>
+
+
 
         <!-- Bootstrap Modal for File Details -->
         <div class="modal fade" id="fileDetailsModal" tabindex="-1" aria-labelledby="fileDetailsModalLabel">
@@ -1828,7 +1862,11 @@
             </div>
         </div>
 
-
+  <!-- Dynamic Stats -->
+                            <div id="networkspikes" class="col-12 col-md-3 d-flex justify-content-center justify-content-md-end gap-3">
+                                <span id="lblnetwork" class="badge rounded-pill bg-dark text-light shadow-sm px-3 py-2"># neurons: 0</span>
+                                <span id="lblspikes" class="badge rounded-pill bg-dark text-light shadow-sm px-3 py-2"># spikes: 0</span>
+                            </div>
 
             <!-- Bootstrap Modal for File Details -->
             <div class="modal fade" id="confileDetailsModal" tabindex="-1" aria-labelledby="confileDetailsModalLabel">

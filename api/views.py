@@ -415,71 +415,146 @@ def generate_raster_plot(chunk_data):
 
 
 
-def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="mediumseagreen"):
+# def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="mediumseagreen"):
+#     try:
+#         if not chunk_data or not isinstance(chunk_data, dict):
+#             return "Error: No data available for plotting."
+
+#         # Convert all spike times to float for histogram binning
+#         all_spike_times = []
+#         active_neurons = set()
+#         for t_str, gids in chunk_data.items():
+#             t = float(t_str)
+#             all_spike_times.extend([t] * len(gids))  # Repeat time per spiking GID
+#             active_neurons.update(gids)
+
+#         # Compute histogram data
+#         t_min, t_max = min(all_spike_times), max(all_spike_times)
+#         bin_edges = np.linspace(t_min, t_max, bins + 1)
+#         spike_counts, _ = np.histogram(all_spike_times, bins=bin_edges)
+
+#         # Compute Mean Firing Rate (MFR)
+#         total_spikes = len(all_spike_times)
+#         total_neurons = len(active_neurons)
+#         total_time_sec = (t_max - t_min) / 1000.0  # convert ms to seconds
+#         mfr = (total_spikes / total_neurons) / total_time_sec if total_neurons > 0 and total_time_sec > 0 else 0
+#         # Create figure and axis
+#         fig, ax = plt.subplots(figsize=(12, 6), dpi=300)
+
+#         # Plot histogram
+#         bars = ax.bar(bin_edges[:-1], spike_counts, width=np.diff(bin_edges), color=color, alpha=0.7, edgecolor="black")
+
+#         # Annotate bars for legend
+#         legend_labels = {
+#             "# Max Spike": max(spike_counts),
+#             "# Min Spike ": min(spike_counts),
+#             "# Spikes": total_spikes,
+#             "# Neurons": total_neurons,
+
+#         }
+#         legend_text = "\n".join([f"{key}: {value}" for key, value in legend_labels.items()])
+
+#         # Create legend box
+#         legend_box = plt.gcf().text(0.80, 0.79, legend_text, fontsize=8, bbox=dict(facecolor='white', alpha=0.5))
+#         # plt.gcf().text(0.75, 0.85, legend_text, fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
+
+#         # Axes and title
+#         ax.set_xlim(t_min, t_max)
+#         ax.set_xlabel("Time (ms)", fontsize=16, fontweight="bold")
+#         ax.set_ylabel("Number of Firing Neurons", fontsize=16, fontweight="bold")
+#         ax.set_title(f"Chunk {chunk_number} - MFR: {mfr:.2f} Hz", fontsize=18, fontweight="bold")
+
+#         # Improve tick readability
+#         ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
+#         ax.tick_params(axis='both', which='major', labelsize=12)
+#         ax.grid(True, linestyle="--", alpha=0.6)
+
+#         # Save plot to buffer
+#         img_buffer = io.BytesIO()
+#         plt.savefig(img_buffer, format="png", bbox_inches="tight", dpi=300)
+#         img_buffer.seek(0)
+#         img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+#         plt.close()
+
+#         return img_base64
+#     except Exception as e:
+#         return f"Error generating spike histogram: {str(e)}"
+
+
+def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="white"):
     try:
         if not chunk_data or not isinstance(chunk_data, dict):
             return "Error: No data available for plotting."
 
-        # Convert all spike times to float for histogram binning
+        import numpy as np
+        import matplotlib.pyplot as plt
+        import matplotlib.ticker as ticker
+        import io
+        import base64
+
         all_spike_times = []
         active_neurons = set()
         for t_str, gids in chunk_data.items():
             t = float(t_str)
-            all_spike_times.extend([t] * len(gids))  # Repeat time per spiking GID
+            all_spike_times.extend([t] * len(gids))
             active_neurons.update(gids)
 
-        # Compute histogram data
         t_min, t_max = min(all_spike_times), max(all_spike_times)
         bin_edges = np.linspace(t_min, t_max, bins + 1)
         spike_counts, _ = np.histogram(all_spike_times, bins=bin_edges)
 
-        # Compute Mean Firing Rate (MFR)
         total_spikes = len(all_spike_times)
         total_neurons = len(active_neurons)
-        total_time_sec = (t_max - t_min) / 1000.0  # convert ms to seconds
+        total_time_sec = (t_max - t_min) / 1000.0
         mfr = (total_spikes / total_neurons) / total_time_sec if total_neurons > 0 and total_time_sec > 0 else 0
-        # Create figure and axis
+
         fig, ax = plt.subplots(figsize=(12, 6), dpi=300)
+        fig.patch.set_facecolor("#33373d")
+        ax.set_facecolor("#33373d")
 
-        # Plot histogram
-        bars = ax.bar(bin_edges[:-1], spike_counts, width=np.diff(bin_edges), color=color, alpha=0.7, edgecolor="black")
+        bars = ax.bar(
+            bin_edges[:-1], spike_counts,
+            width=np.diff(bin_edges),
+            color=color, edgecolor="black", alpha=0.9
+        )
 
-        # Annotate bars for legend
         legend_labels = {
             "# Max Spike": max(spike_counts),
-            "# Min Spike ": min(spike_counts),
+            "# Min Spike": min(spike_counts),
             "# Spikes": total_spikes,
             "# Neurons": total_neurons,
-
         }
         legend_text = "\n".join([f"{key}: {value}" for key, value in legend_labels.items()])
+        plt.gcf().text(
+            0.80, 0.79, legend_text,
+            fontsize=8,
+            bbox=dict(facecolor='white', alpha=0.5),
+            color='black'
+        )
 
-        # Create legend box
-        legend_box = plt.gcf().text(0.80, 0.79, legend_text, fontsize=8, bbox=dict(facecolor='white', alpha=0.5))
-        # plt.gcf().text(0.75, 0.85, legend_text, fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
-
-        # Axes and title
         ax.set_xlim(t_min, t_max)
-        ax.set_xlabel("Time (ms)", fontsize=16, fontweight="bold")
-        ax.set_ylabel("Number of Firing Neurons", fontsize=16, fontweight="bold")
-        ax.set_title(f"Chunk {chunk_number} - MFR: {mfr:.2f} Hz", fontsize=18, fontweight="bold")
+        ax.set_xlabel("Time (ms)", fontsize=16, fontweight="bold", color="white")
+        ax.set_ylabel("Number of Firing Neurons", fontsize=16, fontweight="bold", color="white")
+        ax.set_title(f"Chunk {chunk_number} - MFR: {mfr:.2f} Hz", fontsize=18, fontweight="bold", color="white")
 
-        # Improve tick readability
+        ax.tick_params(axis='x', colors='white')
+        ax.tick_params(axis='y', colors='white')
         ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
-        ax.tick_params(axis='both', which='major', labelsize=12)
-        ax.grid(True, linestyle="--", alpha=0.6)
+        ax.grid(True, linestyle="--", alpha=0.4)
 
-        # Save plot to buffer
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_color("white")
+
         img_buffer = io.BytesIO()
-        plt.savefig(img_buffer, format="png", bbox_inches="tight", dpi=300)
+        plt.savefig(img_buffer, format="png", bbox_inches="tight", dpi=300, facecolor=fig.get_facecolor())
         img_buffer.seek(0)
         img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
         plt.close()
 
         return img_base64
+
     except Exception as e:
         return f"Error generating spike histogram: {str(e)}"
-
 
 def generate_network_graph(network_data):
     try:

@@ -1167,8 +1167,8 @@ function createArrowOverlayFromPCA(pcaAxes) {
   arrowsScene = new THREE.Scene();
   arrowsScene.background = null; // ✅ ensure transparent background
   arrowsCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
-  arrowsCamera.position.set(0, 0, 5);
-  arrowsCamera.lookAt(0, 0, 0);
+  arrowsCamera.position.set(0, 0, 6);
+  arrowsCamera.lookAt(0, -1, 0);
   arrowsScene.add(new THREE.AmbientLight(0xffffff, 2));
 
   addAnatomicalArrowsFromPCA(arrowsScene, new THREE.Vector3(0, 0, 0), 1.0, pcaAxes);
