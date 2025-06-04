@@ -294,7 +294,7 @@ async function LoadHipForm() {
     // Function to process each file
     const processFile = async (file, index) => {
       document.getElementById("msgprogress").innerText = `Please wait a moment while we process data for visualization. Your patience is appreciated. \n` + file.filename;
-
+      console.log(file.filename);
       // Calculate and display progress
       const percentage = Math.round(((index + 1) / totalFiles) * 100);
       document.getElementById("progress-percentage").innerText = `${percentage}%`;
