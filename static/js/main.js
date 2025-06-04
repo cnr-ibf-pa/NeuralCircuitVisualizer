@@ -2018,43 +2018,73 @@ function SelectAllByRegion() {
     },
   ];
 
-  let currUrl = String(window.location.href);
-  let checkboxesToLog = null;
-  if (currUrl.includes("127.0.0.1:8000")) {
-    checkboxesToLog = ["LECIV", "CA3SO", "MECII", "MECIII", "CA1SP", "SubSM", "MECVI", "MECIV", "CA3SP", "LECII", "CA3SLM", "CA1SO", "LECVI", "CA2SP", "DGH", "CA3SR", "DGSMi", "LECV", "MECV", "SubSP", "LECIII", "DGSMo", "LECI", "MECI", "CA1SLM", "CA1SR", "CA3SL", "DGSG"];
-  } else if (currUrl.contains("ebrains-italy")) {
-    checkboxesToLog = [
-      "CA1SO",
-      "MECIV",
-      "MECII",
-      "CA3SL",
-      "CA1SLM",
-      "CA3SP",
-      "LECI",
-      "MECV",
-      "LECII",
-      "DGSG", //DG_Granule
-      "CA3SLM",
-      "DGSMo",
-      "CA3SR",
-      "CA3SO",
-      "MECVI",
-      "LECV",
-      "MECI",
-      "LECVI",
-      "SubSP",
-      "SubSM",
-      "CA1SP",
-      "LECIV",
-      "DGSMi",
-      "DGH",
-      "MECIII",
-      "CA1SR",
-      "CA2SP",
-      "LECIII",
-    ];
-  }
+  //   let currUrl = String(window.location.href);
+  //   let checkboxesToLog = null;
+  //   if (currUrl.includes("127.0.0.1:8000")) {
+  //     checkboxesToLog = ["LECIV", "CA3SO", "MECII", "MECIII", "CA1SP", "SubSM", "MECVI", "MECIV", "CA3SP", "LECII", "CA3SLM", "CA1SO", "LECVI", "CA2SP", "DGH", "CA3SR", "DGSMi", "LECV", "MECV", "SubSP", "LECIII", "DGSMo", "LECI", "MECI", "CA1SLM", "CA1SR", "CA3SL", "DGSG"];
+  //   } else if (currUrl.contains("ebrains-italy")) {
+  //     checkboxesToLog = [
+  //       "CA1SO",
+  //       "MECIV",
+  //       "MECII",
+  //       "CA3SL",
+  //       "CA1SLM",
+  //       "CA3SP",
+  //       "LECI",
+  //       "MECV",
+  //       "LECII",
+  //       "DGSG", //DG_Granule
+  //       "CA3SLM",
+  //       "DGSMo",
+  //       "CA3SR",
+  //       "CA3SO",
+  //       "MECVI",
+  //       "LECV",
+  //       "MECI",
+  //       "LECVI",
+  //       "SubSP",
+  //       "SubSM",
+  //       "CA1SP",
+  //       "LECIV",
+  //       "DGSMi",
+  //       "DGH",
+  //       "MECIII",
+  //       "CA1SR",
+  //       "CA2SP",
+  //       "LECIII",
+  //     ];
+  //   }
 
+  const checkboxesToLog = [
+    "CA1SO",
+    "MECIV",
+    "MECII",
+    "CA3SL",
+    "CA1SLM",
+    "CA3SP",
+    "LECI",
+    "MECV",
+    "LECII",
+    "DGSG", //DG_Granule
+    "CA3SLM",
+    "DGSMo",
+    "CA3SR",
+    "CA3SO",
+    "MECVI",
+    "LECV",
+    "MECI",
+    "LECVI",
+    "SubSP",
+    "SubSM",
+    "CA1SP",
+    "LECIV",
+    "DGSMi",
+    "DGH",
+    "MECIII",
+    "CA1SR",
+    "CA2SP",
+    "LECIII",
+  ];
   const DGLayer = [14, 16, 21, 27];
   const CA3Layer = [10, 15, 26, 8, 1];
   const CA2Layer = [13];
@@ -2993,20 +3023,22 @@ document.getElementById("mockActivityButton").addEventListener("click", mockActi
 
 function downloadActivityNetworkFromJob(jobId) {
   // used in "fetched_results" component
-  console.log('Mock activity triggered');
-  fetch('hpc-integration/download-activity-network?job_id=' + jobId)
-    .then(response => {
+  console.log("Mock activity triggered");
+  fetch("hpc-integration/download-activity-network?job_id=" + jobId)
+    .then((response) => {
       if (!response.ok) {
         getError(response);
       }
       return response.blob();
-    }).then(blob => {
-      const file = new File([blob], 'activity_network.hdf5', { type: 'application/octet-stream' });
+    })
+    .then((blob) => {
+      const file = new File([blob], "activity_network.hdf5", { type: "application/octet-stream" });
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);
       hdfFileInput.files = dataTransfer.files;
-      hdfFileInput.dispatchEvent(new Event('change'));
-    }).catch(error => {
-      console.error('Error fetching mock activity:', error);
+      hdfFileInput.dispatchEvent(new Event("change"));
+    })
+    .catch((error) => {
+      console.error("Error fetching mock activity:", error);
     });
 }
