@@ -11,7 +11,7 @@ from hpc_integration.forms import HPC_LIST
 from hpc_integration.utils import messages, get_tmp_dir, get_tmp_working_dir
 from hpc_integration.utils.decorators import login_required
 from hpc_integration.helper.job_helper import JobHelper
-from hpc_integration.utils.errors import ForbiddenException
+from hpc_integration.utils.errors import ForbiddenException, HPCException, UnicoreClientException
 
 from neural_circuit_visualizer.settings import MEDIA_ROOT
 
@@ -35,11 +35,18 @@ def submit_job(request):
 
     try:
         JobHelper().submit_job(data.pop("hpc"), data, request.session['oidc_access_token'])
+
+    except UnicoreClientException as err:
+        logger.error(f'AUTH Error while trying to submit job: {err}')
+        return HttpResponse(status=401, content=str(err))
     except ForbiddenException as err:
-        logger.error(f'Error while submitting job: {err}')
+        logger.error(f'AUTH Error while trying to submit job: {err}')
         return HttpResponseForbidden(content=str(err))
+    except HPCException as err:
+        logger.error(f'HPC Error while trying to submit job: {err}')
+        return HttpResponse(status=509, content=str(err))
     except Exception as err:
-        logger.error(f'Error while submitting job: {err}')
+        logger.error(f'GENERAL Error while trying to submit job: {err}')
         return HttpResponseServerError(content=str(err))
 
     return HttpResponse(content=messages.OK)
@@ -64,11 +71,18 @@ def fetch_jobs(request):
     try:
         jobs_list = JobHelper().fetch_jobs_list(hpc, request.session['oidc_access_token'])
         return JsonResponse(data=jobs_list)
+
+    except UnicoreClientException as err:
+        logger.error(f'AUTH Error while trying to fetch jobs: {err}')
+        return HttpResponse(status=401, content=str(err))
     except ForbiddenException as err:
-        logger.error(f'Error while fetching jobs: {err}')
+        logger.error(f'AUTH Error while trying to fetch jobs: {err}')
         return HttpResponseForbidden(content=str(err))
+    except HPCException as err:
+        logger.error(f'HPC Error while trying to fetch jobs: {err}')
+        return HttpResponse(status=509, content=str(err))
     except Exception as err:
-        logger.error(f'Error while fetching jobs: {err}')
+        logger.error(f'GENERAL Error while trying to fetch jobs: {err}')
         return HttpResponseServerError(content=str(err))
 
 
@@ -107,8 +121,18 @@ def download_job_results(request):
         os.remove(zip_filename)
         shutil.rmtree(download_dir)
         return response
+
+    except UnicoreClientException as err:
+        logger.error(f'AUTH Error while downloading job results: {err}')
+        return HttpResponse(status=401, content=str(err))
+    except ForbiddenException as err:
+        logger.error(f'AUTH Error while downloading job results: {err}')
+        return HttpResponseForbidden(content=str(err))
+    except HPCException as err:
+        logger.error(f'HPC Error while downloading job results: {err}')
+        return HttpResponse(status=509, content=str(err))
     except Exception as err:
-        logger.error(f'Error while downloading results: {err}')
+        logger.error(f'GENERAL Error while downloading job results: {err}')
         return HttpResponseServerError(content=str(err))
 
 
@@ -142,8 +166,18 @@ def download_activity_network(request):
         try:
             file_list = JobHelper().fetch_job_files(hpc, job_id, request.session['oidc_access_token'])
             file_list[activity_file_name].download(activity_file_path)
+
+        except UnicoreClientException as err:
+            logger.error(f'AUTH Error while trying to download activity network: {err}')
+            return HttpResponse(status=401, content=str(err))
+        except ForbiddenException as err:
+            logger.error(f'AUTH Error while trying to download activity network: {err}')
+            return HttpResponseForbidden(content=str(err))
+        except HPCException as err:
+            logger.error(f'HPC Error while trying to download activity network: {err}')
+            return HttpResponse(status=509, content=str(err))
         except Exception as err:
-            logger.error(f'Error while downloading results: {err}')
+            logger.error(f'GENERAL Error while trying to download activity network: {err}')
             return HttpResponseServerError(content=str(err))
 
     response = FileResponse(open(activity_file_path, 'rb'), content_type='application/octet-stream')
