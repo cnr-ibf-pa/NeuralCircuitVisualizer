@@ -46,7 +46,7 @@ class JobHelper:
                 hpc_url = self._G100_URL
             client = unicore_client.Client(security=transport, site_url=hpc_url)
         except Exception as err:
-            if str(err).find('500') >= 0:
+            if str(err).find('500') >= 0 or str(err).find('504') >= 0:
                 raise errors.HPCException(messages.HPC_NOT_AVAILABLE)
             elif str(err).find('403') >= 0:
                 raise errors.ForbiddenException(err)
@@ -102,8 +102,8 @@ class JobHelper:
             'Tags': UNICORE_JOB_TAGS
         }
 
+        client = self._initialize_unicore_client(hpc, token)
         try:
-            client = self._initialize_unicore_client(hpc, token)
             job = client.new_job(job_description=job_descriptor)
             return job
         except requests.HTTPError as err:
