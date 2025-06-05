@@ -46,7 +46,7 @@ class JobHelper:
                 hpc_url = self._G100_URL
             client = unicore_client.Client(security=transport, site_url=hpc_url)
         except Exception as err:
-            if str(err).find('500') >= 0 or str(err).find('504') >= 0:
+            if str(err).find('500') >= 0 or str(err).find('503') >= 0:
                 raise errors.HPCException(messages.HPC_NOT_AVAILABLE)
             elif str(err).find('403') >= 0:
                 raise errors.ForbiddenException(err)
@@ -109,7 +109,7 @@ class JobHelper:
         except requests.HTTPError as err:
             raise errors.HPCException(messages.HPC_CONNECTION_ERROR)
         except Exception as err:
-            if str(err).find('500') >= 0:
+            if str(err).find('500') >= 0 or str(err).find('503') >= 0:
                 raise errors.HPCException(messages.HPC_NOT_AVAILABLE)
             elif str(err).find('403') >= 0:
                 raise errors.ForbiddenException(err)
