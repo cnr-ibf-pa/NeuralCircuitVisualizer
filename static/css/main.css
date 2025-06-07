@@ -16,12 +16,34 @@
 }
 
 
+/* Reduce font size of sub-accordion headers */
+#accordionFlushRegions .accordion-button {
+    font-size: 0.85rem;
+    /* or use clamp for responsiveness */
+    padding: 0.4rem 0.75rem;
+    /* smaller padding for compact look */
+}
+
+/* Optional: reduce font size of body text as well */
+#accordionFlushRegions .accordion-body {
+    font-size: 0.8rem;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+
+
+#accordionFlushExample {
+
+    border: 2px ridge #bbb;
+}
 
 .accordion-body {
     background-color: #f5f5f5;
     color: #333;
     padding: 1rem 1.25rem;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
+
 }
 
 
@@ -55,21 +77,32 @@
 }
 
 .accordion-button {
-
-
-    /* background: linear-gradient(to left, #d0d0d0, #a8a8aa ) !important; */
     background-color: #a8a8aa !important;
     color: #000 !important;
+    font-weight: 400 !important;
+    font-size: clamp(0.9rem, 1.2vw, 1.2rem);
+    /* 👈 responsive */
 }
 
-
+.accordion-button:hover {
+    color: #ffffff !important;
+}
 
 .accordion-header {
     border: 1px solid #dee2e6;
-
 }
 
+@media (max-width: 768px) {
+    .accordion-button {
+        font-size: 0.9rem;
+    }
+}
 
+@media (max-width: 576px) {
+    .accordion-button {
+        font-size: 0.8rem;
+    }
+}
 
 .accordion-button:focus {
     outline: none !important;
@@ -82,16 +115,10 @@
     color: #000000;
 
     font-weight: bold;
-
-
 }
-
-
 
 .form-check-label {
     font-size: x-small;
-
-
 }
 
 .form-check-label:hover {
@@ -107,8 +134,6 @@
 .form-check-input:hover+.form-check-label {
     font-weight: bold;
 }
-
-
 
 .form-check-input:checked {
     background-color: #a8a8aa !important;
@@ -148,10 +173,6 @@
     transform: translateX(-50%);
 }
 
-
-
-
-
 #page-loader {
 
     position: fixed;
@@ -170,15 +191,6 @@
     background-color: rgba(255, 255, 255, 0.9);
 }
 
-/* canvas {
-  overflow-clip-margin: content-box;
-  overflow: clip;
-
-
-} */
-
-
-
 /* Ensure html and body cover full viewport height */
 html,
 body {
@@ -194,11 +206,7 @@ body {
     height: 100vh;
     /* Full viewport height */
     background-color: #8d8e97;
-
 }
-
-
-
 
 #container {
 
@@ -206,7 +214,6 @@ body {
     height: 100vh;
     overflow: hidden;
     background-color: black;
-
 }
 
 #neuronCanvas {
@@ -214,7 +221,7 @@ body {
     width: 100%;
     height: 100%;
     border-bottom: 2px solid #8a8a8a;
-    border: 2px inset #bbb;
+    border: 2px groove #bbb;
 }
 
 .txt {
@@ -439,16 +446,6 @@ input[type="number"][step="any"][aria-labelledby="lil-gui-name-8"] {
     padding-top: 1px;
 }
 
-
-/* #t
-{
-  color: #fff;
-  width: 100%;
-} */
-
-
-
-
 /* Style the dropdowns */
 select {
     width: 60px;
@@ -491,7 +488,6 @@ select {
     color: #ffffff !important;
     transform: translateY(-1px) !important;
 }
-
 
 
 
@@ -604,15 +600,6 @@ select {
 }
 
 
-
-
-
-
-
-
-
-
-
 #ddactivity_chunks {
 
     transition: 0.4s;
@@ -625,19 +612,6 @@ select {
     font-weight: bold;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 .time-display {
     font-size: 20px;
 
@@ -648,52 +622,6 @@ input[type="range"] {
     cursor: pointer;
 }
 
-/* button {
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin: 5px;
-  font-weight: bold;
-}
-*/
-
-/* 
-#startbtn {
-    background-color: #abacac;
-    color: #000;
-}
-
-#pause {
-    background-color: #abacac;
-    color: #000;
-}
-
-#restart {
-    background-color: #abacac;
-    color: #000;
-
-}
-
-#startbtn:hover {
-    
-    background: linear-gradient(to bottom, #bababa 0%, #97979c 100%);
-
-}
-
-#pause:hover {
-  
-    background: linear-gradient(to bottom, #bababa 0%, #97979c 100%);
-
-}
-
-#restart:hover {
-   
-    background: linear-gradient(to bottom, #bababa 0%, #97979c 100%);
-
-
-} */
-
 .btnstyle {
     /* background: linear-gradient(to bottom, #bababa 40%, #97979c 100%); */
     background-color: #5f636e;
@@ -702,7 +630,7 @@ input[type="range"] {
     padding: 8px 18px;
     font-size: 0.95rem;
     font-weight: 500;
-    border-radius: 6px;
+    border-radius: 3px;
     transition: background-color 0.3s ease, transform 0.2s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
     cursor: pointer;
@@ -714,11 +642,6 @@ input[type="range"] {
     color: #ffffff;
     transform: translateY(-1px);
 }
-
-
-
-
-
 
 .playback-settings {
     display: flex;
@@ -759,28 +682,16 @@ input[type="range"] {
 }
 
 
-
-
-
-
-
-
 .sidebar {
     height: 29%;
     width: 0;
-    /* ✅ Hidden by default */
     position: fixed;
     top: 160;
     right: 0;
-    /* ✅ Slides in from right */
     overflow-x: hidden;
     padding: 50px 0px 0px 0px;
     z-index: 1000;
     display: none;
-
-
-
-
 
 
 }
@@ -1048,7 +959,7 @@ input[type="range"] {
     #togglePanelBtn {
         /* top: 8.9rem; */
         top: 15%;
-        left: 25.2%;
+        left: 25.3%;
         width: auto;
         min-width: 8vw;
         max-width: 20vw;
@@ -1083,7 +994,7 @@ input[type="range"] {
     font-family: 'Segoe UI', sans-serif;
     background-color: #33373d;
     border-bottom: 2px solid #8a8a8a;
-    border: 2px inset #bbb;
+    border: 2px outset #bbb;
     visibility: hidden;
     color: #fff;
     position: relative;
@@ -1109,16 +1020,24 @@ input[type="range"] {
     cursor: not-allowed;
 }
 
+.histogram-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
 #histogramImage {
-    margin-top: 2px;
     display: none;
     width: 100%;
-    height: 99%;
-    cursor: pointer;
-    border-bottom: 2px solid #8a8a8a;
+    height: 72%;
+    object-fit: fill;
+    background-color: #33373d;
     border: 2px outset #bbb;
-
+    margin: 2px auto;
+    cursor: pointer;
+    margin-bottom: 55px;
 }
+
 
 #networkspikes {
     position: fixed;
@@ -1515,4 +1434,33 @@ label {
 #timebar::-moz-range-thumb:hover {
     background: #ffffff;
     transform: scale(1.1);
+}
+
+
+.lbljobid {
+    display: none;
+    margin: 0 auto;
+    /* centers horizontally */
+    width: fit-content;
+    /* prevent full width */
+    background-color: #2f3542;
+    color: #ffffff;
+    font-size: 0.95rem;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    border: 1px solid #ccc;
+    box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.05);
+    white-space: nowrap;
+
+}
+
+
+
+@media (prefers-color-scheme: dark) {
+    .lbljobid {
+        background-color: #2f3542;
+        color: #f8f8f8;
+
+    }
 }

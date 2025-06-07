@@ -2018,14 +2018,7 @@ function SelectAllByRegion() {
     },
   ];
 
-  const hostname = window.location.hostname;
-  let checkboxesToLog = null;
-
-  if (hostname === "127.0.0.1" || hostname === "localhost") {
-    checkboxesToLog = ["LECIV", "CA3SO", "MECII", "MECIII", "CA1SP", "SubSM", "MECVI", "MECIV", "CA3SP", "LECII", "CA3SLM", "CA1SO", "LECVI", "CA2SP", "DGH", "CA3SR", "DGSMi", "LECV", "MECV", "SubSP", "LECIII", "DGSMo", "LECI", "MECI", "CA1SLM", "CA1SR", "CA3SL", "DGSG"];
-  } else if (hostname.includes("ebrains-italy")) {
-    checkboxesToLog = ["CA1SO", "MECIV", "MECII", "CA3SL", "CA1SLM", "CA3SP", "LECI", "MECV", "LECII", "DGSG", "CA3SLM", "DGSMo", "CA3SR", "CA3SO", "MECVI", "LECV", "MECI", "LECVI", "SubSP", "SubSM", "CA1SP", "LECIV", "DGSMi", "DGH", "MECIII", "CA1SR", "CA2SP", "LECIII"];
-  }
+  let checkboxesToLog = ["CA1SLM", "CA1SO", "CA1SP", "CA1SR", "CA2SP", "CA3SL", "CA3SLM", "CA3SO", "CA3SP", "CA3SR", "DGSG", "DGSMi", "DGSMo", "DGH", "LECI", "LECII", "LECIII", "LECIV", "LECV", "LECVI", "MECI", "MECII", "MECIII", "MECIV", "MECV", "MECVI", "SubSM", "SubSP"];
 
   const DGLayer = [14, 16, 21, 27];
   const CA3Layer = [10, 15, 26, 8, 1];
@@ -2037,6 +2030,7 @@ function SelectAllByRegion() {
 
   checkboxesToLog.forEach((id, index) => {
     const checkbox = document.getElementById(id);
+
     if (checkbox) {
       checkbox.addEventListener("change", function () {
         if (checkbox.checked) {
@@ -2074,88 +2068,88 @@ function SelectAllByRegion() {
           //unselected checkboxes by layers
 
           if (index === 0) {
-            unselectCheckboxes([52, 53, 54, 55, 56, 57, 58, 60, 68, 79, 70, 71, 73, 74, 75, 85, 86, 87]);
-          }
-          if (index === 1) {
-            unselectCheckboxes([106, 107, 108]);
-          }
-          if (index === 2) {
-            unselectCheckboxes([96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122]);
-          }
-          if (index === 3) {
-            unselectCheckboxes([22, 28, 30, 31, 32, 33, 34, 35, 38, 39]);
-          }
-          if (index === 4) {
             unselectCheckboxes([50, 57, 61, 63, 65, 66, 67, 77, 79, 82, 84]);
           }
-          if (index === 5) {
-            unselectCheckboxes([19, 20, 23, 25, 26, 27, 32, 35, 38, 39]);
+          if (index === 1) {
+            unselectCheckboxes([52, 53, 54, 55, 56, 57, 58, 60, 68, 79, 70, 71, 73, 74, 75, 85, 86, 87]);
           }
-          if (index === 6) {
-            unselectCheckboxes([92, 93]);
-          }
-          if (index === 7) {
-            unselectCheckboxes([106, 107, 108, 109, 110, 111, 112, 113]);
-          }
-          if (index === 8) {
-            unselectCheckboxes([97, 98, 100, 101, 104, 105, 106, 118, 121]);
-          }
-          if (index === 9) {
-            unselectCheckboxes([1, 2, 7, 8, 10, 11, 14, 15, 16]);
-          }
-          if (index === 10) {
-            unselectCheckboxes([29]);
-          }
-          if (index === 11) {
-            unselectCheckboxes([14, 17, 18]);
-          }
-          if (index === 12) {
-            unselectCheckboxes([21, 22, 34, 38, 39, 40, 41]);
-          }
-          if (index === 13) {
-            unselectCheckboxes([23, 24, 27, 35, 36, 37, 38, 39, 42, 43]);
-          }
-          if (index === 14) {
-            unselectCheckboxes([108, 113]);
-          }
-          if (index === 15) {
-            unselectCheckboxes([106, 107, 108, 111]);
-          }
-          if (index === 16) {
-            unselectCheckboxes([92, 93]);
-          }
-          if (index === 17) {
-            unselectCheckboxes([108, 114]);
-          }
-          if (index === 18) {
-            unselectCheckboxes([89, 90, 91]);
-          }
-          if (index === 19) {
-            unselectCheckboxes([91]);
-          }
-          if (index === 20) {
+          if (index === 2) {
             unselectCheckboxes([49, 51, 52, 55, 56, 57, 58, 60, 62, 64, 72, 76, 80, 83, 85, 87, 88]);
           }
-          if (index === 21) {
-            unselectCheckboxes([106, 107, 108]);
-          }
-          if (index === 22) {
-            unselectCheckboxes([3, 9, 13, 14, 17]);
-          }
-          if (index === 23) {
-            unselectCheckboxes([4, 5, 6, 10, 11, 12]);
-          }
-          if (index === 24) {
-            unselectCheckboxes([96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122]);
-          }
-          if (index === 25) {
+          if (index === 3) {
             unselectCheckboxes([51, 55, 57, 58, 59, 60, 61, 62, 63, 64, 65, 72, 76, 77, 78, 79, 81, 82, 83, 84, 85, 87, 88]);
           }
-          if (index === 26) {
+          if (index === 4) {
             unselectCheckboxes([44, 45, 46, 47, 48]);
           }
-          if (index === 27) {
+          if (index === 5) {
+            unselectCheckboxes([22, 28, 30, 31, 32, 33, 34, 35, 38, 39]);
+          }
+          if (index === 6) {
+            unselectCheckboxes([29]);
+          }
+          if (index === 7) {
+            unselectCheckboxes([23, 24, 27, 35, 36, 37, 38, 39, 42, 43]);
+          }
+          if (index === 8) {
+            unselectCheckboxes([19, 20, 23, 25, 26, 27, 32, 35, 38, 39]);
+          }
+          if (index === 9) {
+            unselectCheckboxes([21, 22, 34, 38, 39, 40, 41]);
+          }
+          if (index === 10) {
+            unselectCheckboxes([1, 2, 7, 8, 10, 11, 14, 15, 16]);
+          }
+          if (index === 11) {
+            unselectCheckboxes([3, 9, 13, 14, 17]);
+          }
+          if (index === 12) {
+            unselectCheckboxes([14, 17, 18]);
+          }
+          if (index === 13) {
+            unselectCheckboxes([4, 5, 6, 10, 11, 12]);
+          }
+          if (index === 14) {
+            unselectCheckboxes([92, 93]);
+          }
+          if (index === 15) {
+            unselectCheckboxes([92, 93, 97, 115, 117]);
+          }
+          if (index === 16) {
             unselectCheckboxes([97, 98, 100, 101, 104, 105, 106, 118, 121]);
+          }
+          if (index === 17) {
+            unselectCheckboxes([106, 107, 108]);
+          }
+          if (index === 18) {
+            unselectCheckboxes([106, 107, 108, 111]);
+          }
+          if (index === 19) {
+            unselectCheckboxes([106, 107, 108, 111]);
+          }
+          if (index === 20) {
+            unselectCheckboxes([92, 93]);
+          }
+          if (index === 21) {
+            unselectCheckboxes([92, 93, 94, 95, 96, 97, 115, 116, 117]);
+          }
+          if (index === 22) {
+            unselectCheckboxes([96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122]);
+          }
+          if (index === 23) {
+            unselectCheckboxes([106, 107, 108]);
+          }
+          if (index === 24) {
+            unselectCheckboxes([106, 107, 108, 109, 110, 111, 112, 113]);
+          }
+          if (index === 25) {
+            unselectCheckboxes([108, 113]);
+          }
+          if (index === 26) {
+            unselectCheckboxes([91]);
+          }
+          if (index === 27) {
+            unselectCheckboxes([89, 90, 91]);
           }
 
           AllNT.disabled = true;
@@ -2169,99 +2163,99 @@ function SelectAllByRegion() {
 
         if (selectedCheckboxByLayer.length > 0) {
           if (selectedCheckboxByLayer.includes(0)) {
-            selectCheckboxes([52, 53, 54, 55, 56, 57, 58, 60, 68, 79, 70, 71, 73, 74, 75, 85, 86, 87]);
-          }
-          if (selectedCheckboxByLayer.includes(1)) {
-            selectCheckboxes([106, 107, 108]);
-          }
-          if (selectedCheckboxByLayer.includes(2)) {
-            selectCheckboxes([96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122]);
-          }
-          if (selectedCheckboxByLayer.includes(3)) {
-            selectCheckboxes([22, 28, 30, 31, 32, 33, 34, 35, 38, 39]);
-          }
-          if (selectedCheckboxByLayer.includes(4)) {
             selectCheckboxes([50, 57, 61, 63, 65, 66, 67, 77, 79, 82, 84]);
           }
-          if (selectedCheckboxByLayer.includes(5)) {
-            selectCheckboxes([19, 20, 23, 25, 26, 27, 32, 35, 38, 39]);
+          if (selectedCheckboxByLayer.includes(1)) {
+            selectCheckboxes([52, 53, 54, 55, 56, 57, 58, 60, 68, 79, 70, 71, 73, 74, 75, 85, 86, 87]);
           }
-          if (selectedCheckboxByLayer.includes(6)) {
-            selectCheckboxes([92, 93]);
-          }
-          if (selectedCheckboxByLayer.includes(7)) {
-            selectCheckboxes([106, 107, 108, 109, 110, 111, 112, 113]);
-          }
-          if (selectedCheckboxByLayer.includes(8)) {
-            selectCheckboxes([97, 98, 100, 101, 104, 105, 106, 118, 121]);
-          }
-          if (selectedCheckboxByLayer.includes(9)) {
-            selectCheckboxes([1, 2, 7, 8, 10, 11, 14, 15, 16]);
-          }
-          if (selectedCheckboxByLayer.includes(10)) {
-            selectCheckboxes([29]);
-          }
-          if (selectedCheckboxByLayer.includes(11)) {
-            selectCheckboxes([14, 17, 18]);
-          }
-          if (selectedCheckboxByLayer.includes(12)) {
-            selectCheckboxes([21, 22, 34, 38, 39, 40, 41]);
-          }
-          if (selectedCheckboxByLayer.includes(13)) {
-            selectCheckboxes([23, 24, 27, 35, 36, 37, 38, 39, 42, 43]);
-          }
-          if (selectedCheckboxByLayer.includes(14)) {
-            selectCheckboxes([108, 113]);
-          }
-          if (selectedCheckboxByLayer.includes(15)) {
-            selectCheckboxes([106, 107, 108, 111]);
-          }
-          if (selectedCheckboxByLayer.includes(16)) {
-            selectCheckboxes([92, 93]);
-          }
-          if (selectedCheckboxByLayer.includes(17)) {
-            selectCheckboxes([108, 114]);
-          }
-          if (selectedCheckboxByLayer.includes(18)) {
-            selectCheckboxes([89, 90, 91]);
-          }
-          if (selectedCheckboxByLayer.includes(19)) {
-            selectCheckboxes([91]);
-          }
-          if (selectedCheckboxByLayer.includes(20)) {
+          if (selectedCheckboxByLayer.includes(2)) {
             selectCheckboxes([49, 51, 52, 55, 56, 57, 58, 60, 62, 64, 72, 76, 80, 83, 85, 87, 88]);
           }
-          if (selectedCheckboxByLayer.includes(21)) {
-            selectCheckboxes([106, 107, 108]);
-          }
-          if (selectedCheckboxByLayer.includes(22)) {
-            selectCheckboxes([3, 9, 13, 14, 17]);
-          }
-          if (selectedCheckboxByLayer.includes(23)) {
-            selectCheckboxes([4, 5, 6, 10, 11, 12]);
-          }
-          if (selectedCheckboxByLayer.includes(24)) {
-            selectCheckboxes([96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122]);
-          }
-          if (selectedCheckboxByLayer.includes(25)) {
+          if (selectedCheckboxByLayer.includes(3)) {
             selectCheckboxes([51, 55, 57, 58, 59, 60, 61, 62, 63, 64, 65, 72, 76, 77, 78, 79, 81, 82, 83, 84, 85, 87, 88]);
           }
-          if (selectedCheckboxByLayer.includes(26)) {
+          if (selectedCheckboxByLayer.includes(4)) {
             selectCheckboxes([44, 45, 46, 47, 48]);
           }
-          if (selectedCheckboxByLayer.includes(27)) {
+          if (selectedCheckboxByLayer.includes(5)) {
+            selectCheckboxes([22, 28, 30, 31, 32, 33, 34, 35, 38, 39]);
+          }
+          if (selectedCheckboxByLayer.includes(6)) {
+            selectCheckboxes([29]);
+          }
+          if (selectedCheckboxByLayer.includes(7)) {
+            selectCheckboxes([23, 24, 27, 35, 36, 37, 38, 39, 42, 43]);
+          }
+          if (selectedCheckboxByLayer.includes(8)) {
+            selectCheckboxes([19, 20, 23, 25, 26, 27, 32, 35, 38, 39]);
+          }
+          if (selectedCheckboxByLayer.includes(9)) {
+            selectCheckboxes([21, 22, 34, 38, 39, 40, 41]);
+          }
+          if (selectedCheckboxByLayer.includes(10)) {
+            selectCheckboxes([1, 2, 7, 8, 10, 11, 14, 15, 16]);
+          }
+          if (selectedCheckboxByLayer.includes(11)) {
+            selectCheckboxes([3, 9, 13, 14, 17]);
+          }
+          if (selectedCheckboxByLayer.includes(12)) {
+            selectCheckboxes([14, 17, 18]);
+          }
+          if (selectedCheckboxByLayer.includes(13)) {
+            selectCheckboxes([4, 5, 6, 10, 11, 12]);
+          }
+          if (selectedCheckboxByLayer.includes(14)) {
+            selectCheckboxes([92, 93]);
+          }
+          if (selectedCheckboxByLayer.includes(15)) {
+            selectCheckboxes([92, 93, 97, 115, 117]);
+          }
+          if (selectedCheckboxByLayer.includes(16)) {
             selectCheckboxes([97, 98, 100, 101, 104, 105, 106, 118, 121]);
           }
+          if (selectedCheckboxByLayer.includes(17)) {
+            selectCheckboxes([106, 107, 108]);
+          }
+          if (selectedCheckboxByLayer.includes(18)) {
+            selectCheckboxes([106, 107, 108, 111]);
+          }
+          if (selectedCheckboxByLayer.includes(19)) {
+            selectCheckboxes([108, 114]);
+          }
+          if (selectedCheckboxByLayer.includes(20)) {
+            selectCheckboxes([92, 93]);
+          }
+          if (selectedCheckboxByLayer.includes(21)) {
+            selectCheckboxes([92, 93, 94, 95, 96, 97, 115, 116, 117]);
+          }
+          if (selectedCheckboxByLayer.includes(22)) {
+            selectCheckboxes([96, 97, 99, 100, 102, 103, 104, 105, 106, 119, 120, 121, 122]);
+          }
+          if (selectedCheckboxByLayer.includes(23)) {
+            selectCheckboxes([106, 107, 108]);
+          }
+          if (selectedCheckboxByLayer.includes(24)) {
+            selectCheckboxes([106, 107, 108, 109, 110, 111, 112, 113]);
+          }
+          if (selectedCheckboxByLayer.includes(25)) {
+            selectCheckboxes([108, 113]);
+          }
+          if (selectedCheckboxByLayer.includes(26)) {
+            selectCheckboxes([91]);
+          }
+          if (selectedCheckboxByLayer.includes(27)) {
+            selectCheckboxes([89, 90, 91]);
+          }
 
-          VisualizateNeurons();
           updateSelectedCount(); // Call the function to update the count
+          VisualizateNeurons();
         } else {
           AllNT.disabled = false;
           RankNT.disabled = false;
           CanonicalNT.disabled = false;
           selectedCheckboxByLayer = [];
-          VisualizateNeurons();
           updateSelectedCount(); // Call the function to update the count
+          VisualizateNeurons();
         }
       });
     }
@@ -2273,6 +2267,7 @@ function SelectAllByRegion() {
       const checkbox = document.getElementById(id);
       if (checkbox) {
         checkbox.checked = true;
+        console.log(id);
       }
     });
   }
