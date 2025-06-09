@@ -9,10 +9,8 @@ def generate_workflow_id():
 
 def index(request):
     if request.GET.get('new_wf'):
-        return HttpResponse(content=generate_workflow_id())
-    if not request.session.get('workflow_id'):
-        request.session['workflow_id'] = generate_workflow_id()
-    workflow_id = request.session['workflow_id']
+        request.session.clear()
+    workflow_id = request.session.get('workflow_id', generate_workflow_id())
     return render(request, 'index.html', context={'workflow_id': workflow_id})
 
 
