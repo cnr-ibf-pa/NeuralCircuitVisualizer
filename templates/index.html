@@ -96,6 +96,11 @@
           </div>
         </div>
 
+        {% include "components/workflow_id.html" %}
+
+        <div class="row min-vh-100 m-1" g-0>
+          <div class="col-12 col-md-4 col-lg-3 d-flex flex-column" style="overflow-y: auto; max-height: 100vh">
+            <div class="accordion accordion-flush border border-success" id="accordionFlushExample">
          <div class="row min-vh-100 m-1">
           <div class="col-12 col-md-4 col-lg-3 d-flex flex-column" style="overflow-y: auto; max-height: 100vh" >
             <div class="accordion accordion-flush" id="accordionFlushExample" >
@@ -1912,6 +1917,8 @@
         </div>
       </div>
 
+
+
       <!-- End of .container -->
 
       {% include 'components/alert.html' %}
@@ -1951,6 +1958,15 @@
               break;
             case 509:
               showAlert("HPC System is down, please try again later", "error");
+              break;
+            case 510:
+              showAlert(await response.text(), "info");
+              break;
+            case 511:
+              showAlert(await response.text(), "warning");
+              break;
+            case 512:
+              showAlert(await response.text(), "error");
               break;
             default:
               showAlert("An unexpected error occurred", "error");

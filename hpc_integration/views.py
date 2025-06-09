@@ -11,7 +11,7 @@ from hpc_integration.forms import HPC_LIST
 from hpc_integration.utils import messages, get_tmp_dir, get_tmp_working_dir
 from hpc_integration.utils.decorators import login_required
 from hpc_integration.helper.job_helper import JobHelper
-from hpc_integration.utils.errors import ForbiddenException, HPCException, UnicoreClientException
+from hpc_integration.utils.errors import ForbiddenException, HPCException, UnicoreClientException, JobAlreadySubmittedException
 
 from neural_circuit_visualizer.settings import MEDIA_ROOT
 
@@ -34,7 +34,11 @@ def submit_job(request):
     data = form.cleaned_data
 
     try:
-        JobHelper().submit_job(data.pop("hpc"), data, request.session['oidc_access_token'])
+        if request.session.get('job_already_submitted'):
+            return HttpResponse(status=510, content=messages.JOB_ALREADY_SUBMITTED)
+        JobHelper().submit_job(data.pop("hpc"), data, request.session['oidc_access_token'], job_name=request.session.get('workflow_id'))
+        request.session['job_already_submitted'] = True
+        return HttpResponse(status=OK, content=messages.JOB_SUBMITTED.format(data.get('hpc')))
 
     except UnicoreClientException as err:
         logger.error(f'AUTH Error while trying to submit job: {err}')
@@ -48,8 +52,6 @@ def submit_job(request):
     except Exception as err:
         logger.error(f'GENERAL Error while trying to submit job: {err}')
         return HttpResponseServerError(content=str(err))
-
-    return HttpResponse(content=messages.OK)
 
 
 @login_required
@@ -109,16 +111,15 @@ def download_job_results(request):
 
     try:
         file_list = JobHelper().fetch_job_files(hpc, job_id, request.session['oidc_access_token'])
-        for f in file_list.keys():
-            if type(file_list[f]) == UnicorePathFile:
-                file_list[f].download(os.path.join(download_dir, f))
-        zip_filename = os.path.join(get_tmp_dir(), f'{job_id}_results.zip')
-        shutil.make_archive(base_name=zip_filename.replace('.zip', ''), format='zip', root_dir=download_dir)
-        response = HttpResponse(content_type='application/zip')
-        response['Content-Disposition'] = f'attachment; filename={os.path.split(zip_filename)[1]}'
-        with open(zip_filename, 'rb') as f:
+        try:
+            output_file_path = os.path.join(download_dir, 'output.tar.gz')
+            file_list['output.tar.gz'].download(output_file_path)
+        except KeyError:
+            return HttpResponse(status=511, content=messages.JOB_OUTPUT_NOT_FOUND)
+        response = HttpResponse(content_type='application/tar+gzip')
+        response['Content-Disposition'] = f'attachment; filename={os.path.split(output_file_path)[1]}'
+        with open(output_file_path, 'rb') as f:
             response.write(f.read())
-        os.remove(zip_filename)
         shutil.rmtree(download_dir)
         return response
 

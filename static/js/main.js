@@ -2959,27 +2959,3 @@ function resetTimeUI() {
   document.getElementById("start-time").value = "";
   document.getElementById("end-time").value = "";
 }
-
-document.getElementById("mockActivityButton").addEventListener("click", mockActivity);
-
-function downloadActivityNetworkFromJob(jobId) {
-  // used in "fetched_results" component
-  console.log("Mock activity triggered");
-  fetch("hpc-integration/download-activity-network?job_id=" + jobId)
-    .then((response) => {
-      if (!response.ok) {
-        getError(response);
-      }
-      return response.blob();
-    })
-    .then((blob) => {
-      const file = new File([blob], "activity_network.hdf5", { type: "application/octet-stream" });
-      const dataTransfer = new DataTransfer();
-      dataTransfer.items.add(file);
-      hdfFileInput.files = dataTransfer.files;
-      hdfFileInput.dispatchEvent(new Event("change"));
-    })
-    .catch((error) => {
-      console.error("Error fetching mock activity:", error);
-    });
-}
