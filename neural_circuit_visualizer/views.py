@@ -4,7 +4,7 @@ from django.shortcuts import render
 
 
 def generate_workflow_id():
-    return datetime.now().strftime("%Y%m%d%H%M%S%f")
+    return datetime.now().strftime("%Y%m%d_%H%M%S%f")
 
 
 def index(request):
