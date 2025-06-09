@@ -8,7 +8,7 @@ def generate_workflow_id():
 
 
 def index(request):
-    if request.GET.get('new_wf') or 'workflow_id' not in request.session:
+    if request.GET.get('new_wf'):
         return HttpResponse(content=generate_workflow_id())
     if not request.session.get('workflow_id'):
         request.session['workflow_id'] = generate_workflow_id()
