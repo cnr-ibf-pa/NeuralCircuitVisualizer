@@ -34,11 +34,11 @@ def submit_job(request):
     data = form.cleaned_data
 
     try:
+        if request.session.get('job_already_submitted'):
+            return HttpResponse(status=510, content=messages.JOB_ALREADY_SUBMITTED)
+        JobHelper().submit_job(data.pop("hpc"), data, request.session['oidc_access_token'], job_name=request.session.get('workflow_id'))
         request.session['job_already_submitted'] = True
-        if not request.session.get('job_already_submitted'):
-            JobHelper().submit_job(data.pop("hpc"), data, request.session['oidc_access_token'], job_name=request.session.get('workflow_id'))
-            request.session['job_already_submitted'] = True
-        return HttpResponse(status=510, content=messages.JOB_ALREADY_SUBMITTED)
+        return HttpResponse(status=OK, content=messages.JOB_SUBMITTED.format(data.get('hpc')))
 
     except UnicoreClientException as err:
         logger.error(f'AUTH Error while trying to submit job: {err}')

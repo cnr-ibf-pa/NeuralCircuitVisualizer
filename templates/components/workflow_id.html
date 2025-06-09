@@ -11,20 +11,14 @@
   <script>
     function generateNewWf() {
       const params = new URLSearchParams()
-      params.append('new_wf', true)
-      fetch(`?${params.toString()}`, {
+      fetch(`/reset`, {
         method: 'GET'
       })
         .then((response) => {
           if (!response.ok) {
             throw new Error('Network response was not ok');
           }
-          return response.text();
-        })
-        .then((data) => {
-          console.log("New workflow id: ", data);
-          sessionStorage.setItem("workflow_id", data);
-          document.getElementById("wf_id").innerText = data;
+          window.location.reload();
         })
         .catch((error) => {
           console.error('There was a problem with the fetch operation:', error);

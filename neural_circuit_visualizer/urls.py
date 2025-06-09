@@ -8,5 +8,6 @@ urlpatterns = [
     path('hpc-integration/', include('hpc_integration.urls')),
 
     path('', views.index),
+    path('reset', views.reset),
     path('docs', views.docs),
 ]
