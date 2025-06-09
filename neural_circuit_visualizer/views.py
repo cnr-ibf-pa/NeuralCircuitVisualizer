@@ -15,7 +15,8 @@ def index(request):
 
 
 def reset(request):
-    request.session.clear()
+    request.session.pop('workflow_id')
+    request.session.pop('job_already_submitted')
     return HttpResponse()
 
 
