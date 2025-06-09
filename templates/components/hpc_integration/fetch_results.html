@@ -55,7 +55,9 @@
         el.classList.add('job-pending', 'btn-info');
       }
       if (status === 'successful') {
-        el.addEventListener('click', downloadActivityNetworkFromJob(jobId));
+        el.addEventListener('click', function() {
+          downloadActivityNetworkFromJob(jobId);
+        });
       } else if (status === 'failed') {
         el.addEventListener('click', function () {
           const a = document.createElement('a');
@@ -91,5 +93,27 @@
           document.getElementById('fetch-job-button').removeAttribute('disabled');
         });
     });
+
+    function downloadActivityNetworkFromJob(jobId) {
+      fetch("hpc-integration/download-activity-network?job_id=" + jobId)
+        .then((response) => {
+          if (!response.ok) {
+            getError(response);
+          }
+          return response.blob();
+        })
+        .then((blob) => {
+          const file = new File([blob], "activity_network.hdf5", { type: "application/octet-stream" });
+          const dataTransfer = new DataTransfer();
+          const hdfFileInput = document.getElementById("activityFileInput");
+          dataTransfer.items.add(file);
+          hdfFileInput.files = dataTransfer.files;
+          hdfFileInput.dispatchEvent(new Event("change"));
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+
   </script>
 {% endblock %}
