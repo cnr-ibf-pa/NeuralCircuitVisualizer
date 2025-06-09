@@ -2,29 +2,6 @@ import * as THREE from "three";
 import { TrackballControls } from "three/addons/controls/TrackballControls.js";
 import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 
-
-function downloadActivityNetworkFromJob(jobId) {
-  // used in "fetched_results" component
-  fetch("hpc-integration/download-activity-network?job_id=" + jobId)
-    .then((response) => {
-      if (!response.ok) {
-        getError(response);
-      }
-      return response.blob();
-    })
-    .then((blob) => {
-      const file = new File([blob], "activity_network.hdf5", { type: "application/octet-stream" });
-      const dataTransfer = new DataTransfer();
-      const hdfFileInput = document.getElementById("activityFileInput");
-      dataTransfer.items.add(file);
-      hdfFileInput.files = dataTransfer.files;
-      hdfFileInput.dispatchEvent(new Event("change"));
-    })
-    .catch((error) => {
-      console.error("Error fetching mock activity:", error);
-    });
-}
-
 let firstLastKeys;
 var chkpanle = false;
 var total_neurons = 0;
