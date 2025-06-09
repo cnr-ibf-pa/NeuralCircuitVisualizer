@@ -2625,6 +2625,15 @@
             case 509:
               showAlert("HPC System is down, please try again later", "error");
               break;
+            case 510:
+              showAlert(await response.text(), "info");
+              break;
+            case 511:
+              showAlert(await response.text(), "warning");
+              break;
+            case 512:
+              showAlert(await response.text(), "error");
+              break;
             default:
               showAlert("An unexpected error occurred", "error");
               console.error("Unexpected error:", response);

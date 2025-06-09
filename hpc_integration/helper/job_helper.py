@@ -56,7 +56,7 @@ class JobHelper:
             raise errors.UnicoreClientException(messages.USER_LOGIN_ERROR)
         return client
 
-    def _submit_on_unicore(self, hpc, token, settings):
+    def _submit_on_unicore(self, hpc, token, settings, job_name):
         """
         Submit the job on UNICORE system.
         To submit a job, first a UNICORE client is created using
@@ -90,7 +90,7 @@ class JobHelper:
             'Executable': command,
             'Arguments': args,
             'User postcommand': post_command,
-            'Name': 'my_test',
+            'Name': job_name,
             'Resources': {
                 'Project': 'EIRI_E_CNRIB2',
                 'Nodes': 2,
@@ -170,7 +170,8 @@ class JobHelper:
             job = { raw_job.job_id: {
                     'status': props['status'],
                     'date': str_to_datetime(props['submissionTime']),
-                    'message': props['statusMessage']
+                    'message': props['statusMessage'],
+                    'job_name': props.get('name', raw_job.job_id),
                 }
             }
             jobs.update(job)
@@ -181,9 +182,9 @@ class JobHelper:
 
     @classmethod
     @check_hpc_supported
-    def submit_job(cls, hpc, settings, token):
+    def submit_job(cls, hpc, settings, token, job_name):
         job_handler = cls()
-        return job_handler._submit_on_unicore(hpc, token, settings)
+        return job_handler._submit_on_unicore(hpc, token, settings, job_name)
 
     @classmethod
     @check_hpc_supported
