@@ -1,28 +1,26 @@
 {% block content %}
-  <div class="d-flex justify-content-end align-items-center" style="color: white;">
-    <button type="button" class="btn btn-success" onclick="generateNewWf()">New workflow</button>
+<div class="d-flex justify-content-end align-items-center gap-3" style="color: white">
+  <button type="button" class="btn btn-success btn-sm px-2 py-2" onclick="generateNewWf()">New workflow</button>
+  <div class="d-flex align-items-center" style="cursor: pointer">
+    <p id="wf_id" class="lbljobid">{{ workflow_id }}</p>
   </div>
-  <div class="d-flex justify-content-end align-items-center" style="color: white;">
-    <div class="d-flex justify-content-center align-items-center" style="cursor: pointer; text-decoration: none; color: white">
-      <p id="wf_id" class="me-1 mb-0">{{ workflow_id }}</p>
-    </div>
-  </div>
+</div>
 
-  <script>
-    function generateNewWf() {
-      const params = new URLSearchParams()
-      fetch(`/reset`, {
-        method: 'GET'
+<script>
+  function generateNewWf() {
+    const params = new URLSearchParams();
+    fetch(`/reset`, {
+      method: "GET",
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        window.location.reload();
       })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          window.location.reload();
-        })
-        .catch((error) => {
-          console.error('There was a problem with the fetch operation:', error);
-        })
-    }
-  </script>
+      .catch((error) => {
+        console.error("There was a problem with the fetch operation:", error);
+      });
+  }
+</script>
 {% endblock %}

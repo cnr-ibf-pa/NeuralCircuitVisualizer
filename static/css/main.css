@@ -1433,14 +1433,14 @@ label {
 
 
 .lbljobid {
-    display: none;
+   
     margin: 0 auto;
         /* centers horizontally */
         width: fit-content;
         /* prevent full width */
         background-color: #2f3542;
         color: #ffffff;
-        font-size: 0.95rem;
+        font-size: 0.85rem;
         padding: 6px 14px;
         border-radius: 6px;
         font-weight: 600;
