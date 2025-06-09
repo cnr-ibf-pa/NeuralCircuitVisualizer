@@ -1,0 +1,34 @@
+{% block content %}
+  <div class="d-flex justify-content-end align-items-center" style="color: white;">
+    <button type="button" class="btn btn-success" onclick="generateNewWf()">New workflow</button>
+  </div>
+  <div class="d-flex justify-content-end align-items-center" style="color: white;">
+    <div class="d-flex justify-content-center align-items-center" style="cursor: pointer; text-decoration: none; color: white">
+      <p id="wf_id" class="me-1 mb-0">{{ workflow_id }}</p>
+    </div>
+  </div>
+
+  <script>
+    function generateNewWf() {
+      const params = new URLSearchParams()
+      params.append('new_wf', true)
+      fetch(`?${params.toString()}`, {
+        method: 'GET'
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.text();
+        })
+        .then((data) => {
+          console.log("New workflow id: ", data);
+          sessionStorage.setItem("workflow_id", data);
+          document.getElementById("wf_id").innerText = data;
+        })
+        .catch((error) => {
+          console.error('There was a problem with the fetch operation:', error);
+        })
+    }
+  </script>
+{% endblock %}
