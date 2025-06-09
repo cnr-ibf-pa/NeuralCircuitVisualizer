@@ -28,22 +28,22 @@
 #accordionFlushRegions .accordion-body {
     font-size: 0.8rem;
     background-color: #f5f5f5;
-    color: #333;
+        color: #333;
 }
 
 
 
-#accordionFlushExample {
+#accordionFlushExample
+{
 
     border: 2px ridge #bbb;
 }
-
 .accordion-body {
     background-color: #f5f5f5;
     color: #333;
     padding: 1rem 1.25rem;
     font-size: 0.85rem;
-
+    
 }
 
 
@@ -81,17 +81,16 @@
     color: #000 !important;
     font-weight: 400 !important;
     font-size: clamp(0.9rem, 1.2vw, 1.2rem);
-    /* 👈 responsive */
+        /* 👈 responsive */
 }
 
-.accordion-button:hover {
+.accordion-button:hover {   
     color: #ffffff !important;
 }
 
 .accordion-header {
     border: 1px solid #dee2e6;
 }
-
 @media (max-width: 768px) {
     .accordion-button {
         font-size: 0.9rem;
@@ -103,7 +102,6 @@
         font-size: 0.8rem;
     }
 }
-
 .accordion-button:focus {
     outline: none !important;
     box-shadow: none !important;
@@ -134,7 +132,6 @@
 .form-check-input:hover+.form-check-label {
     font-weight: bold;
 }
-
 .form-check-input:checked {
     background-color: #a8a8aa !important;
     border-color: #d0d0d0 !important;
@@ -611,7 +608,6 @@ select {
     padding: 1px;
     font-weight: bold;
 }
-
 .time-display {
     font-size: 20px;
 
@@ -1019,7 +1015,6 @@ input[type="range"] {
     color: #666;
     cursor: not-allowed;
 }
-
 .histogram-container {
     width: 100%;
     max-width: 100%;
@@ -1027,7 +1022,7 @@ input[type="range"] {
 }
 
 #histogramImage {
-    display: none;
+    display:none;
     width: 100%;
     height: 72%;
     object-fit: fill;
@@ -1440,19 +1435,19 @@ label {
 .lbljobid {
     display: none;
     margin: 0 auto;
-    /* centers horizontally */
-    width: fit-content;
-    /* prevent full width */
-    background-color: #2f3542;
-    color: #ffffff;
-    font-size: 0.95rem;
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-weight: 600;
-    border: 1px solid #ccc;
-    box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.05);
-    white-space: nowrap;
-
+        /* centers horizontally */
+        width: fit-content;
+        /* prevent full width */
+        background-color: #2f3542;
+        color: #ffffff;
+        font-size: 0.95rem;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-weight: 600;
+        border: 1px solid #ccc;
+        box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.05);
+        white-space: nowrap;
+    
 }
 
 
@@ -1461,6 +1456,10 @@ label {
     .lbljobid {
         background-color: #2f3542;
         color: #f8f8f8;
-
+            
     }
 }
+
+
+
+

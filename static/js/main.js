@@ -555,6 +555,8 @@ networkFileInput.addEventListener("change", async (event) => {
       VisualizateNeurons();
       resetCamera();
       centerCameraToObject(particles);
+      document.getElementById("jobid").innerText = uniqueDirectory;
+      document.getElementById("jobid").style.display = "inline-block";
     } else {
       console.log("No files found in the response.");
     }
@@ -598,8 +600,8 @@ hdfFileInput.addEventListener("change", async (event) => {
       }
 
       for (const file of files) {
-        console.log("Processing file:", file.name);
-        console.log("Processing file:", file);
+        // console.log("Processing file:", file.name);
+        // console.log("Processing file:", file);
 
         const fileType = file.name.split(".").pop().toLowerCase(); // csv or hdf5
         const totalChunks = Math.ceil(file.size / chunkSize);
@@ -664,6 +666,8 @@ hdfFileInput.addEventListener("change", async (event) => {
         VisualizateNeurons();
         resetCamera();
         centerCameraToObject(particles);
+        document.getElementById("jobid").innerText = uniqueDirectory;
+        document.getElementById("jobid").style.display = "inline-block";
 
         if (parseInt(data.flag_check) === 1) {
           document.getElementById("lblspikes").innerText = "# spikes :" + data.lstresponse.total_lines;
@@ -1563,11 +1567,11 @@ function animate() {
     arrowsScene.quaternion.copy(camera.quaternion);
 
     const size = 150;
-    const margin = 2;
+    const margin = 10;
 
     // 📌 Bottom-left corner (or you can adjust for top-right)
     const x = margin;
-    const y = margin + 80;
+    const y = margin + 110;
 
     // Now set a smaller viewport just for the arrow scene
     renderer.setViewport(x, y, size, size);
