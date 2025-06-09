@@ -16,3 +16,7 @@ class HPCException(Exception):
 
 class ForbiddenException(Exception):
     pass
+
+
+class JobAlreadySubmittedException(Exception):
+    pass

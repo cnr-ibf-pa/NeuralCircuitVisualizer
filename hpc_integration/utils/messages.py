@@ -17,3 +17,5 @@ HPC_NOT_VALID = 'HPC value not valid!'
 
 JOB_ID_NOT_PROVIDED = 'Job id not provided!'
 JOB_NAME_ALREADY_EXISTS = 'Job name already exists'
+JOB_ALREADY_SUBMITTED = 'Job already submitted for this workflow! Please create a new one.'
+JOB_OUTPUT_NOT_FOUND = 'Job output file was not found ! Please contact the support team.'
