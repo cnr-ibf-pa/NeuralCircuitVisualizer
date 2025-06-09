@@ -658,7 +658,7 @@ def LoadAllLayers(request):
         total_size = 0
         # connections = {}
         # Iterate over each JSON file in the directory
-        for filename in os.listdir(json_directory):
+        for filename in sorted(os.listdir(json_directory)):
             if filename.endswith(".json"):
                 file_path = os.path.join(json_directory, filename)
                 filename_without_ext = os.path.splitext(filename)[0]
