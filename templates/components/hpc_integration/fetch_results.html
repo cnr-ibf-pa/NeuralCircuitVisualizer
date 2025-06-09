@@ -56,7 +56,7 @@
       }
       if (status === 'successful') {
         el.addEventListener('click', downloadActivityNetworkFromJob(jobId));
-      } else {
+      } else if (status === 'failed') {
         el.addEventListener('click', function () {
           const a = document.createElement('a');
           a.href = new URL(`/hpc-integration/download-job-results?job_id=${jobId}`, window.location.origin);
