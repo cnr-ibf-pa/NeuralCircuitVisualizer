@@ -847,10 +847,6 @@ dropdown.addEventListener("change", async function () {
       firstKey = sortedKeys[0];
       count = parseFloat(firstKey).toFixed(1);
       currentTimeDisplay.textContent = count;
-
-      //   timebar.min = count;
-      //   timebar.max = lastKey;
-      //   timebar.value = count;
     } else {
       count = 0.0;
       currentTimeDisplay.textContent = count.toFixed(1);
@@ -962,6 +958,32 @@ timebar.addEventListener("input", (event) => {
   count = parseFloat(event.target.value);
   currentTimeDisplay.textContent = count.toFixed(1);
   resetParticles();
+
+  if (!particles) return;
+
+  const geometry = particles.geometry;
+  const colors = geometry.attributes.color.array;
+  const originalColors = geometry.attributes.originalColor.array;
+  const sizes = geometry.attributes.size.array;
+
+  for (let i = 0; i < colors.length; i++) {
+    colors[i] = originalColors[i]; // restore R, G, B
+  }
+
+  for (let i = 0; i < sizes.length; i++) {
+    const r = colors[i * 3];
+    const g = colors[i * 3 + 1];
+    const b = colors[i * 3 + 2];
+
+    // Check if neuron is firing (yellow or white)
+    const isFiring = (r === 1 && g === 1 && b === 0) || (r === 1 && g === 1 && b === 1);
+
+    sizes[i] = isFiring
+      ? parameters.Firing_Neuron_Size || 100 // fallback if not defined
+      : parameters.Neuron_Size || 30;
+  }
+  geometry.attributes.color.needsUpdate = true;
+  geometry.attributes.size.needsUpdate = true;
 
   if (isPaused) {
     if (isConnection) {
