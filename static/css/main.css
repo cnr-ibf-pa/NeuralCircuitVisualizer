@@ -884,7 +884,7 @@ input[type="range"] {
 #togglePanelBtn {
     display: none;
     position: fixed;
-    top: 9.7rem;
+    top: 9.8rem;
     left: 25.3%;
     width: auto;
     min-width: 8vw;
