@@ -1739,19 +1739,24 @@
 
 
                 </div>
-                <div class="row mt-1 min-vh-100 " style="background-color:black;" >
+                <div class="row mt-1 min-vh-100" style="background-color:black;">
+                    <div id="visualizationControls" class="position-relative w-100">
+                        <button id="togglePanelBtn">☰ Visualization Controls</button>
+                         <button class="openbtn" id="btnopen">☰ Playback Contols</button>
+                        <div id="panel" style="display: none;"></div>
+                    </div>
                     <canvas id="neuronCanvas"></canvas>
-                </div>   
-              
+                </div>  
+
             </div>
 
           </div>
         </div>
 
-               <div class="progressbar">
-                <div class="progress" id="progress"></div>
-            </div>
-                    <button class="openbtn" id="btnopen">☰ Playback Configuration</button>
+                <div class="progressbar">
+                    <div class="progress" id="progress"></div>
+                </div>
+                   
                     <div class="playback-container" id="playbackcontainer">
                         <div class="config-row">
                         <label for="simTimestepRange">Playback Timestep (ms)</label>
@@ -1771,8 +1776,7 @@
                     </div>
 
 
-                    <button id="togglePanelBtn">☰ Visualization Controls</button>
-                    <div id="panel" style="display: none"></div>
+                   
                     
       <!-- Bootstrap Modal for File Details -->
       <div class="modal fade" id="fileDetailsModal" tabindex="-1" aria-labelledby="fileDetailsModalLabel">
