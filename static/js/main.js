@@ -555,8 +555,6 @@ networkFileInput.addEventListener("change", async (event) => {
       VisualizateNeurons();
       resetCamera();
       centerCameraToObject(particles);
-      document.getElementById("jobid").innerText = uniqueDirectory;
-      document.getElementById("jobid").style.display = "inline-block";
     } else {
       console.log("No files found in the response.");
     }
@@ -666,8 +664,6 @@ hdfFileInput.addEventListener("change", async (event) => {
         VisualizateNeurons();
         resetCamera();
         centerCameraToObject(particles);
-        document.getElementById("jobid").innerText = uniqueDirectory;
-        document.getElementById("jobid").style.display = "inline-block";
 
         if (parseInt(data.flag_check) === 1) {
           document.getElementById("lblspikes").innerText = "# spikes :" + data.lstresponse.total_lines;
