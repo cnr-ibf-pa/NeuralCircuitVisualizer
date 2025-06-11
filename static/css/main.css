@@ -803,11 +803,18 @@ input[type="range"] {
 }
 
 .styled-input {
-  width: 5rem;
-  padding: 0.25rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 0.85rem;
+    width: 70px;
+    padding: 2px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #000000;
+    background-color: #f9f9f9;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    margin-top: 3px;
+
+    gap: 12px;
+    
 }
 
 /* Responsive time display */
