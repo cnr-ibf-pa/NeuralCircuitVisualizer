@@ -435,24 +435,7 @@ input[type="number"][step="any"][aria-labelledby="lil-gui-name-5"] {
     padding-top: 1px;
 }
 
-input[type="number"][step="any"][aria-labelledby="lil-gui-name-8"] {
-    background-color: #b8b8b7;
-    color: #000 !important;
-    margin-top: 1px;
-    padding-top: 1px;
-}
-input[type="number"][step="any"][aria-labelledby="lil-gui-name-9"] {
-    background-color: #b8b8b7;
-    color: #000 !important;
-    margin-top: 1px;
-    padding-top: 1px;
-}
-input[type="number"][step="any"][aria-labelledby="lil-gui-name-9"] {
-    background-color: #b8b8b7;
-    color: #000 !important;
-    margin-top: 1px;
-    padding-top: 1px;
-}
+
 
 /* Style the dropdowns */
 select {
@@ -812,31 +795,27 @@ input[type="range"] {
     margin: 0 6px;
 }
 
+/* Responsive input container */
 .input-group-container {
     display: flex;
-    gap: 2px;
-    /* Adjust spacing between inputs */
-    align-items: center;
     flex-wrap: wrap;
-
+    gap: 0.5rem;
 }
 
 .styled-input {
-    width: 70px;
-    padding: 2px 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 12px;
-    color: #000000;
-    background-color: #f9f9f9;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    margin-top: 3px;
-
-    gap: 12px;
-    /* Adjust spacing between inputs */
-
+  width: 5rem;
+  padding: 0.25rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.85rem;
 }
 
+/* Responsive time display */
+.simulation-container {
+    padding: 0.5rem 0.75rem;
+    
+    border-radius: 6px;
+}
 
 
 #time {
@@ -1162,6 +1141,29 @@ label {
 }
 
 
+/* Tablet view */
+@media (max-width: 768px) {
+    .playback-container {
+        width: 80vw;
+        right: 1rem;
+        padding: 0.75rem;
+    }
+
+    .value-box {
+        width: 60px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Mobile view */
+@media (max-width: 500px) {
+    .playback-container {
+        width: 95vw;
+        left: 0.5rem;
+        right: 0.5rem;
+        padding: 0.75rem;
+        font-size: 13px;
+    }
 
     .slider-wrapper {
         flex-direction: column;
@@ -1280,42 +1282,25 @@ label {
 
 
 
-
-
-.ncv-button-group {
-
-    display: flex;
-
-
-    padding-left: 25px;
-
-    width: fit-content;
-
-}
-
-/* Button base */
-.ncv-btn {
-    width: 38px;
-    height: 38px;
-    background-color: #5f636e;
+/* Shared button styles */
+.ncv-button-group .ncv-btn {
+    background-color: #2d313f;
+    color: white;
     border: none;
-    border-radius: 8px;
-    font-size: 1.4rem;
-    color: #fff;
-
+    padding: 0.4rem 0.75rem;
+    border-radius: 4px;
+    font-size: 1.2rem;
+    display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-    box-shadow: inset -2px -2px 3px rgba(255, 255, 255, 0.3),
-        inset 2px 2px 4px rgba(0, 0, 0, 0.6);
+    transition: background 0.2s ease;
 }
 
-/* Hover effect */
-.ncv-btn:hover {
-    background-color: #6e7280;
-    transform: translateY(-2px);
-    box-shadow: 0 0 8px rgba(100, 200, 255, 0.3);
+.ncv-button-group .ncv-btn:hover {
+    background-color: #444;
 }
+
+
 
 /* Active glowing state */
 .ncv-btn.active {
@@ -1425,6 +1410,9 @@ label {
             
     }
 }
+
+
+
 
 
 
