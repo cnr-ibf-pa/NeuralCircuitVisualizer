@@ -136,7 +136,14 @@
     background-color: #a8a8aa !important;
     border-color: #d0d0d0 !important;
 }
-
+/* Ensure time display wraps properly */
+.time-display {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
 .time-panel {
     position: relative;
     width: 100%;
@@ -790,9 +797,12 @@ input[type="range"] {
 
 .styled-label {
     font-size: 14px;
-    font-weight: 500;
-    color: #000000;
-    margin: 0 6px;
+        
+        color: #000000;
+        margin: 0 6px;
+        display: flex;
+        flex-direction: column;
+        min-width: 70px;
 }
 
 /* Responsive input container */
@@ -803,24 +813,24 @@ input[type="range"] {
 }
 
 .styled-input {
-    width: 70px;
-    padding: 2px 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 12px;
-    color: #000000;
-    background-color: #f9f9f9;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    margin-top: 3px;
-
-    gap: 12px;
+    width: 100%;
+        max-width: 80px;
+        padding: 2px 8px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 12px;
+        color: #000000;
+        
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        margin-top: 3px;
     
 }
 
 /* Responsive time display */
 .simulation-container {
-    padding: 0.1rem 0.65rem;
     
+        width: 100%;
+        
 }
 
 
