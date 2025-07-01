@@ -1,13 +1,28 @@
 from email.policy import default
 from django import forms
+from pyparsing import C
 
 
 HPC_LIST = [
     ('CINECA - G100', 'CINECA - G100')
 ]
 
+CIRCUIT_LIST = [
+    ('human', 'Human'),
+    ('mouse', 'Mouse')
+]
 
-class OptimizationSettingsForm(forms.Form):
+
+class HumanSimulationForm(forms.Form):
+    circuit = forms.ChoiceField(choices=CIRCUIT_LIST, required=True)
+    hpc = forms.ChoiceField(choices=HPC_LIST, required=True)
+    background_frequency = forms.FloatField(required=True, max_value=10.0, min_value=1.0)
+    stimulus_1_synapses_weight = forms.FloatField(required=True, max_value=10.0, min_value=1.0)
+    simulation_duration = forms.FloatField(required=True, max_value=20000.0, min_value=500.0)
+
+
+class MouseSimulationForm(forms.Form):
+    circuit = forms.ChoiceField(choices=CIRCUIT_LIST, required=True)
     hpc = forms.ChoiceField(choices=HPC_LIST, required=True)
     pyr2pyr = forms.FloatField(required=True, max_value=10.0, min_value=1.0)
     inh2inh = forms.FloatField(required=True, max_value=10.0, min_value=1.0)

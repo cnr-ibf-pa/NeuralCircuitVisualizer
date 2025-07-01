@@ -9,6 +9,7 @@ USER_LOGIN_ERROR = 'Authentication error! Unable to log in the user.'
 JOB_SUBMISSION_FAILED = 'Connection error! The job submission failed.'
 HPC_SYSTEM_ERROR = 'Service error! The hpc system encounter an error.'
 INVALID_HPC_ERROR = 'HPC value error! This hpc {} is not valid.'
+INVALID_CIRCUIT = 'Invalid circuit!'
 
 JOB_SUBMITTED = 'Job submitted on {}.'
 

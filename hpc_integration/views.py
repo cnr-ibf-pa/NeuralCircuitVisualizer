@@ -25,7 +25,14 @@ def submit_job(request):
     if request.method != 'POST':
         return HttpResponseNotAllowed('POST')
 
-    form = forms.OptimizationSettingsForm(request.POST)
+    form = None
+    circuit = request.POST.get('circuit')
+    if circuit == 'human':
+        form = forms.HumanSimulationForm(request.POST)
+    elif circuit == 'mouse':
+        form = forms.MouseSimulationForm(request.POST)
+    else:
+        return HttpResponse(status=400, content=messages.INVALID_CIRCUIT)
 
     if not form.is_valid():
         logging.error(f'Invalid form: {form.errors.get_json_data(escape_html=True)}')

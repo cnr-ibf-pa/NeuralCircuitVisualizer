@@ -9,6 +9,24 @@ from hpc_integration.utils import messages, errors, str_to_datetime
 from hpc_integration.utils.decorators import check_hpc_supported
 
 
+def get_commands_scripts(circuit: str) -> tuple[str, str, str]:
+
+    if circuit == 'human':
+        pre_command = ''
+        command = ''
+        post_command = ''
+
+    elif circuit == 'mouse':
+        pre_command = '/g100_work/EIRI_E_CNRIB2/NeuralCircuitVisualizer/prepare_job.sh'
+        command = './run_job.sh'
+        post_command = './postprocessing.sh'
+
+    else:
+        raise ValueError(messages.INVALID_CIRCUIT)
+
+    return pre_command, command, post_command
+
+
 class JobHelper:
 
     _G100_CINECA = 'CINECA - G100'
@@ -80,9 +98,8 @@ class JobHelper:
             the job object containing the job submission instance.
         """
 
-        pre_command = '/g100_work/EIRI_E_CNRIB2/NeuralCircuitVisualizer/prepare_job.sh'
-        command = './run_job.sh'
-        post_command = './postprocessing.sh'
+        circuit = settings.pop('circuit')
+        pre_command, command, post_command = get_commands_scripts(circuit)
         args = [str(settings[ss]) for ss in list(settings.keys())]
 
         job_descriptor = {
@@ -90,7 +107,7 @@ class JobHelper:
             'Executable': command,
             'Arguments': args,
             'User postcommand': post_command,
-            'Name': job_name,
+            'Name': f'{circuit[0].upper()}_job_name',
             'Resources': {
                 'Project': 'EIRI_E_CNRIB2',
                 'Nodes': 2,
