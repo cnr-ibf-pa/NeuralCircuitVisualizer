@@ -107,7 +107,7 @@ class JobHelper:
             'Executable': command,
             'Arguments': args,
             'User postcommand': post_command,
-            'Name': f'{circuit[0].upper()}_job_name',
+            'Name': circuit[0].upper() + '_' + job_name,
             'Resources': {
                 'Project': 'EIRI_E_CNRIB2',
                 'Nodes': 2,

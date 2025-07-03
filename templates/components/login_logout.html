@@ -1,6 +1,6 @@
 {% block content %}
   <div class="d-flex justify-content-end align-items-center" style="color: white;">
-    {% if user.is_authenticated %}
+    {% if user.is_authenticated and request.session.oidc_access_token %}
       <div id="logout-button" class="d-flex justify-content-center align-items-center" style="cursor: pointer; text-decoration: none; color: white" onclick="document.getElementById('logout-form').submit();">
         <p class="me-1 mb-0">Logout</p>
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-box-arrow-in-left" viewBox="0 0 16 16">

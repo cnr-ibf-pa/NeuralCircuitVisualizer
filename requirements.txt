@@ -11,3 +11,4 @@ requests
 h5py
 networkx
 gunicorn
+pyjwt
