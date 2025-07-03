@@ -12,12 +12,12 @@ from hpc_integration.utils.decorators import check_hpc_supported
 def get_commands_scripts(circuit: str) -> tuple[str, str, str]:
 
     if circuit == 'human':
-        pre_command = ''
-        command = ''
-        post_command = ''
+        pre_command = '/g100_work/EIRI_E_CNRIB2/NCV_Human/prepare_job.sh'
+        command = './run_job.sh'
+        post_command = './postprocessing.sh'
 
     elif circuit == 'mouse':
-        pre_command = '/g100_work/EIRI_E_CNRIB2/NeuralCircuitVisualizer/prepare_job.sh'
+        pre_command = '/g100_work/EIRI_E_CNRIB2/NCV_Mouse/prepare_job.sh'
         command = './run_job.sh'
         post_command = './postprocessing.sh'
 
