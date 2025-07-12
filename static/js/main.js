@@ -22,6 +22,7 @@ let timeRanges;
 let customRanges;
 let flag = false;
 let ishuman = false;
+let ishalf = false;
 let flagact = false;
 let count = 0.0;
 let x = 0.0;
@@ -342,6 +343,7 @@ window.addEventListener("load", function () {
     document.getElementById("progress-percentage").style.display = "none";
     document.getElementById("page-loader").style.display = "block";
     LoadHumanHipForm("half"); // Pass "half"
+    ishalf = true;
     dropdown.innerHTML = "";
   });
 });
@@ -552,6 +554,8 @@ networkFileInput.addEventListener("change", async (event) => {
       }
 
       flag = true;
+
+      if (total_neurons > 5200000) ishuman = true;
       VisualizateNeurons();
       resetCamera();
       centerCameraToObject(particles);
@@ -659,6 +663,8 @@ hdfFileInput.addEventListener("change", async (event) => {
           NetworkArray.push(file.fileData);
           total_neurons += file.total_neuros;
         });
+
+        if (total_neurons > 5000000) ishuman = true;
 
         flag = true;
         VisualizateNeurons();
@@ -1317,23 +1323,44 @@ function VisualizateNeurons() {
 
   if (flag) {
     if (ishuman) {
-      NetworkArray.forEach((net) => {
-        net.forEach((p) => {
-          const x = p.x * scalingFactor;
-          const y = p.y * scalingFactor;
-          const z = p.z * scalingFactor;
-          positions.push(x, y, z);
-          sizes.push(30);
-          gIDs.push(p.id);
+      if (ishalf) {
+        NetworkArray.forEach((net) => {
+          net.forEach((p) => {
+            const x = p.x * scalingFactor;
+            const y = p.y * scalingFactor;
+            const z = p.z * scalingFactor;
+            positions.push(x, y, z);
+            sizes.push(30);
+            gIDs.push(p.id);
 
-          p.id > 120000 ? (vertexColors.push(0, 0, 1), total_excitatory++) : (vertexColors.push(1, 0, 0), total_inhibitory++);
+            p.id < 2400001 ? (vertexColors.push(0, 0, 1), total_excitatory++) : (vertexColors.push(1, 0, 0), total_inhibitory++);
 
-          totalX += x;
-          totalY += y;
-          totalZ += z;
+            totalX += x;
+            totalY += y;
+            totalZ += z;
+          });
+          totalParticles += net.length;
         });
-        totalParticles += net.length;
-      });
+        ishalf = false;
+      } else {
+        NetworkArray.forEach((net) => {
+          net.forEach((p) => {
+            const x = p.x * scalingFactor;
+            const y = p.y * scalingFactor;
+            const z = p.z * scalingFactor;
+            positions.push(x, y, z);
+            sizes.push(30);
+            gIDs.push(p.id);
+
+            p.id < 4800001 ? (vertexColors.push(0, 0, 1), total_excitatory++) : (vertexColors.push(1, 0, 0), total_inhibitory++);
+
+            totalX += x;
+            totalY += y;
+            totalZ += z;
+          });
+          totalParticles += net.length;
+        });
+      }
       ishuman = false;
     } else {
       NetworkArray.forEach((net) => {
