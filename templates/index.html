@@ -7,13 +7,13 @@
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>Neural Circuit Visualizer</title>
 
-      <link rel="shortcut icon" href="{% static 'img/favicon.svg' %}" type="image/x-icon">
+      <link rel="shortcut icon" href="{% static 'img/favicon.svg' %}" type="image/x-icon" />
 
       <link rel="stylesheet" href="{% static 'css/main.css' %}" />
       <link rel="stylesheet" href="{% static 'css/alert.css' %}" />
 
       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
 
       <style>
         .lil-gui .gui-stats {
@@ -98,14 +98,11 @@
           </div>
         </div>
 
-
-
-
-         <div class="row min-vh-100 m-1">
+        <div class="row min-vh-100 m-1">
           <div class="col-12 col-md-4 col-lg-3 d-flex flex-column" style="overflow-y: auto; max-height: 100vh">
             <div class="accordion accordion-flush" id="accordionFlushExample">
               <div class="accordion-item">
-                <h2 class="accordion-header  heading" id="flush-headingOne"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="true" aria-controls="flush-collapseOne">UPLOAD DATA</button></h2>
+                <h2 class="accordion-header heading" id="flush-headingOne"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="true" aria-controls="flush-collapseOne">UPLOAD DATA</button></h2>
                 <div id="flush-collapseOne" class="accordion-collapse show collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample">
                   <div class="accordion-body">
                     <div class="d-grid gap-2 col-9 mx-auto">
@@ -198,7 +195,7 @@
                         </div>
 
                         <!-- Mice Circuit -->
-                            <div class="accordion-item">
+                        <div class="accordion-item">
                           <h2 class="accordion-header" id="headingMice"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMice" aria-expanded="false" aria-controls="collapseMice">Mouse Circuit</button></h2>
                           <div id="collapseMice" class="accordion-collapse collapse" aria-labelledby="headingMice" data-bs-parent="#accordionSubCircuits">
                             <div class="d-grid gap-2 col-11 mx-auto mt-2 mb-2">
@@ -398,16 +395,20 @@
                                               <div class="col-8">
                                                 <div class="row">
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="DGSMo" /><label class="form-check-label" for="DGSMo">SMo</label>
+                                                    <input class="form-check-input" type="checkbox" id="DGSMo" />
+                                                    <label class="form-check-label" for="DGSMo">SMo</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="DGSMi" /><label class="form-check-label" for="DGSMi">SMi</label>
+                                                    <input class="form-check-input" type="checkbox" id="DGSMi" />
+                                                    <label class="form-check-label" for="DGSMi">SMi</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="DGSG" /><label class="form-check-label" for="DGSG">SG</label>
+                                                    <input class="form-check-input" type="checkbox" id="DGSG" />
+                                                    <label class="form-check-label" for="DGSG">SG</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="DGH" /><label class="form-check-label" for="DGH">H</label>
+                                                    <input class="form-check-input" type="checkbox" id="DGH" />
+                                                    <label class="form-check-label" for="DGH">H</label>
                                                   </div>
                                                 </div>
                                               </div>
@@ -420,19 +421,24 @@
                                               <div class="col-8">
                                                 <div class="row">
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="CA3SLM" /><label class="form-check-label" for="CA3SLM">SLM</label>
+                                                    <input class="form-check-input" type="checkbox" id="CA3SLM" />
+                                                    <label class="form-check-label" for="CA3SLM">SLM</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="CA3SR" /><label class="form-check-label" for="CA3SR">SR</label>
+                                                    <input class="form-check-input" type="checkbox" id="CA3SR" />
+                                                    <label class="form-check-label" for="CA3SR">SR</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="CA3SL" /><label class="form-check-label" for="CA3SL">SL</label>
+                                                    <input class="form-check-input" type="checkbox" id="CA3SL" />
+                                                    <label class="form-check-label" for="CA3SL">SL</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="CA3SP" /><label class="form-check-label" for="CA3SP">SP</label>
+                                                    <input class="form-check-input" type="checkbox" id="CA3SP" />
+                                                    <label class="form-check-label" for="CA3SP">SP</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="CA3SO" /><label class="form-check-label" for="CA3SO">SO</label>
+                                                    <input class="form-check-input" type="checkbox" id="CA3SO" />
+                                                    <label class="form-check-label" for="CA3SO">SO</label>
                                                   </div>
                                                 </div>
                                               </div>
@@ -446,7 +452,8 @@
                                               <div class="col-8">
                                                 <div class="row">
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="CA2SP" /><label class="form-check-label" for="CA2SP">SP</label>
+                                                    <input class="form-check-input" type="checkbox" id="CA2SP" />
+                                                    <label class="form-check-label" for="CA2SP">SP</label>
                                                   </div>
                                                 </div>
                                               </div>
@@ -460,16 +467,20 @@
                                               <div class="col-8">
                                                 <div class="row">
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="CA1SLM" /><label class="form-check-label" for="CA1SLM">SLM</label>
+                                                    <input class="form-check-input" type="checkbox" id="CA1SLM" />
+                                                    <label class="form-check-label" for="CA1SLM">SLM</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="CA1SR" /><label class="form-check-label" for="CA1SR">SR</label>
+                                                    <input class="form-check-input" type="checkbox" id="CA1SR" />
+                                                    <label class="form-check-label" for="CA1SR">SR</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="CA1SP" /><label class="form-check-label" for="CA1SP">SP</label>
+                                                    <input class="form-check-input" type="checkbox" id="CA1SP" />
+                                                    <label class="form-check-label" for="CA1SP">SP</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="CA1SO" /><label class="form-check-label" for="CA1SO">SO</label>
+                                                    <input class="form-check-input" type="checkbox" id="CA1SO" />
+                                                    <label class="form-check-label" for="CA1SO">SO</label>
                                                   </div>
                                                 </div>
                                               </div>
@@ -483,10 +494,12 @@
                                               <div class="col-8">
                                                 <div class="row">
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="SubSM" /><label class="form-check-label" for="SubSM">SM</label>
+                                                    <input class="form-check-input" type="checkbox" id="SubSM" />
+                                                    <label class="form-check-label" for="SubSM">SM</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="SubSP" /><label class="form-check-label" for="SubSP">SP</label>
+                                                    <input class="form-check-input" type="checkbox" id="SubSP" />
+                                                    <label class="form-check-label" for="SubSP">SP</label>
                                                   </div>
                                                 </div>
                                               </div>
@@ -500,22 +513,28 @@
                                               <div class="col-8">
                                                 <div class="row">
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="LECI" /><label class="form-check-label" for="LECI">I</label>
+                                                    <input class="form-check-input" type="checkbox" id="LECI" />
+                                                    <label class="form-check-label" for="LECI">I</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="LECII" /><label class="form-check-label" for="LECII">II</label>
+                                                    <input class="form-check-input" type="checkbox" id="LECII" />
+                                                    <label class="form-check-label" for="LECII">II</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="LECIII" /><label class="form-check-label" for="LECIII">III</label>
+                                                    <input class="form-check-input" type="checkbox" id="LECIII" />
+                                                    <label class="form-check-label" for="LECIII">III</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="LECIV" /><label class="form-check-label" for="LECIV">IV</label>
+                                                    <input class="form-check-input" type="checkbox" id="LECIV" />
+                                                    <label class="form-check-label" for="LECIV">IV</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="LECV" /><label class="form-check-label" for="LECV">V</label>
+                                                    <input class="form-check-input" type="checkbox" id="LECV" />
+                                                    <label class="form-check-label" for="LECV">V</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="LECVI" /><label class="form-check-label" for="LECVI">VI</label>
+                                                    <input class="form-check-input" type="checkbox" id="LECVI" />
+                                                    <label class="form-check-label" for="LECVI">VI</label>
                                                   </div>
                                                 </div>
                                               </div>
@@ -528,22 +547,28 @@
                                               <div class="col-8">
                                                 <div class="row">
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="MECI" /><label class="form-check-label" for="MECI">I</label>
+                                                    <input class="form-check-input" type="checkbox" id="MECI" />
+                                                    <label class="form-check-label" for="MECI">I</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="MECII" /><label class="form-check-label" for="MECII">II</label>
+                                                    <input class="form-check-input" type="checkbox" id="MECII" />
+                                                    <label class="form-check-label" for="MECII">II</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="MECIII" /><label class="form-check-label" for="MECIII">III</label>
+                                                    <input class="form-check-input" type="checkbox" id="MECIII" />
+                                                    <label class="form-check-label" for="MECIII">III</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="MECIV" /><label class="form-check-label" for="MECIV">IV</label>
+                                                    <input class="form-check-input" type="checkbox" id="MECIV" />
+                                                    <label class="form-check-label" for="MECIV">IV</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="MECV" /><label class="form-check-label" for="MECV">V</label>
+                                                    <input class="form-check-input" type="checkbox" id="MECV" />
+                                                    <label class="form-check-label" for="MECV">V</label>
                                                   </div>
                                                   <div class="col border p-0">
-                                                    <input class="form-check-input" type="checkbox" id="MECVI" /><label class="form-check-label" for="MECVI">VI</label>
+                                                    <input class="form-check-input" type="checkbox" id="MECVI" />
+                                                    <label class="form-check-label" for="MECVI">VI</label>
                                                   </div>
                                                 </div>
                                               </div>
@@ -570,7 +595,9 @@
                                     </div>
 
                                     <div class="accordion-item">
-                                      <h2 class="accordion-header small-head" id="DG-heading"><button id="btnDG" class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseDG" aria-expanded="false" aria-controls="flush-collapseDG">DG Neuron Types (0/18)</button></h2>
+                                      <h2 class="accordion-header small-head" id="DG-heading">
+                                        <button id="btnDG" class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseDG" aria-expanded="false" aria-controls="flush-collapseDG">DG Neuron Types (0/18)</button>
+                                      </h2>
                                       <div id="flush-collapseDG" class="accordion-collapse collapse p-0" aria-labelledby="DG-heading" data-bs-parent="#accordionFlushRegions">
                                         <div class="accordion-body p-0">
                                           <div class="container">
@@ -725,7 +752,9 @@
                                     </div>
 
                                     <div class="accordion-item">
-                                      <h2 class="accordion-header small-head" id="CA3-heading"><button id="btnCA3" class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseCA3" aria-expanded="false" aria-controls="flush-collapseCA3">CA3 Neuron Types (0/25)</button></h2>
+                                      <h2 class="accordion-header small-head" id="CA3-heading">
+                                        <button id="btnCA3" class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseCA3" aria-expanded="false" aria-controls="flush-collapseCA3">CA3 Neuron Types (0/25)</button>
+                                      </h2>
                                       <div id="flush-collapseCA3" class="accordion-collapse collapse p-0" aria-labelledby="CA3-heading" data-bs-parent="#accordionFlushRegions">
                                         <div class="accordion-body p-0">
                                           <div class="container">
@@ -934,7 +963,9 @@
                                     </div>
 
                                     <div class="accordion-item">
-                                      <h2 class="accordion-header small-head" id="CA2-heading"><button id="btnCA2" class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseCA2" aria-expanded="false" aria-controls="flush-collapseCA2">CA2 Neuron Types (0/5)</button></h2>
+                                      <h2 class="accordion-header small-head" id="CA2-heading">
+                                        <button id="btnCA2" class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseCA2" aria-expanded="false" aria-controls="flush-collapseCA2">CA2 Neuron Types (0/5)</button>
+                                      </h2>
                                       <div id="flush-collapseCA2" class="accordion-collapse collapse p-0" aria-labelledby="CA2-heading" data-bs-parent="#accordionFlushRegions">
                                         <div class="accordion-body p-0">
                                           <div class="container">
@@ -993,7 +1024,9 @@
                                     </div>
 
                                     <div class="accordion-item">
-                                      <h2 class="accordion-header small-head" id="CA1-heading"><button id="btnCA1" class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseCA1" aria-expanded="false" aria-controls="flush-collapseCA1">CA1 Neuron Types (0/40)</button></h2>
+                                      <h2 class="accordion-header small-head" id="CA1-heading">
+                                        <button id="btnCA1" class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseCA1" aria-expanded="false" aria-controls="flush-collapseCA1">CA1 Neuron Types (0/40)</button>
+                                      </h2>
                                       <div id="flush-collapseCA1" class="accordion-collapse collapse p-0" aria-labelledby="CA1-heading" data-bs-parent="#accordionFlushRegions">
                                         <div class="accordion-body p-0">
                                           <div class="container">
@@ -1313,7 +1346,9 @@
                                     </div>
 
                                     <div class="accordion-item">
-                                      <h2 class="accordion-header small-head" id="sub-heading"><button id="btnSub" class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapsesub" aria-expanded="false" aria-controls="flush-collapsesub">Subiculum (Sub) Neuron Types (0/3)</button></h2>
+                                      <h2 class="accordion-header small-head" id="sub-heading">
+                                        <button id="btnSub" class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapsesub" aria-expanded="false" aria-controls="flush-collapsesub">Subiculum (Sub) Neuron Types (0/3)</button>
+                                      </h2>
                                       <div id="flush-collapsesub" class="accordion-collapse collapse p-0" aria-labelledby="sub-heading" data-bs-parent="#accordionFlushRegions">
                                         <div class="accordion-body p-0">
                                           <div class="container">
@@ -1357,7 +1392,9 @@
                                     </div>
 
                                     <div class="accordion-item">
-                                      <h2 class="accordion-header small-head" id="EC-heading"><button id="btnEC" class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseEC" aria-expanded="false" aria-controls="flush-collapseEC">Entorhinal Cortex (EC) Neuron Types (0/31)</button></h2>
+                                      <h2 class="accordion-header small-head" id="EC-heading">
+                                        <button id="btnEC" class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseEC" aria-expanded="false" aria-controls="flush-collapseEC">Entorhinal Cortex (EC) Neuron Types (0/31)</button>
+                                      </h2>
                                       <div id="flush-collapseEC" class="accordion-collapse collapse p-0" aria-labelledby="EC-heading" data-bs-parent="#accordionFlushRegions">
                                         <div class="accordion-body p-0">
                                           <div class="container">
@@ -1613,162 +1650,140 @@
                                 </div>
                               </div>
                             </div>
-
-
                           </div>
                         </div>
-
-
-
-
-
-
                       </div>
                       <!-- Sub Accordion Ends Here -->
                     </div>
                   </div>
                 </div>
-                {% include 'components/hpc_integration/job_submission.html' %}
-                {% include 'components/hpc_integration/fetch_results.html' %}
+                {% include 'components/hpc_integration/job_submission.html' %} {% include 'components/hpc_integration/fetch_results.html' %}
               </div>
             </div>
 
-            <div id="Neurons_firing_attributes" class="mt-2 px-3 py-3 px-3 ">
-                        <div class="row justify-content-center align-items-center">
-                            <!-- Excitatory Neurons -->
-                            <div class="col-12 col-sm-6 d-flex align-items-center mb-2">
-                            <div class="rounded-circle me-2 flex-shrink-0" style="width: 16px; height: 16px; background-color: #0d6efd"></div>
-                            <span class="small">Excitatory Neurons</span>
-                            </div>
+            <div id="Neurons_firing_attributes" class="mt-2 px-3 py-3 px-3">
+              <div class="row justify-content-center align-items-center">
+                <!-- Excitatory Neurons -->
+                <div class="col-12 col-sm-6 d-flex align-items-center mb-2">
+                  <div class="rounded-circle me-2 flex-shrink-0" style="width: 16px; height: 16px; background-color: #0d6efd"></div>
+                  <span class="small">Excitatory Neurons</span>
+                </div>
 
-                            <!-- Inhibitory Neurons -->
-                            <div class="col-12 col-sm-6 d-flex align-items-center mb-2">
-                            <div class="rounded-circle me-2 flex-shrink-0" style="width: 16px; height: 16px; background-color: #dc3545"></div>
-                            <span class="small">Inhibitory Neurons</span>
-                            </div>
-                        </div>
+                <!-- Inhibitory Neurons -->
+                <div class="col-12 col-sm-6 d-flex align-items-center mb-2">
+                  <div class="rounded-circle me-2 flex-shrink-0" style="width: 16px; height: 16px; background-color: #dc3545"></div>
+                  <span class="small">Inhibitory Neurons</span>
+                </div>
+              </div>
 
-                        <div class="row justify-content-center align-items-center" id="Neurons_firing_attributes_Heading">
-                            <!-- Excitatory Neurons -->
-                            <div class="col-12 col-sm-6 d-flex align-items-center mb-2">
-                            <div class="rounded-circle me-2 flex-shrink-0" style="width: 16px; height: 16px; background-color: #ffea00"></div>
-                            <span class="small">Firing Excitatory</span>
-                            </div>
+              <div class="row justify-content-center align-items-center" id="Neurons_firing_attributes_Heading">
+                <!-- Excitatory Neurons -->
+                <div class="col-12 col-sm-6 d-flex align-items-center mb-2">
+                  <div class="rounded-circle me-2 flex-shrink-0" style="width: 16px; height: 16px; background-color: #ffea00"></div>
+                  <span class="small">Firing Excitatory</span>
+                </div>
 
-                            <!-- Inhibitory Neurons -->
-                            <div class="col-12 col-sm-6 d-flex align-items-center mb-2">
-                            <div class="rounded-circle me-2 flex-shrink-0" style="width: 16px; height: 16px; background-color: #ffffff; border: 1px solid #ccc"></div>
-                            <span class="small">Firing Inhibitory</span>
-                            </div>
-                        </div>
+                <!-- Inhibitory Neurons -->
+                <div class="col-12 col-sm-6 d-flex align-items-center mb-2">
+                  <div class="rounded-circle me-2 flex-shrink-0" style="width: 16px; height: 16px; background-color: #ffffff; border: 1px solid #ccc"></div>
+                  <span class="small">Firing Inhibitory</span>
+                </div>
+              </div>
             </div>
 
-            <div class=" histogram-container ">
-                <img id="histogramImage" />
+            <div class="histogram-container">
+              <img id="histogramImage" />
             </div>
             <!-- <img id="rasterImage" style="display:none; width: 100;" /> -->
-
-
           </div>
 
           <div id="" class="col-12 col-md-12 col-lg-9 d-flex flex-column">
-                <div class="row control-panel align-items-center custom-header ">
-                        <!-- Activity Dropdown -->
-                        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                        <select id="ddactivity_chunks" class="form-select" style="background-color:#b8b8b7">
-                            <option selected>Activity windows</option>
-                        </select>
-                        </div>
+            <div class="row control-panel align-items-center custom-header">
+              <!-- Activity Dropdown -->
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <select id="ddactivity_chunks" class="form-select" style="background-color: #b8b8b7">
+                  <option selected>Activity windows</option>
+                </select>
+              </div>
 
-
-                          <!-- Playback Buttons -->
-                        <div class="col-12 col-sm-6 col-md-6 col-lg-2">
-                            <div class="ncv-button-group d-flex flex-wrap justify-content-center gap-2">
-                            <button id="startbtn" class="ncv-btn" title="Play"><i class="bi bi-play-fill"></i></button>
-                            <button id="pause" class="ncv-btn" title="Pause"><i class="bi bi-pause-fill"></i></button>
-                            <button id="restart" class="ncv-btn" title="Restart"><i class="bi bi-arrow-clockwise"></i></button>
-                            </div>
-                        </div>
-
-
-                        <!-- Time Display and Slider -->
-                        <div class="col-12 col-md-6 col-lg-4">
-                            <div class="simulation-container">
-                            <div class="time-display d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                <div id="time">
-                                t = <span id="current-time">0.0</span> / <span id="total-time">0.0</span> ms
-                                </div>
-                                <div class="input-group-container">
-                                <label class="styled-label">
-                                    Start:
-                                    <input type="number" class="styled-input" id="start-time" min="0" step="0.1" />
-                                </label>
-                                <label class="styled-label">
-                                    End:
-                                    <input type="number" class="styled-input" id="end-time" min="0" step="0.1" />
-                                </label>
-                                </div>
-                            </div>
-                            <input type="range" id="timebar" step="0.1" value="0" />
-                            </div>
-                        </div>
-
-                        <!-- Workflow ID -->
-                        <div class="col-12 col-md-6 col-lg-3">
-                            <div class="d-flex justify-content-start justify-content-md-end">
-                            {% include "components/workflow_id.html" %}
-                            </div>
-                        </div>
-
-
-
-
+              <!-- Playback Buttons -->
+              <div class="col-12 col-sm-6 col-md-6 col-lg-2">
+                <div class="ncv-button-group d-flex flex-wrap justify-content-center gap-2">
+                  <button id="startbtn" class="ncv-btn" title="Play"><i class="bi bi-play-fill"></i></button>
+                  <button id="pause" class="ncv-btn" title="Pause"><i class="bi bi-pause-fill"></i></button>
+                  <button id="restart" class="ncv-btn" title="Restart"><i class="bi bi-arrow-clockwise"></i></button>
                 </div>
+              </div>
 
-
-
-                <div class="row mt-1 min-vh-100" style="background-color:black;">
-                    <div id="visualizationControls" class="position-relative w-100">
-                        <button id="togglePanelBtn">☰ Visualization Controls</button>
-                        <div id="panel" style="display: none;"></div>
-                        <button class="openbtn" id="btnopen">☰ Playback Contols</button>
-                        <div class="playback-container" id="playbackcontainer">
-                            <div class="config-row">
-                            <label for="simTimestepRange">Playback Timestep (ms)</label>
-                            <div class="slider-wrapper">
-                                <input type="range" id="simTimestepRange" min="0.1" value="0.1" step="0.1" max="10" />
-                                <input type="number" class="value-box" id="simTimestepValue" value="0.1" min="0.1" step="0.1" max="10" />
-                            </div>
-                            </div>
-
-                            <div class="config-row">
-                            <label for="stepDurationRange">Playback Step Duration (ms)</label>
-                            <div class="slider-wrapper">
-                                <input type="range" id="stepDurationRange" min="0" step="10" value="0" max="1000" />
-                                <input type="number" class="value-box" id="stepDurationValue" value="0" min="0" step="10" max="1000" />
-                            </div>
-                            </div>
-                        </div>
-
+              <!-- Time Display and Slider -->
+              <div class="col-12 col-md-6 col-lg-4">
+                <div class="simulation-container">
+                  <div class="time-display d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div id="time">
+                      t =
+                      <span id="current-time">0.0</span>
+                      /
+                      <span id="total-time">0.0</span>
+                      ms
                     </div>
-                    <canvas id="neuronCanvas"></canvas>
-
-                     <div id="networkspikes" class="col-12 col-md-3 d-flex justify-content-center justify-content-md-end gap-3">
-                        <span id="lblnetwork" class="badge rounded-pill bg-dark text-light shadow-sm px-3 py-2"># neurons: 0</span>
-                        <span id="lblspikes" class="badge rounded-pill bg-dark text-light shadow-sm px-3 py-2"># spikes: 0</span>
+                    <div class="input-group-container">
+                      <label class="styled-label">
+                        Start:
+                        <input type="number" class="styled-input" id="start-time" min="0" step="0.1" />
+                      </label>
+                      <label class="styled-label">
+                        End:
+                        <input type="number" class="styled-input" id="end-time" min="0" step="0.1" />
+                      </label>
                     </div>
+                  </div>
+                  <input type="range" id="timebar" step="0.1" value="0" />
                 </div>
+              </div>
 
-                <div>footer</div>
-
+              <!-- Workflow ID -->
+              <div class="col-12 col-md-6 col-lg-3">
+                <div class="d-flex justify-content-start justify-content-md-end">{% include "components/workflow_id.html" %}</div>
+              </div>
             </div>
 
+            <div class="row mt-1 min-vh-100" style="background-color: black">
+              <div id="visualizationControls" class="position-relative w-100">
+                <button id="togglePanelBtn">☰ Visualization Controls</button>
+                <div id="panel" style="display: none"></div>
+                <button class="openbtn" id="btnopen">☰ Playback Contols</button>
+                <div class="playback-container" id="playbackcontainer">
+                  <div class="config-row">
+                    <label for="simTimestepRange">Playback Timestep (ms)</label>
+                    <div class="slider-wrapper">
+                      <input type="range" id="simTimestepRange" min="0.1" value="0.1" step="0.1" max="10" />
+                      <input type="number" class="value-box" id="simTimestepValue" value="0.1" min="0.1" step="0.1" max="10" />
+                    </div>
+                  </div>
+
+                  <div class="config-row">
+                    <label for="stepDurationRange">Playback Step Duration (ms)</label>
+                    <div class="slider-wrapper">
+                      <input type="range" id="stepDurationRange" min="0" step="10" value="0" max="1000" />
+                      <input type="number" class="value-box" id="stepDurationValue" value="0" min="0" step="10" max="1000" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <canvas id="neuronCanvas"></canvas>
+
+              <div id="networkspikes" class="col-12 col-md-3 d-flex justify-content-center justify-content-md-end gap-3">
+                <span id="lblnetwork" class="badge rounded-pill bg-dark text-light shadow-sm px-3 py-2"># neurons: 0</span>
+                <span id="lblspikes" class="badge rounded-pill bg-dark text-light shadow-sm px-3 py-2"># spikes: 0</span>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div class="progressbar">
-            <div class="progress" id="progress"></div>
-        </div>
+      <div class="progressbar">
+        <div class="progress" id="progress"></div>
+      </div>
       <!-- Bootstrap Modal for File Details -->
       <div class="modal fade" id="fileDetailsModal" tabindex="-1" aria-labelledby="fileDetailsModalLabel">
         <div class="modal-dialog modal-xl">
@@ -1864,9 +1879,7 @@
           </div>
         </div>
       </div>
-             <!-- Dynamic Stats -->
-
-
+      <!-- Dynamic Stats -->
 
       <!-- Bootstrap Modal for File Details -->
       <div class="modal fade" id="confileDetailsModal" tabindex="-1" aria-labelledby="confileDetailsModalLabel">
@@ -1881,24 +1894,39 @@
               <!-- Connection Rules Description -->
 
               <div class="alert alert-secondary">
+                <strong>Biological Projection Rule:</strong>
+                Connections are made between CA3 and CA1 pyramidal cells based on anatomical region mapping:
+                <ul>
+                  <li>
+                    <strong>Dorsal</strong>
+                    CA3 →
+                    <strong>Dorsal</strong>
+                    CA1
+                  </li>
+                  <li>
+                    <strong>Ventral</strong>
+                    CA3 →
+                    <strong>Ventral</strong>
+                    CA1
+                  </li>
+                  <li>
+                    <strong>Proximal</strong>
+                    CA3 →
+                    <strong>Proximal</strong>
+                    CA1
+                  </li>
+                  <li>
+                    <strong>Distal</strong>
+                    CA3 →
+                    <strong>Distal</strong>
+                    CA1
+                  </li>
+                </ul>
+
                 <p>
-                  <strong>Biological Projection Rule:</strong> Connections are made between CA3 and CA1 pyramidal cells based on anatomical region mapping:<ul>
-                    <li>
-                      <strong>Dorsal</strong> CA3 → <strong>Dorsal</strong> CA1
-                    </li>
-                    <li>
-                      <strong>Ventral</strong> CA3 → <strong>Ventral</strong> CA1
-                    </li>
-                    <li>
-                      <strong>Proximal</strong> CA3 → <strong>Proximal</strong> CA1
-                    </li>
-                    <li>
-                      <strong>Distal</strong> CA3 → <strong>Distal</strong> CA1
-                    </li>
-                  </ul>
-                </p>
-                <p>
-                  Synapse probability is derived from <a href="https://hippocampome.org" target="_blank">Hippocampome.org</a> and scaled to mouse-specific anatomy using dendritic length from SR and SO layers (Tecuatl et al., 2021).
+                  Synapse probability is derived from
+                  <a href="https://hippocampome.org" target="_blank">Hippocampome.org</a>
+                  and scaled to mouse-specific anatomy using dendritic length from SR and SO layers (Tecuatl et al., 2021).
                 </p>
                 <p>CA3 interneurons are excluded from the projection model (they do not target CA1), while CA1 interneurons will be added in future updates.</p>
               </div>
@@ -1907,12 +1935,12 @@
         </div>
       </div>
 
-            <!-- The Modal -->
-            <div id="myModal" class="modal">
-              <span class="close">&times;</span>
-              <img class="modal-content" id="img01" />
-              <div id="caption"></div>
-            </div>
+      <!-- The Modal -->
+      <div id="myModal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="img01" />
+        <div id="caption"></div>
+      </div>
 
       <!-- End of .container -->
 
