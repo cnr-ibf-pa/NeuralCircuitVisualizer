@@ -37,35 +37,7 @@
   </div>
 </div>
 
-<<<<<<< HEAD
 <script>
-  function addJobToList(jobId, details) {
-    console.log("Adding job to list:", jobId, details);
-    const el = document.createElement("button");
-    el.classList.add("btn", "job-button", "border");
-    el.innerText = details.job_name;
-    const status = details.status.toLowerCase();
-    if (status === "successful") {
-      el.classList.add("job-success", "btn-success");
-    } else if (status === "failed") {
-      el.classList.add("job-failed", "btn-danger");
-    } else if (status === "pending" || status === "running" || status === "queued") {
-      el.classList.add("job-pending", "btn-info");
-    }
-    if (status === "successful") {
-      el.addEventListener("click", function () {
-        downloadActivityNetworkFromJob(jobId);
-      });
-    } else if (status === "failed") {
-      el.addEventListener("click", function () {
-        const a = document.createElement("a");
-        a.href = new URL(`/hpc-integration/download-job-results?job_id=${jobId}`, window.location.origin);
-        a.style.display = "none";
-        document.body.appendChild(a);
-        a.click();
-      });
-=======
-  <script>
     function addJobToList(jobId, details) {
       console.log('Adding job to list:', jobId, details);
 
@@ -156,7 +128,6 @@
         .catch((error) => {
           console.error(error);
         });
->>>>>>> main
     }
     document.getElementById("fetched-jobs-list").appendChild(el);
   }
