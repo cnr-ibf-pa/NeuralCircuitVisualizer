@@ -8,7 +8,7 @@ from django.http.response import JsonResponse, HttpResponseBadRequest, HttpRespo
 
 from hpc_integration import forms
 from hpc_integration.forms import HPC_LIST
-from hpc_integration.utils import messages, get_tmp_dir, get_tmp_working_dir
+from hpc_integration.utils import messages, get_tmp_working_dir
 from hpc_integration.utils.decorators import login_required
 from hpc_integration.helper.job_helper import JobHelper
 from hpc_integration.utils.errors import ForbiddenException, HPCException, UnicoreClientException, JobAlreadySubmittedException
