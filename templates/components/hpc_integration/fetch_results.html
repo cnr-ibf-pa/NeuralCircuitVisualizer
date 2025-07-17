@@ -1,36 +1,33 @@
 {% block content %}
-  <div class="accordion-item">
-    <h2 class="accordion-header" id="fetch-jobs-heading"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fetch-jobs-collapse" aria-expanded="false" aria-controls="fetch-jobs-collapse">FETCH RESULTS</button></h2>
-    <div id="fetch-jobs-collapse" class="accordion-collapse collapse" aria-labelledby="fetch-jobs-heading" data-bs-parent="#accordionFlushExample">
-      <div class="accordion-body">
-        <form id="fetch-jobs-form">
-          {% csrf_token %}
-          <div class="mb-3">
-            <label for="hpc-selector" class="form-label">Select HPC Platform:</label>
-            <select class="form-select" id="hpc-selector" name="hpc">
-              <option value="CINECA - G100">CINECA - G100</option>
-            </select>
+<div class="accordion-item">
+  <h2 class="accordion-header" id="fetch-jobs-heading"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fetch-jobs-collapse" aria-expanded="false" aria-controls="fetch-jobs-collapse">FETCH RESULTS</button></h2>
+  <div id="fetch-jobs-collapse" class="accordion-collapse collapse" aria-labelledby="fetch-jobs-heading" data-bs-parent="#accordionFlushExample">
+    <div class="accordion-body">
+      <form id="fetch-jobs-form">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="hpc-selector" class="form-label">Select HPC Platform:</label>
+          <select class="form-select" id="hpc-selector" name="hpc">
+            <option value="CINECA - G100">CINECA - G100</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-success w-100 d-flex-inline" id="fetch-job-button">
+          <div class="spinner-border spinner-border-sm d-none" role="status" id="fetch-job-spinner">
+            <span class="visually-hidden">Loading...</span>
           </div>
-          <button type="submit" class="btn btn-success w-100 d-flex-inline" id="fetch-job-button">
-            <div class="spinner-border spinner-border-sm d-none" role="status" id="fetch-job-spinner">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            Fetch jobs
-          </button>
-        </form>
-        <div id="fetchedJobsDiv" class="d-block d-none">
-          <hr>
-          <div class="accordion" id="fetchedJobsAccordion">
-            <div class="accordion-item">
-              <h2 class="accordion-header" id="headingOne">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                  Fetched Jobs
-                </button>
-              </h2>
-              <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#fetchedJobsAccordion">
-                <div class="accordion-body" style="padding: 0;">
-                  <div id="fetched-jobs-list"></div>
-                </div>
+          Fetch jobs
+        </button>
+      </form>
+      <div id="fetchedJobsDiv" class="d-block d-none">
+        <hr />
+        <div class="accordion" id="fetchedJobsAccordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+              <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">Fetched Jobs</button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#fetchedJobsAccordion">
+              <div class="accordion-body" style="padding: 0">
+                <div id="fetched-jobs-list"></div>
               </div>
             </div>
           </div>
@@ -38,82 +35,82 @@
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-
-    function addJobToList(jobId, details) {
-      console.log('Adding job to list:', jobId, details);
-      const el = document.createElement('button');
-      el.classList.add('btn', 'job-button', 'border');
-      el.innerText = details.job_name;
-      const status = details.status.toLowerCase();
-      if (status === 'successful') {
-        el.classList.add('job-success', 'btn-success');
-      } else if (status === 'failed') {
-        el.classList.add('job-failed', 'btn-danger');
-      } else if (status === 'pending' || status === 'running' || status === 'queued') {
-        el.classList.add('job-pending', 'btn-info');
-      }
-      if (status === 'successful') {
-        el.addEventListener('click', function() {
-          downloadActivityNetworkFromJob(jobId);
-        });
-      } else if (status === 'failed') {
-        el.addEventListener('click', function () {
-          const a = document.createElement('a');
-          a.href = new URL(`/hpc-integration/download-job-results?job_id=${jobId}`, window.location.origin);
-          a.style.display = 'none';
-          document.body.appendChild(a);
-          a.click();
-        })
-      }
-      document.getElementById('fetched-jobs-list').appendChild(el);
+<script>
+  function addJobToList(jobId, details) {
+    console.log("Adding job to list:", jobId, details);
+    const el = document.createElement("button");
+    el.classList.add("btn", "job-button", "border");
+    el.innerText = details.job_name;
+    const status = details.status.toLowerCase();
+    if (status === "successful") {
+      el.classList.add("job-success", "btn-success");
+    } else if (status === "failed") {
+      el.classList.add("job-failed", "btn-danger");
+    } else if (status === "pending" || status === "running" || status === "queued") {
+      el.classList.add("job-pending", "btn-info");
     }
-
-    document.getElementById('fetch-jobs-form').addEventListener('submit', function (event) {
-      event.preventDefault();
-      document.getElementById('fetchedJobsDiv').classList.add('d-none');
-      const formData = new FormData(this);
-      const url = new URL('/hpc-integration/fetch-jobs', window.location.origin);
-      url.searchParams.set('hpc', formData.get('hpc'));
-      document.getElementById('fetch-job-spinner').classList.remove('d-none');
-      document.getElementById('fetch-job-button').setAttribute('disabled', true);
-      fetch(url)
-        .then(async (response) => {
-          if (!response.ok) {
-            getError(response);
-          } else {
-            const data = await response.json();
-            document.getElementById('fetched-jobs-list').innerHTML = '';
-            document.getElementById('fetchedJobsDiv').classList.remove('d-none');
-            Object.keys(data).forEach(jobId => addJobToList(jobId, data[jobId]));
-          }
-        }).finally(() => {
-          document.getElementById('fetch-job-spinner').classList.add('d-none');
-          document.getElementById('fetch-job-button').removeAttribute('disabled');
-        });
-    });
-
-    function downloadActivityNetworkFromJob(jobId) {
-      fetch("hpc-integration/download-activity-network?job_id=" + jobId)
-        .then((response) => {
-          if (!response.ok) {
-            getError(response);
-          }
-          return response.blob();
-        })
-        .then((blob) => {
-          const file = new File([blob], "activity_network.hdf5", { type: "application/octet-stream" });
-          const dataTransfer = new DataTransfer();
-          const hdfFileInput = document.getElementById("activityFileInput");
-          dataTransfer.items.add(file);
-          hdfFileInput.files = dataTransfer.files;
-          hdfFileInput.dispatchEvent(new Event("change"));
-        })
-        .catch((error) => {
-          console.error(error);
-        });
+    if (status === "successful") {
+      el.addEventListener("click", function () {
+        downloadActivityNetworkFromJob(jobId);
+      });
+    } else if (status === "failed") {
+      el.addEventListener("click", function () {
+        const a = document.createElement("a");
+        a.href = new URL(`/hpc-integration/download-job-results?job_id=${jobId}`, window.location.origin);
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+      });
     }
+    document.getElementById("fetched-jobs-list").appendChild(el);
+  }
 
-  </script>
+  document.getElementById("fetch-jobs-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    document.getElementById("fetchedJobsDiv").classList.add("d-none");
+    const formData = new FormData(this);
+    const url = new URL("/hpc-integration/fetch-jobs", window.location.origin);
+    url.searchParams.set("hpc", formData.get("hpc"));
+    document.getElementById("fetch-job-spinner").classList.remove("d-none");
+    document.getElementById("fetch-job-button").setAttribute("disabled", true);
+    fetch(url)
+      .then(async (response) => {
+        if (!response.ok) {
+          getError(response);
+        } else {
+          const data = await response.json();
+          document.getElementById("fetched-jobs-list").innerHTML = "";
+          document.getElementById("fetchedJobsDiv").classList.remove("d-none");
+          Object.keys(data).forEach((jobId) => addJobToList(jobId, data[jobId]));
+        }
+      })
+      .finally(() => {
+        document.getElementById("fetch-job-spinner").classList.add("d-none");
+        document.getElementById("fetch-job-button").removeAttribute("disabled");
+      });
+  });
+
+  function downloadActivityNetworkFromJob(jobId) {
+    fetch("hpc-integration/download-activity-network?job_id=" + jobId)
+      .then((response) => {
+        if (!response.ok) {
+          getError(response);
+        }
+        return response.blob();
+      })
+      .then((blob) => {
+        const file = new File([blob], `${jobId}.hdf5`, { type: "application/octet-stream" });
+        const dataTransfer = new DataTransfer();
+        const hdfFileInput = document.getElementById("activityFileInput");
+        dataTransfer.items.add(file);
+        hdfFileInput.files = dataTransfer.files;
+        hdfFileInput.dispatchEvent(new Event("change"));
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+</script>
 {% endblock %}
