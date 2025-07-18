@@ -63,12 +63,7 @@ const playbackConfig = {
   simTimestep: parseFloat(document.getElementById("simTimestepValue").value),
   stepDuration: parseInt(document.getElementById("stepDurationValue").value),
 };
-let dgRGB = [0.0, 0.0, 1.0];
-let ca3RGB = [0.0, 0.0, 1.0];
-let ca2RGB = [0.0, 0.0, 1.0];
-let ca1RGB = [0.0, 0.0, 1.0];
-let subRGB = [0.0, 0.0, 1.0];
-let ecRGB = [0.0, 0.0, 1.0];
+
 let isConnection = false;
 let container;
 container = document.getElementById("container");
@@ -169,7 +164,6 @@ async function LoadActivityData(file_id) {
       const number_of_spikes = response_data.number_of_spikes;
 
       gids_activity_indexes = response_data.gids_activity_indexes;
-      //   console.log("gids activity indexes: ", gids_activity_indexes);
 
       document.getElementById("lblspikes").innerText = "# spikes: " + number_of_spikes;
 
@@ -295,7 +289,7 @@ async function LoadHipForm() {
     // Function to process each file
     const processFile = async (file, index) => {
       document.getElementById("msgprogress").innerText = `Please wait a moment while we process data for visualization. Your patience is appreciated. \n` + file.filename;
-      console.log(file.filename);
+
       // Calculate and display progress
       const percentage = Math.round(((index + 1) / totalFiles) * 100);
       document.getElementById("progress-percentage").innerText = `${percentage}%`;
@@ -306,7 +300,6 @@ async function LoadHipForm() {
       const fileData = file.fileData;
       NetworkArray.push(fileData);
       total_neurons += file.total_neurons;
-      //   console.log("filename: " + JSON.stringify(file.filename));
 
       //ca3toca1connections = data.connections;
       //console.log(ca3toca1connections);
@@ -580,7 +573,7 @@ hdfFileInput.addEventListener("change", async (event) => {
   resetAndDisableAllCheckboxes();
 
   const files = event.target.files;
-  console.log(files);
+
   if (files.length > 0) {
     try {
       const chunkSize = 10 * 1024 * 1024; // 10 MB
@@ -602,9 +595,6 @@ hdfFileInput.addEventListener("change", async (event) => {
       }
 
       for (const file of files) {
-        // console.log("Processing file:", file.name);
-        // console.log("Processing file:", file);
-
         const fileType = file.name.split(".").pop().toLowerCase(); // csv or hdf5
         const totalChunks = Math.ceil(file.size / chunkSize);
 
@@ -1156,44 +1146,54 @@ function CreateScene() {
   restart.disabled = true;
 }
 
-const colorSelectdg = document.getElementById("colorSelectdg");
-colorSelectdg.addEventListener("change", function () {
-  const selectedColor = colorSelectdg.value.split(",").map(Number);
-  dgRGB = selectedColor; // Get the selected color
-  VisualizateNeurons();
-});
-const colorSelectca3 = document.getElementById("colorSelectca3");
-colorSelectca3.addEventListener("change", function () {
-  const selectedColor = colorSelectca3.value.split(",").map(Number);
-  ca3RGB = selectedColor; // Get the selected color
-  VisualizateNeurons();
+let dgRGB = [0.0, 0.0, 1.0];
+let ca3RGB = [0.0, 0.0, 1.0];
+let ca2RGB = [0.0, 0.0, 1.0];
+let ca1RGB = [0.0, 0.0, 1.0];
+let subRGB = [0.0, 0.0, 1.0];
+let ecRGB = [0.0, 0.0, 1.0];
+
+const colorPickerDG = document.getElementById("colorPickerDG");
+const colorPickerCA3 = document.getElementById("colorPickerCA3");
+const colorPickerCA2 = document.getElementById("colorPickerCA2");
+const colorPickerCA1 = document.getElementById("colorPickerCA1");
+const colorPickerSub = document.getElementById("colorPickerSub");
+const colorPickerEC = document.getElementById("colorPickerEC");
+
+colorPickerDG.addEventListener("input", function () {
+  const selectedRGB = hexToNormalizedRGB(colorPickerDG.value); // [r, g, b] in 0–1
+  dgRGB = selectedRGB; // Use this in your rendering logic
+  VisualizateNeurons(); // Re-render with new color
 });
 
-const colorSelectca2 = document.getElementById("colorSelectca2");
-colorSelectca2.addEventListener("change", function () {
-  const selectedColor = colorSelectca2.value.split(",").map(Number);
-  ca2RGB = selectedColor; // Get the selected color
-  VisualizateNeurons();
+colorPickerCA3.addEventListener("input", function () {
+  const selectedRGB = hexToNormalizedRGB(colorPickerCA3.value); // [r, g, b] in 0–1
+  ca3RGB = selectedRGB; // Use this in your rendering logic
+  VisualizateNeurons(); // Re-render with new color
 });
 
-const colorSelectca1 = document.getElementById("colorSelectca1");
-colorSelectca1.addEventListener("change", function () {
-  const selectedColor = colorSelectca1.value.split(",").map(Number);
-  ca1RGB = selectedColor; // Get the selected color
-  VisualizateNeurons();
+colorPickerCA2.addEventListener("input", function () {
+  const selectedRGB = hexToNormalizedRGB(colorPickerCA2.value); // [r, g, b] in 0–1
+  ca2RGB = selectedRGB; // Use this in your rendering logic
+  VisualizateNeurons(); // Re-render with new color
 });
 
-const colorSelectcasub = document.getElementById("colorSelectsub");
-colorSelectcasub.addEventListener("change", function () {
-  const selectedColor = colorSelectcasub.value.split(",").map(Number);
-  subRGB = selectedColor; // Get the selected color
-  VisualizateNeurons();
+colorPickerCA1.addEventListener("input", function () {
+  const selectedRGB = hexToNormalizedRGB(colorPickerCA1.value); // [r, g, b] in 0–1
+  ca1RGB = selectedRGB; // Use this in your rendering logic
+  VisualizateNeurons(); // Re-render with new color
 });
-const colorSelectcaec = document.getElementById("colorSelectec");
-colorSelectcaec.addEventListener("change", function () {
-  const selectedColor = colorSelectcaec.value.split(",").map(Number);
-  ecRGB = selectedColor; // Get the selected color
-  VisualizateNeurons();
+
+colorPickerSub.addEventListener("input", function () {
+  const selectedRGB = hexToNormalizedRGB(colorPickerSub.value); // [r, g, b] in 0–1
+  subRGB = selectedRGB; // Use this in your rendering logic
+  VisualizateNeurons(); // Re-render with new color
+});
+
+colorPickerEC.addEventListener("input", function () {
+  const selectedRGB = hexToNormalizedRGB(colorPickerEC.value); // [r, g, b] in 0–1
+  ecRGB = selectedRGB; // Use this in your rendering logic
+  VisualizateNeurons(); // Re-render with new color
 });
 
 function createTextLabel(text) {
@@ -1443,11 +1443,11 @@ function VisualizateNeurons() {
     uniforms,
     vertexShader: document.getElementById("vertexshader").textContent,
     fragmentShader: document.getElementById("fragmentshader").textContent,
-    transparent: true,
+    transparent: false,
     vertexColors: true,
     depthTest: true,
     depthWrite: true,
-    blending: THREE.NoBlending,
+    blending: THREE.NormalBlending,
     // uniforms,
     // vertexShader: document.getElementById("vertexshader").textContent,
     // fragmentShader: document.getElementById("fragmentshader").textContent,
@@ -1931,65 +1931,6 @@ function resetParticles() {
   geometry.attributes.size.needsUpdate = true;
 }
 
-function GetActivityData() {
-  fetch("https://127.0.0.1:8000/load_Activity_Data/")
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then((data) => {
-      Activitys = data.data;
-      timeRanges = data.keys;
-      // console.log("Activity: " + Activitys[1]);
-      //console.log("ranges: " + timeRanges);
-    })
-    .catch((error) => {
-      console.error("Error fetching or storing data:", error);
-    });
-}
-
-function GetNetworkData(number_of_neuros = 0) {
-  if (number_of_neuros > 0) {
-    console.log("ok go ahead...");
-    const formData = new FormData();
-    formData.append("number_of_neuros", number_of_neuros);
-
-    fetch("https://127.0.0.1:8000/load_Network_Data/", {
-      method: "POST",
-      body: formData,
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        Networks = data;
-
-        VisualizateNeurons(Networks);
-        //GetActivityData();
-      });
-  } else {
-    fetch("https://127.0.0.1:8000/load_Network_Data/")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        // Store the fetched data in the global array
-
-        Networks = data;
-        // console.log(Networks[0]);}
-        VisualizateNeurons(Networks);
-        GetActivityData();
-      });
-  }
-}
 let loadmouseflag = false;
 window.addEventListener("load", function () {
   const btnLoadAllLayers = document.getElementById("btnLoadAllLayers");
@@ -2007,6 +1948,33 @@ window.addEventListener("load", function () {
 });
 
 function SelectAllByRegion() {
+  // 1. Define region-to-layer mappings for disabling
+  const regionToLayerMapForDisabling = {
+    AllDGRegSwitchCheck: ["DGSG", "DGSMi", "DGSMo", "DGH"],
+    AllCA3RegSwitchCheck: ["CA3SL", "CA3SLM", "CA3SO", "CA3SP", "CA3SR"],
+    AllCA2RegSwitchCheck: ["CA2SP"],
+    AllCA1RegSwitchCheck: ["CA1SLM", "CA1SO", "CA1SP", "CA1SR"],
+    AllSubRegSwitchCheck: ["SubSM", "SubSP"],
+    AllECRegSwitchCheck: ["LECI", "LECII", "LECIII", "LECIV", "LECV", "LECVI", "MECI", "MECII", "MECIII", "MECIV", "MECV", "MECVI"],
+  };
+
+  // 2. Iterate through each region checkbox and attach change listener
+  Object.keys(regionToLayerMapForDisabling).forEach((regionId) => {
+    const regionCheckbox = document.getElementById(regionId);
+    const layerCheckboxIds = regionToLayerMapForDisabling[regionId];
+
+    if (regionCheckbox) {
+      regionCheckbox.addEventListener("change", () => {
+        const disable = regionCheckbox.checked;
+        layerCheckboxIds.forEach((layerId) => {
+          const layerCheckbox = document.getElementById(layerId);
+          if (layerCheckbox) {
+            layerCheckbox.disabled = disable;
+          }
+        });
+      });
+    }
+  });
   // Handle Regions checkbox selection
   const SelectAll = document.getElementById("SelectAll");
   const UnselectAll = document.getElementById("UnselectAll");
@@ -2069,13 +2037,13 @@ function SelectAllByRegion() {
 
   let checkboxesToLog = ["CA1SLM", "CA1SO", "CA1SP", "CA1SR", "CA2SP", "CA3SL", "CA3SLM", "CA3SO", "CA3SP", "CA3SR", "DGSG", "DGSMi", "DGSMo", "DGH", "LECI", "LECII", "LECIII", "LECIV", "LECV", "LECVI", "MECI", "MECII", "MECIII", "MECIV", "MECV", "MECVI", "SubSM", "SubSP"];
 
-  const DGLayer = [14, 16, 21, 27];
-  const CA3Layer = [10, 15, 26, 8, 1];
-  const CA2Layer = [13];
-  const CA1Layer = [24, 25, 4, 11];
-  const Sub = [5, 19];
-  const LEC = [22, 9, 20, 0, 17, 12];
-  const MEC = [23, 2, 3, 7, 18, 6];
+  const DGLayer = [10, 11, 12, 13];
+  const CA3Layer = [5, 6, 7, 8, 9];
+  const CA2Layer = [4];
+  const CA1Layer = [0, 1, 2, 3];
+  const Sub = [26, 27];
+  const LEC = [14, 15, 16, 17, 18, 19];
+  const MEC = [20, 21, 22, 23, 24, 25];
 
   checkboxesToLog.forEach((id, index) => {
     const checkbox = document.getElementById(id);
@@ -2316,7 +2284,6 @@ function SelectAllByRegion() {
       const checkbox = document.getElementById(id);
       if (checkbox) {
         checkbox.checked = true;
-        console.log(id);
       }
     });
   }
@@ -2472,7 +2439,6 @@ function SelectAllByRegion() {
               const checkbox = document.getElementById(id);
               if (checkbox) {
                 checkbox.checked = isChecked;
-                console.log("ID:" + checkbox.id);
               }
             });
           }
@@ -2704,6 +2670,12 @@ function checkAllNTStatus() {
 }
 
 function disableAllElements() {
+  document.getElementById("colorPickerDG").disabled = true;
+  document.getElementById("colorPickerCA3").disabled = true;
+  document.getElementById("colorPickerCA2").disabled = true;
+  document.getElementById("colorPickerCA1").disabled = true;
+  document.getElementById("colorPickerSub").disabled = true;
+  document.getElementById("colorPickerEC").disabled = true;
   const elementsToDisable = [
     document.getElementById("SelectAll"),
     document.getElementById("UnselectAll"),
@@ -2731,6 +2703,12 @@ function disableAllElements() {
 }
 
 function enableAllElements() {
+  document.getElementById("colorPickerDG").disabled = false;
+  document.getElementById("colorPickerCA3").disabled = false;
+  document.getElementById("colorPickerCA2").disabled = false;
+  document.getElementById("colorPickerCA1").disabled = false;
+  document.getElementById("colorPickerSub").disabled = false;
+  document.getElementById("colorPickerEC").disabled = false;
   const elementsToDisable = [
     document.getElementById("SelectAll"),
     document.getElementById("UnselectAll"),
@@ -3003,4 +2981,12 @@ function resetTimeUI() {
   // Reset start/end time inputs
   document.getElementById("start-time").value = "";
   document.getElementById("end-time").value = "";
+}
+
+function hexToNormalizedRGB(hex) {
+  const bigint = parseInt(hex.replace("#", ""), 16);
+  const r = ((bigint >> 16) & 255) / 255;
+  const g = ((bigint >> 8) & 255) / 255;
+  const b = (bigint & 255) / 255;
+  return [r, g, b];
 }

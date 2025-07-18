@@ -49,17 +49,15 @@
         uniform sampler2D pointTexture;
         uniform float uBrightness;
         varying vec3 vColor;
-        varying float vScale;
 
         void main() {
+
             vec2 coord = gl_PointCoord - vec2(0.5);
             if (dot(coord, coord) > 0.25) discard;
-
             vec4 textureColor = texture2D(pointTexture, gl_PointCoord);
             if (textureColor.a < 0.25) discard;
+            vec3 gammaCorrected = pow(vColor * uBrightness, vec3(1.0 / 2.2));
 
-            float brightness = uBrightness * (1.0 + 0.5 * vScale);
-            vec3 gammaCorrected = pow(vColor * brightness, vec3(1.0/2.2));
             gl_FragColor = vec4(gammaCorrected, 1.0) * textureColor;
         }
       </script>
@@ -290,7 +288,7 @@
                                             </div>
 
                                             <!-- Region Labels -->
-                                            <div class="row text-center mb-1 small text-muted region-labels">
+                                            <div class="row text-center mb-1 x-small text-muted region-labels">
                                               <div class="col-md-2">DG</div>
                                               <div class="col-md-2">CA3</div>
                                               <div class="col-md-2">CA2</div>
@@ -301,71 +299,24 @@
 
                                             <!-- Color Pickers -->
                                             <div class="row select-row">
-                                              <div class="col-md-2 border p-0">
-                                                <select id="colorSelectdg" class="form-select form-select-sm color-select-mini">
-                                                  <option value="0,0,1">Blue</option>
-                                                  <option value="1,0,0">Red</option>
-                                                  <option value="0,1,0">Green</option>
-                                                  <option value="1,1,0">Yellow</option>
-                                                  <option value="0,1,1">Cyan</option>
-                                                  <option value="1,0,1">Magenta</option>
-                                                  <option value="1,1,1">White</option>
-                                                </select>
+                                              <div class="col-md-2 d-flex justify-content-center">
+                                                <input type="color" id="colorPickerDG" value="#0000ff" />
+                                                <!-- default: orange -->
                                               </div>
-                                              <div class="col-md-2 border p-0">
-                                                <select id="colorSelectca3" class="form-select form-select-sm color-select-mini">
-                                                  <option value="0,0,1">Blue</option>
-                                                  <option value="1,0,0">Red</option>
-                                                  <option value="0,1,0">Green</option>
-                                                  <option value="1,1,0">Yellow</option>
-                                                  <option value="0,1,1">Cyan</option>
-                                                  <option value="1,0,1">Magenta</option>
-                                                  <option value="1,1,1">White</option>
-                                                </select>
+                                              <div class="col-md-2 d-flex justify-content-center">
+                                                <input type="color" id="colorPickerCA3" value="#0000ff" />
                                               </div>
-                                              <div class="col-md-2 border p-0">
-                                                <select id="colorSelectca2" class="form-select form-select-sm color-select-mini">
-                                                  <option value="0,0,1">Blue</option>
-                                                  <option value="1,0,0">Red</option>
-                                                  <option value="0,1,0">Green</option>
-                                                  <option value="1,1,0">Yellow</option>
-                                                  <option value="0,1,1">Cyan</option>
-                                                  <option value="1,0,1">Magenta</option>
-                                                  <option value="1,1,1">White</option>
-                                                </select>
+                                              <div class="col-md-2 d-flex justify-content-center">
+                                                <input type="color" id="colorPickerCA2" value="#0000ff" />
                                               </div>
-                                              <div class="col-md-2 border p-0">
-                                                <select id="colorSelectca1" class="form-select form-select-sm color-select-mini">
-                                                  <option value="0,0,1">Blue</option>
-                                                  <option value="1,0,0">Red</option>
-                                                  <option value="0,1,0">Green</option>
-                                                  <option value="1,1,0">Yellow</option>
-                                                  <option value="0,1,1">Cyan</option>
-                                                  <option value="1,0,1">Magenta</option>
-                                                  <option value="1,1,1">White</option>
-                                                </select>
+                                              <div class="col-md-2 d-flex justify-content-center">
+                                                <input type="color" id="colorPickerCA1" value="#0000ff" />
                                               </div>
-                                              <div class="col-md-2 border p-0">
-                                                <select id="colorSelectsub" class="form-select form-select-sm color-select-mini">
-                                                  <option value="0,0,1">Blue</option>
-                                                  <option value="1,0,0">Red</option>
-                                                  <option value="0,1,0">Green</option>
-                                                  <option value="1,1,0">Yellow</option>
-                                                  <option value="0,1,1">Cyan</option>
-                                                  <option value="1,0,1">Magenta</option>
-                                                  <option value="1,1,1">White</option>
-                                                </select>
+                                              <div class="col-md-2 d-flex justify-content-center">
+                                                <input type="color" id="colorPickerSub" value="#0000ff" />
                                               </div>
-                                              <div class="col-md-2 border p-0">
-                                                <select id="colorSelectec" class="form-select form-select-sm color-select-mini">
-                                                  <option value="0,0,1">Blue</option>
-                                                  <option value="1,0,0">Red</option>
-                                                  <option value="0,1,0">Green</option>
-                                                  <option value="1,1,0">Yellow</option>
-                                                  <option value="0,1,1">Cyan</option>
-                                                  <option value="1,0,1">Magenta</option>
-                                                  <option value="1,1,1">White</option>
-                                                </select>
+                                              <div class="col-md-2 d-flex justify-content-center">
+                                                <input type="color" id="colorPickerEC" value="#0000ff" />
                                               </div>
                                             </div>
                                           </div>
