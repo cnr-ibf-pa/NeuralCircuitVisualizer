@@ -1381,10 +1381,16 @@ function VisualizateNeurons() {
         totalParticles += net.length;
       });
     }
-  } else if (selectedCheckboxIds.length > 0) {
-    NetworkArray.forEach((net) => {
-      const filteredParticles = net.filter((p) => selectedCheckboxIds.includes(p.ntype.toString()));
+  } else if (selectedCheckboxIds.length > 0 || selectedCheckboxByLayer.length > 0) {
+    NetworkArray.forEach((net, index) => {
+      const filteredParticles = net.filter((p) => {
+        const matchByRegion = selectedCheckboxIds.includes(p.ntype.toString());
+        const matchByLayer = selectedCheckboxByLayer.includes(index);
+        return matchByRegion || matchByLayer;
+      });
+
       totalParticles += filteredParticles.length;
+
       filteredParticles.forEach((p) => {
         const x = p.x * scalingFactor;
         const y = p.y * scalingFactor;
@@ -1410,22 +1416,52 @@ function VisualizateNeurons() {
         neuron_class.push(p.type);
       });
     });
-  } else if (selectedCheckboxByLayer.length > 0) {
-    NetworkArray.forEach((net, i) => {
-      if (selectedCheckboxByLayer.includes(i)) {
-        net.forEach((p) => {
-          const x = p.x * scalingFactor;
-          const y = p.y * scalingFactor;
-          const z = p.z * scalingFactor;
-          positions.push(x, y, z);
-          sizes.push(30);
-          gIDs.push(p.id);
-          p.type === 1 ? (vertexColors.push(0, 0, 1), total_excitatory++) : (vertexColors.push(1, 0, 0), total_inhibitory++);
-        });
-        totalParticles += net.length;
-      }
-    });
   }
+  //   else if (selectedCheckboxIds.length > 0) {
+  //     NetworkArray.forEach((net) => {
+  //       const filteredParticles = net.filter((p) => selectedCheckboxIds.includes(p.ntype.toString()));
+  //       totalParticles += filteredParticles.length;
+  //       filteredParticles.forEach((p) => {
+  //         const x = p.x * scalingFactor;
+  //         const y = p.y * scalingFactor;
+  //         const z = p.z * scalingFactor;
+
+  //         if (p.type === 1) {
+  //           const ntype = Number(p.ntype);
+  //           if (DG.includes(ntype)) vertexColors.push(...dgRGB);
+  //           else if (CA3.includes(ntype)) vertexColors.push(...ca3RGB);
+  //           else if (CA2.includes(ntype)) vertexColors.push(...ca2RGB);
+  //           else if (CA1.includes(ntype)) vertexColors.push(...ca1RGB);
+  //           else if (SUB.includes(ntype)) vertexColors.push(...subRGB);
+  //           else if (EC.includes(ntype)) vertexColors.push(...ecRGB);
+  //           total_excitatory++;
+  //         } else {
+  //           vertexColors.push(1.0, 0.0, 0.0);
+  //           total_inhibitory++;
+  //         }
+
+  //         positions.push(x, y, z);
+  //         sizes.push(30);
+  //         gIDs.push(p.id);
+  //         neuron_class.push(p.type);
+  //       });
+  //     });
+  //   } else if (selectedCheckboxByLayer.length > 0) {
+  //     NetworkArray.forEach((net, i) => {
+  //       if (selectedCheckboxByLayer.includes(i)) {
+  //         net.forEach((p) => {
+  //           const x = p.x * scalingFactor;
+  //           const y = p.y * scalingFactor;
+  //           const z = p.z * scalingFactor;
+  //           positions.push(x, y, z);
+  //           sizes.push(30);
+  //           gIDs.push(p.id);
+  //           p.type === 1 ? (vertexColors.push(0, 0, 1), total_excitatory++) : (vertexColors.push(1, 0, 0), total_inhibitory++);
+  //         });
+  //         totalParticles += net.length;
+  //       }
+  //     });
+  //   }
 
   document.getElementById("Neurons_firing_attributes").style.visibility = "visible";
   document.getElementById("networkspikes").style.visibility = "visible";
@@ -2347,6 +2383,29 @@ function SelectAllByRegion() {
     resetPlaybackConfig();
     resetTimeUI();
     activitySelect.selectedIndex = 0;
+
+    // ✅ Enable all region checkboxes
+    AllDGRegSwitchCheck.disabled = false;
+    AllCA3RegSwitchCheck.disabled = false;
+    AllCA2RegSwitchCheck.disabled = false;
+    AllCA1RegSwitchCheck.disabled = false;
+    AllSubRegSwitchCheck.disabled = false;
+    AllECRegSwitchCheck.disabled = false;
+
+    // ✅ Enable all NT type checkboxes
+    AllNT.disabled = false;
+    RankNT.disabled = false;
+    CanonicalNT.disabled = false;
+
+    // ✅ Enable all layer checkboxes using regionToLayerMapForDisabling
+    Object.values(regionToLayerMapForDisabling)
+      .flat()
+      .forEach((layerId) => {
+        const layerCheckbox = document.getElementById(layerId);
+        if (layerCheckbox) {
+          layerCheckbox.disabled = false;
+        }
+      });
 
     sections.forEach((section) => {
       document.querySelectorAll(" .form-check-input").forEach((checkbox) => {
