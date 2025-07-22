@@ -121,6 +121,7 @@ async function loadActivity() {
 
   if (selectedValue === "1" || selectedValue === "2") {
     await LoadActivityData(selectedValue);
+    startBtn.style.display = "block";
   }
 }
 
@@ -215,6 +216,7 @@ async function loadHumanActivity() {
 
   if (selectedValue === "1" || selectedValue === "2") {
     await LoadHumanActivityData(selectedValue);
+    startBtn.style.display = "block";
   }
 }
 
@@ -377,6 +379,7 @@ async function LoadHumanHipForm(mode = "full") {
     VisualizateNeurons();
     resetCamera();
     centerCameraToObject(particles);
+
     document.getElementById("HumanactivitySelect").disabled = false;
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -668,6 +671,7 @@ hdfFileInput.addEventListener("change", async (event) => {
         VisualizateNeurons();
         resetCamera();
         centerCameraToObject(particles);
+        startBtn.style.display = "block";
 
         if (parseInt(data.flag_check) === 1) {
           document.getElementById("lblspikes").innerText = "# spikes :" + data.lstresponse.total_lines;
@@ -1170,54 +1174,47 @@ function drawHUDTimeToCanvas2D(ctx, count, endVal) {
   ctx.fillText(text, ctx.canvas.width / 2, 10);
 }
 
-let dgRGB = [0.0, 0.0, 1.0];
-let ca3RGB = [0.0, 0.0, 1.0];
-let ca2RGB = [0.0, 0.0, 1.0];
-let ca1RGB = [0.0, 0.0, 1.0];
-let subRGB = [0.0, 0.0, 1.0];
-let ecRGB = [0.0, 0.0, 1.0];
+const colorPickers = {
+  DG: document.getElementById("colorPickerDG"),
+  CA3: document.getElementById("colorPickerCA3"),
+  CA2: document.getElementById("colorPickerCA2"),
+  CA1: document.getElementById("colorPickerCA1"),
+  Sub: document.getElementById("colorPickerSub"),
+  EC: document.getElementById("colorPickerEC"),
+};
 
-const colorPickerDG = document.getElementById("colorPickerDG");
-const colorPickerCA3 = document.getElementById("colorPickerCA3");
-const colorPickerCA2 = document.getElementById("colorPickerCA2");
-const colorPickerCA1 = document.getElementById("colorPickerCA1");
-const colorPickerSub = document.getElementById("colorPickerSub");
-const colorPickerEC = document.getElementById("colorPickerEC");
+let dgRGB = hexToNormalizedRGB(colorPickers.DG.value);
+let ca3RGB = hexToNormalizedRGB(colorPickers.CA3.value);
+let ca2RGB = hexToNormalizedRGB(colorPickers.CA2.value);
+let ca1RGB = hexToNormalizedRGB(colorPickers.CA1.value);
+let subRGB = hexToNormalizedRGB(colorPickers.Sub.value);
+let ecRGB = hexToNormalizedRGB(colorPickers.EC.value);
 
-colorPickerDG.addEventListener("input", function () {
-  const selectedRGB = hexToNormalizedRGB(colorPickerDG.value); // [r, g, b] in 0–1
-  dgRGB = selectedRGB; // Use this in your rendering logic
-  VisualizateNeurons(); // Re-render with new color
-});
-
-colorPickerCA3.addEventListener("input", function () {
-  const selectedRGB = hexToNormalizedRGB(colorPickerCA3.value); // [r, g, b] in 0–1
-  ca3RGB = selectedRGB; // Use this in your rendering logic
-  VisualizateNeurons(); // Re-render with new color
-});
-
-colorPickerCA2.addEventListener("input", function () {
-  const selectedRGB = hexToNormalizedRGB(colorPickerCA2.value); // [r, g, b] in 0–1
-  ca2RGB = selectedRGB; // Use this in your rendering logic
-  VisualizateNeurons(); // Re-render with new color
-});
-
-colorPickerCA1.addEventListener("input", function () {
-  const selectedRGB = hexToNormalizedRGB(colorPickerCA1.value); // [r, g, b] in 0–1
-  ca1RGB = selectedRGB; // Use this in your rendering logic
-  VisualizateNeurons(); // Re-render with new color
-});
-
-colorPickerSub.addEventListener("input", function () {
-  const selectedRGB = hexToNormalizedRGB(colorPickerSub.value); // [r, g, b] in 0–1
-  subRGB = selectedRGB; // Use this in your rendering logic
-  VisualizateNeurons(); // Re-render with new color
-});
-
-colorPickerEC.addEventListener("input", function () {
-  const selectedRGB = hexToNormalizedRGB(colorPickerEC.value); // [r, g, b] in 0–1
-  ecRGB = selectedRGB; // Use this in your rendering logic
-  VisualizateNeurons(); // Re-render with new color
+Object.entries(colorPickers).forEach(([region, picker]) => {
+  picker.addEventListener("input", () => {
+    const rgb = hexToNormalizedRGB(picker.value);
+    switch (region) {
+      case "DG":
+        dgRGB = rgb;
+        break;
+      case "CA3":
+        ca3RGB = rgb;
+        break;
+      case "CA2":
+        ca2RGB = rgb;
+        break;
+      case "CA1":
+        ca1RGB = rgb;
+        break;
+      case "Sub":
+        subRGB = rgb;
+        break;
+      case "EC":
+        ecRGB = rgb;
+        break;
+    }
+    VisualizateNeurons(); // Optional re-render
+  });
 });
 
 function createTextLabel(text) {
@@ -1830,32 +1827,37 @@ function twoMilisecondStay_Connection(currentTime) {
                 const index = GIDindex * 3;
                 sizes[GIDindex] = 30;
 
-                // Apply color based on selected color index logic
-                if (colorSelectdg.selectedIndex > -1) {
-                  colors[index] = dgRGB[0];
-                  colors[index + 1] = dgRGB[1];
-                  colors[index + 2] = dgRGB[2];
-                } else if (colorSelectca3.selectedIndex > -1) {
-                  colors[index] = ca3RGB[0];
-                  colors[index + 1] = ca3RGB[1];
-                  colors[index + 2] = ca3RGB[2];
-                } else if (colorSelectca2.selectedIndex > -1) {
-                  colors[index] = ca2RGB[0];
-                  colors[index + 1] = ca2RGB[1];
-                  colors[index + 2] = ca2RGB[2];
-                } else if (colorSelectca1.selectedIndex > -1) {
-                  colors[index] = ca1RGB[0];
-                  colors[index + 1] = ca1RGB[1];
-                  colors[index + 2] = ca1RGB[2];
-                } else if (colorSelectcasub.selectedIndex > -1) {
-                  colors[index] = subRGB[0];
-                  colors[index + 1] = subRGB[1];
-                  colors[index + 2] = subRGB[2];
-                } else if (colorSelectcaec.selectedIndex > -1) {
-                  colors[index] = ecRGB[0];
-                  colors[index + 1] = ecRGB[1];
-                  colors[index + 2] = ecRGB[2];
-                }
+                // // Apply color based on selected color index logic
+                // if (colorSelectdg.selectedIndex > -1) {
+                //   colors[index] = dgRGB[0];
+                //   colors[index + 1] = dgRGB[1];
+                //   colors[index + 2] = dgRGB[2];
+                // } else if (colorSelectca3.selectedIndex > -1) {
+                //   colors[index] = ca3RGB[0];
+                //   colors[index + 1] = ca3RGB[1];
+                //   colors[index + 2] = ca3RGB[2];
+                // } else if (colorSelectca2.selectedIndex > -1) {
+                //   colors[index] = ca2RGB[0];
+                //   colors[index + 1] = ca2RGB[1];
+                //   colors[index + 2] = ca2RGB[2];
+                // } else if (colorSelectca1.selectedIndex > -1) {
+                //   colors[index] = ca1RGB[0];
+                //   colors[index + 1] = ca1RGB[1];
+                //   colors[index + 2] = ca1RGB[2];
+                // } else if (colorSelectcasub.selectedIndex > -1) {
+                //   colors[index] = subRGB[0];
+                //   colors[index + 1] = subRGB[1];
+                //   colors[index + 2] = subRGB[2];
+                // } else if (colorSelectcaec.selectedIndex > -1) {
+                //   colors[index] = ecRGB[0];
+                //   colors[index + 1] = ecRGB[1];
+                //   colors[index + 2] = ecRGB[2];
+                // }
+
+                // Use CA3 color
+                colors[index] = ca3RGB[0];
+                colors[index + 1] = ca3RGB[1];
+                colors[index + 2] = ca3RGB[2];
 
                 geometry.attributes.size.needsUpdate = true;
                 geometry.attributes.color.needsUpdate = true;
@@ -2876,6 +2878,7 @@ function clearScene() {
   document.getElementById("Neurons_firing_attributes").style.visibility = "hidden";
   document.getElementById("networkspikes").style.visibility = "hidden";
   removeTable();
+  startBtn.style.display = "none";
   //   chkpanle = false;
 }
 
