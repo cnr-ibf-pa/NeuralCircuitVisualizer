@@ -63,6 +63,13 @@ const playbackConfig = {
   simTimestep: parseFloat(document.getElementById("simTimestepValue").value),
   stepDuration: parseInt(document.getElementById("stepDurationValue").value),
 };
+let mediaRecorder = null;
+let recordingIntervalId = null;
+let combinedCanvas = null;
+let combinedCtx = null;
+let recordedChunks = [];
+const startBtn = document.getElementById("startRecordingBtn");
+const stopBtn = document.getElementById("stopRecordingBtn");
 
 let isConnection = false;
 let container;
@@ -552,6 +559,7 @@ networkFileInput.addEventListener("change", async (event) => {
       VisualizateNeurons();
       resetCamera();
       centerCameraToObject(particles);
+      startBtn.style.display = "block";
     } else {
       console.log("No files found in the response.");
     }
@@ -1111,6 +1119,10 @@ function onWindowResize() {
   render();
 }
 
+let timeSprite;
+const hudCanvas = document.getElementById("hudCanvas");
+const hudCtx = hudCanvas.getContext("2d");
+
 const canvas = document.getElementById("neuronCanvas");
 function CreateScene() {
   // Use your canvas explicitly
@@ -1119,6 +1131,7 @@ function CreateScene() {
     powerPreference: "high-performance",
     alpha: true,
     antialias: true,
+    preserveDrawingBuffer: true, //  ADD THIS
   });
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap at 2 for performance
@@ -1144,6 +1157,17 @@ function CreateScene() {
   stopButton.disabled = true;
   startButton.disabled = true;
   restart.disabled = true;
+}
+
+// === HUD Text ===
+function drawHUDTimeToCanvas2D(ctx, count, endVal) {
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  ctx.font = "bold 32px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillStyle = "white";
+  const text = `t = ${parseFloat(count).toFixed(1)} / ${parseFloat(endVal).toFixed(1)} ms`;
+  ctx.fillText(text, ctx.canvas.width / 2, 10);
 }
 
 let dgRGB = [0.0, 0.0, 1.0];
@@ -1673,6 +1697,8 @@ function startAnimation(startVal, endVal) {
       timebar.value = count;
       currentTimeDisplay.textContent = parseFloat(count).toFixed(1);
 
+      drawHUDTimeToCanvas2D(hudCtx, count, endVal);
+
       if (isConnection) {
         animateTimeRange_Connection(count, spikeNeuronSize);
         twoMilisecondStay_Connection(count);
@@ -1686,13 +1712,19 @@ function startAnimation(startVal, endVal) {
         interval = null;
         resetParticles();
         count = 0.0;
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+          stopRecording(); //  Automatically stop and download
+          document.getElementById("rec-indicator").style.display = "none";
+          stopBtn.style.display = "none";
+          startBtn.style.display = "inline-block";
+        }
 
-        isPaused = true; // ✅ allow future play
+        isPaused = true; //  allow future play
         stopButton.disabled = true;
         startButton.disabled = false;
-        restart.disabled = false; // ✅ allow restarting
+        restart.disabled = false; //  allow restarting
 
-        count = startVal; // ✅ reset count for next run
+        count = startVal; //  reset count for next run
         if (selectedChunkNumber > 0) {
           count = parseFloat(firstKey).toFixed(1);
           currentTimeDisplay.textContent = count;
@@ -3049,3 +3081,69 @@ function hexToNormalizedRGB(hex) {
   const b = (bigint & 255) / 255;
   return [r, g, b];
 }
+
+function startRecording(mainCanvas, hudCanvas) {
+  combinedCanvas = document.createElement("canvas");
+  combinedCanvas.width = mainCanvas.width;
+  combinedCanvas.height = mainCanvas.height;
+  combinedCtx = combinedCanvas.getContext("2d");
+
+  const fps = 30;
+  const interval = 1000 / fps;
+
+  const stream = combinedCanvas.captureStream(fps);
+  mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+
+  recordedChunks = [];
+
+  mediaRecorder.ondataavailable = (e) => {
+    if (e.data.size > 0) recordedChunks.push(e.data);
+  };
+
+  mediaRecorder.onstop = () => {
+    clearInterval(recordingIntervalId);
+
+    const blob = new Blob(recordedChunks, { type: "video/webm" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "neuron_visualization.webm";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  recordingIntervalId = setInterval(() => {
+    //  Then draw to combined canvas
+    combinedCtx.clearRect(0, 0, combinedCanvas.width, combinedCanvas.height);
+    combinedCtx.drawImage(mainCanvas, 0, 0);
+    combinedCtx.drawImage(hudCanvas, 0, 0);
+  }, interval);
+
+  mediaRecorder.start();
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    mediaRecorder.stop(); //  Will trigger .onstop and download
+  }
+
+  if (recordingIntervalId !== null) {
+    clearInterval(recordingIntervalId);
+    recordingIntervalId = null;
+  }
+}
+
+startBtn.addEventListener("click", () => {
+  startRecording(canvas, hudCanvas);
+  document.getElementById("rec-indicator").style.display = "block"; // on start
+  startBtn.style.display = "none";
+  stopBtn.style.display = "inline-block";
+});
+
+stopBtn.addEventListener("click", () => {
+  stopRecording();
+  document.getElementById("rec-indicator").style.display = "none";
+
+  stopBtn.style.display = "none";
+  startBtn.style.display = "inline-block";
+});

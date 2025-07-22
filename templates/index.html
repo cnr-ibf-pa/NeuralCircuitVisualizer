@@ -89,6 +89,17 @@
 
           <!-- Header Icons -->
           <div class="col-12 col-md-3 d-flex align-items-center justify-content-end text-center text-md-end mb-2 mb-md-0 pe-4">
+            <div id="rec-indicator" style="position: fixed; top: 11.3rem; left: 55%; font-weight: bold; color: red; display: none">🔴 REC</div>
+            <div id="recordControls" style="position: absolute; bottom: 20px; left: 55%; transform: translateX(-50%); z-index: 1000; display: flex; gap: 16px">
+              <button id="startRecordingBtn" title="Start Recording" style="width: 60px; height: 60px; border-radius: 50%; border: 4px solid #4caf50; background-color: white; cursor: pointer; display: none">
+                <div style="width: 20px; height: 20px; background-color: #4caf50; border-radius: 50%; margin: auto"></div>
+              </button>
+
+              <button id="stopRecordingBtn" title="Stop Recording" style="width: 60px; height: 60px; border-radius: 50%; border: 4px solid #f44336; background-color: white; cursor: pointer; display: none">
+                <div style="width: 24px; height: 24px; background-color: #f44336; border-radius: 4px; margin: auto"></div>
+              </button>
+            </div>
+
             <a href="/" class="header-icon-link text-decoration-none me-4"><img src="{% static 'img/docs/home.svg' %}" alt="Home" class="header-icon" /></a>
             <a href="/docs" target="_blank" class="header-icon-link text-decoration-none me-4"><img src="{% static 'img/docs/file-info.svg' %}" alt="Info" class="header-icon" /></a>
             <a href="/docs#video" class="header-icon-link text-decoration-none me-4"><img src="{% static 'img/docs/brand-youtube.svg' %}" alt="Video" class="header-icon" /></a>
@@ -1721,7 +1732,9 @@
                   </div>
                 </div>
               </div>
+
               <canvas id="neuronCanvas"></canvas>
+              <canvas id="hudCanvas" width="1024" height="768" style="position: absolute; top: 0; left: 0; pointer-events: none; display: none"></canvas>
 
               <div id="networkspikes" class="col-12 col-md-3 d-flex justify-content-center justify-content-md-end gap-3">
                 <span id="lblnetwork" class="badge rounded-pill bg-dark text-light shadow-sm px-3 py-2"># neurons: 0</span>

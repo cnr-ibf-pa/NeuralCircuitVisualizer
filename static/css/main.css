@@ -810,7 +810,7 @@ input[type="range"] {
   background: #b8b8b7;
   position: fixed;
   left: 25.2%;
-  top: 23%;
+  top: 13.4rem;
   width: 18vw;
   height: auto;
   z-index: 1000;
@@ -995,7 +995,8 @@ input[type="range"] {
   background: #b8b8b7;
   color: #000;
   position: fixed;
-  top: 23%;
+  top: 13.7rem;
+
   right: 0.4rem;
   width: 15vw;
   max-width: 300px;
