@@ -167,7 +167,7 @@
         return response.blob();
       })
       .then((blob) => {
-        const file = new File([blob], "activity_network.hdf5", { type: "application/octet-stream" });
+        const file = new File([blob], `${jobId}.hdf5`, { type: "application/octet-stream" });
         const dataTransfer = new DataTransfer();
         const hdfFileInput = document.getElementById("activityFileInput");
         dataTransfer.items.add(file);
