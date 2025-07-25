@@ -1149,7 +1149,7 @@ function CreateScene() {
   const light = new THREE.DirectionalLight(0xffffff, 3);
   light.position.set(1, 1, 1).normalize();
   scene.add(light);
-  camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.01, 10000);
+  camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.01, 100000);
   camera.position.z = 1000;
   //   camera.position.set(-1090, 0, 1450);
 
@@ -1158,9 +1158,11 @@ function CreateScene() {
   renderer.toneMappingExposure = 1000;
 
   controls = new TrackballControls(camera, canvas);
-  controls.rotateSpeed = 9.0;
-  controls.zoomSpeed = 5;
+  controls.rotateSpeed = 20.0;
+  controls.zoomSpeed = 10;
   controls.panSpeed = 0.8;
+  controls.minDistance = 0.1; // Allow very close zoom (default is 0)
+  controls.maxDistance = 100000; // Increase if camera hits a limit
 
   controls.dynamicDampingFactor = 0.25;
 
