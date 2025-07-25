@@ -1048,6 +1048,8 @@ restart.addEventListener("click", () => {
   let startVal, endVal;
 
   if (selectedChunkNumber > 0) {
+    spikeTimes.clear();
+    spikeTransitions.clear();
     startVal = parseFloat(firstKey).toFixed(1);
 
     endVal = parseFloat(lasttime).toFixed(1);
@@ -1144,11 +1146,15 @@ function CreateScene() {
   renderer.autoClear = false; // So we can render both scenes
 
   scene = new THREE.Scene();
+  const light = new THREE.DirectionalLight(0xffffff, 3);
+  light.position.set(1, 1, 1).normalize();
+  scene.add(light);
   camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.01, 10000);
   camera.position.z = 1000;
   //   camera.position.set(-1090, 0, 1450);
 
-  renderer.toneMapping = THREE.ReinhardToneMapping;
+  //   renderer.toneMapping = THREE.ReinhardToneMapping;
+  renderer.toneMapping = 2;
   renderer.toneMappingExposure = 1000;
 
   controls = new TrackballControls(camera, canvas);
@@ -1438,51 +1444,6 @@ function VisualizateNeurons() {
       });
     });
   }
-  //   else if (selectedCheckboxIds.length > 0) {
-  //     NetworkArray.forEach((net) => {
-  //       const filteredParticles = net.filter((p) => selectedCheckboxIds.includes(p.ntype.toString()));
-  //       totalParticles += filteredParticles.length;
-  //       filteredParticles.forEach((p) => {
-  //         const x = p.x * scalingFactor;
-  //         const y = p.y * scalingFactor;
-  //         const z = p.z * scalingFactor;
-
-  //         if (p.type === 1) {
-  //           const ntype = Number(p.ntype);
-  //           if (DG.includes(ntype)) vertexColors.push(...dgRGB);
-  //           else if (CA3.includes(ntype)) vertexColors.push(...ca3RGB);
-  //           else if (CA2.includes(ntype)) vertexColors.push(...ca2RGB);
-  //           else if (CA1.includes(ntype)) vertexColors.push(...ca1RGB);
-  //           else if (SUB.includes(ntype)) vertexColors.push(...subRGB);
-  //           else if (EC.includes(ntype)) vertexColors.push(...ecRGB);
-  //           total_excitatory++;
-  //         } else {
-  //           vertexColors.push(1.0, 0.0, 0.0);
-  //           total_inhibitory++;
-  //         }
-
-  //         positions.push(x, y, z);
-  //         sizes.push(30);
-  //         gIDs.push(p.id);
-  //         neuron_class.push(p.type);
-  //       });
-  //     });
-  //   } else if (selectedCheckboxByLayer.length > 0) {
-  //     NetworkArray.forEach((net, i) => {
-  //       if (selectedCheckboxByLayer.includes(i)) {
-  //         net.forEach((p) => {
-  //           const x = p.x * scalingFactor;
-  //           const y = p.y * scalingFactor;
-  //           const z = p.z * scalingFactor;
-  //           positions.push(x, y, z);
-  //           sizes.push(30);
-  //           gIDs.push(p.id);
-  //           p.type === 1 ? (vertexColors.push(0, 0, 1), total_excitatory++) : (vertexColors.push(1, 0, 0), total_inhibitory++);
-  //         });
-  //         totalParticles += net.length;
-  //       }
-  //     });
-  //   }
 
   document.getElementById("Neurons_firing_attributes").style.visibility = "visible";
   document.getElementById("networkspikes").style.visibility = "visible";
@@ -1495,26 +1456,18 @@ function VisualizateNeurons() {
   geometry.setAttribute("gid", new THREE.Float32BufferAttribute(gIDs, 1));
   geometry.setAttribute("originalColor", new THREE.Float32BufferAttribute(vertexColors, 3));
 
-  const uniforms = { pointTexture: { value: new THREE.TextureLoader().load(texturePath) } };
+  const uniforms = { pointTexture: { value: null }, uBrightness: { value: 2.5 } };
   material = new THREE.ShaderMaterial({
     uniforms,
     vertexShader: document.getElementById("vertexshader").textContent,
     fragmentShader: document.getElementById("fragmentshader").textContent,
-    transparent: false,
+    transparent: true,
     vertexColors: true,
     depthTest: true,
     depthWrite: true,
     blending: THREE.NormalBlending,
-    // uniforms,
-    // vertexShader: document.getElementById("vertexshader").textContent,
-    // fragmentShader: document.getElementById("fragmentshader").textContent,
-    // transparent: true,
-    // vertexColors: true,
-    // depthTest: true,
-    // depthWrite: true,
-    // blending: THREE.NormalBlending,
   });
-  material.uniforms.uBrightness = { value: 7.0 };
+  material.uniforms.uBrightness = { value: 10.0 };
   particles = new THREE.Points(geometry, material);
   scene.add(particles);
 
@@ -1714,6 +1667,8 @@ function startAnimation(startVal, endVal) {
           document.getElementById("rec-indicator").style.display = "none";
           stopBtn.style.display = "none";
           startBtn.style.display = "inline-block";
+          spikeTimes.clear();
+          spikeTransitions.clear();
         }
 
         isPaused = true; //  allow future play
@@ -1748,38 +1703,32 @@ function animateParticles_Connection(particleIds, targetSize) {
   const colors = geometry.attributes.color.array;
   const gIDs = geometry.attributes.gid.array;
 
-  // Create a Map for efficient lookup
   const gIDsMap = new Map();
   for (let i = 0; i < gIDs.length; i++) {
     gIDsMap.set(gIDs[i], i);
   }
 
-  let delay = 0; // Initial delay
-
   particleIds.forEach((particleId) => {
     if (ca3toca1connections[particleId]) {
       ca3toca1connections[particleId].forEach((ca1Id) => {
-        setTimeout(() => {
-          const GIDindex = gIDsMap.get(ca1Id);
-          const index = GIDindex * 3;
-          sizes[GIDindex] = targetSize;
+        const GIDindex = gIDsMap.get(ca1Id);
+        if (GIDindex === undefined) return;
+        const index = GIDindex * 3;
 
-          // Toggle color logic
-          if (colors[index] === 1 && colors[index + 1] === 0 && colors[index + 2] === 0) {
-            colors[index] = 1;
-            colors[index + 1] = 1;
-            colors[index + 2] = 1;
-          } else {
-            colors[index] = 1;
-            colors[index + 1] = 1;
-            colors[index + 2] = 0;
-          }
+        spikeTimes.set(ca1Id, count);
+        spikeTransitions.set(ca1Id, { startTime: count });
 
-          geometry.attributes.size.needsUpdate = true;
-          geometry.attributes.color.needsUpdate = true;
-        }, delay);
+        sizes[GIDindex] = targetSize;
 
-        delay += 0.01; // Increment delay (adjust for animation speed)
+        if (colors[index] === 1 && colors[index + 1] === 0 && colors[index + 2] === 0) {
+          colors[index] = 1;
+          colors[index + 1] = 1;
+          colors[index + 2] = 1;
+        } else {
+          colors[index] = 1;
+          colors[index + 1] = 1;
+          colors[index + 2] = 0;
+        }
       });
     }
 
@@ -1787,6 +1736,9 @@ function animateParticles_Connection(particleIds, targetSize) {
     if (GIDindex !== undefined) {
       const index = GIDindex * 3;
       sizes[GIDindex] = targetSize;
+
+      spikeTimes.set(particleId, count);
+      spikeTransitions.set(particleId, { startTime: count });
 
       if (colors[index] === 1 && colors[index + 1] === 0 && colors[index + 2] === 0) {
         colors[index] = 1;
@@ -1797,12 +1749,13 @@ function animateParticles_Connection(particleIds, targetSize) {
         colors[index + 1] = 1;
         colors[index + 2] = 0;
       }
-
-      geometry.attributes.size.needsUpdate = true;
-      geometry.attributes.color.needsUpdate = true;
     }
   });
+
+  geometry.attributes.size.needsUpdate = true;
+  geometry.attributes.color.needsUpdate = true;
 }
+
 function twoMilisecondStay_Connection(currentTime) {
   const sizes = geometry.attributes.size.array;
   const colors = geometry.attributes.color.array;
@@ -1813,82 +1766,36 @@ function twoMilisecondStay_Connection(currentTime) {
     gIDsMap.set(gIDs[i], i);
   }
 
-  let delay = 0; // Initial delay
+  spikeTransitions.forEach((state, gid) => {
+    const GIDindex = gids_activity_indexes[gid] ?? gIDsMap.get(gid);
+    if (GIDindex === undefined) return;
 
-  for (const currentRange of timeRanges) {
-    if (parseFloat(currentTime).toFixed(1) == parseFloat(currentRange) + pt) {
-      const particleIds = Activitys[currentRange];
-      if (particleIds !== undefined) {
-        particleIds.forEach((particleId) => {
-          if (ca3toca1connections[particleId]) {
-            ca3toca1connections[particleId].forEach((ca1Id) => {
-              setTimeout(() => {
-                const GIDindex = gIDsMap.get(ca1Id);
-                const index = GIDindex * 3;
-                sizes[GIDindex] = 30;
+    const index = GIDindex * 3;
+    const elapsed = currentTime - state.startTime;
+    const t = Math.min(elapsed / 2.0, 1); // 2ms fade window
 
-                // // Apply color based on selected color index logic
-                // if (colorSelectdg.selectedIndex > -1) {
-                //   colors[index] = dgRGB[0];
-                //   colors[index + 1] = dgRGB[1];
-                //   colors[index + 2] = dgRGB[2];
-                // } else if (colorSelectca3.selectedIndex > -1) {
-                //   colors[index] = ca3RGB[0];
-                //   colors[index + 1] = ca3RGB[1];
-                //   colors[index + 2] = ca3RGB[2];
-                // } else if (colorSelectca2.selectedIndex > -1) {
-                //   colors[index] = ca2RGB[0];
-                //   colors[index + 1] = ca2RGB[1];
-                //   colors[index + 2] = ca2RGB[2];
-                // } else if (colorSelectca1.selectedIndex > -1) {
-                //   colors[index] = ca1RGB[0];
-                //   colors[index + 1] = ca1RGB[1];
-                //   colors[index + 2] = ca1RGB[2];
-                // } else if (colorSelectcasub.selectedIndex > -1) {
-                //   colors[index] = subRGB[0];
-                //   colors[index + 1] = subRGB[1];
-                //   colors[index + 2] = subRGB[2];
-                // } else if (colorSelectcaec.selectedIndex > -1) {
-                //   colors[index] = ecRGB[0];
-                //   colors[index + 1] = ecRGB[1];
-                //   colors[index + 2] = ecRGB[2];
-                // }
+    const eased = Math.sin(t * Math.PI); // ease in-out
+    sizes[GIDindex] = 30 + (spikeNeuronSize - 30) * eased;
 
-                // Use CA3 color
-                colors[index] = ca3RGB[0];
-                colors[index + 1] = ca3RGB[1];
-                colors[index + 2] = ca3RGB[2];
-
-                geometry.attributes.size.needsUpdate = true;
-                geometry.attributes.color.needsUpdate = true;
-              }, delay);
-
-              delay += 0.01; // Increment delay for smoother animation
-            });
-          }
-
-          const GIDindex = gids_activity_indexes[particleId];
-          if (GIDindex !== undefined) {
-            const index = GIDindex * 3;
-            sizes[GIDindex] = 30;
-
-            if (colors[index] === 1 && colors[index + 1] === 1 && colors[index + 2] === 1) {
-              colors[index] = 1;
-              colors[index + 1] = 0;
-              colors[index + 2] = 0;
-            } else {
-              colors[index] = 0;
-              colors[index + 1] = 0;
-              colors[index + 2] = 1;
-            }
-
-            geometry.attributes.size.needsUpdate = true;
-            geometry.attributes.color.needsUpdate = true;
-          }
-        });
+    if (t >= 1) {
+      // Fade back to baseline colors
+      if (colors[index] === 1 && colors[index + 1] === 1 && colors[index + 2] === 1) {
+        colors[index] = 1;
+        colors[index + 1] = 0;
+        colors[index + 2] = 0;
+      } else {
+        colors[index] = 0;
+        colors[index + 1] = 0;
+        colors[index + 2] = 1;
       }
+      sizes[GIDindex] = 30;
+      spikeTransitions.delete(gid);
+      spikeTimes.delete(gid);
     }
-  }
+  });
+
+  geometry.attributes.size.needsUpdate = true;
+  geometry.attributes.color.needsUpdate = true;
 }
 
 function animateTimeRange_Without_Connection(currentTime, targetSize) {
@@ -1906,6 +1813,10 @@ function animateTimeRange_Without_Connection(currentTime, targetSize) {
   }
 }
 
+const baseSize = 30;
+const fadeDuration = 2.0;
+const spikeTransitions = new Map(); // gid → { startTime }
+
 function animateParticles_Without_Connection(particleIds, targetSize) {
   const sizes = geometry.attributes.size.array;
   const colors = geometry.attributes.color.array;
@@ -1915,65 +1826,64 @@ function animateParticles_Without_Connection(particleIds, targetSize) {
     if (GIDindex === undefined) return;
 
     const index = GIDindex * 3;
-    sizes[GIDindex] = targetSize;
 
+    // Save spike start time
+    spikeTimes.set(gid, count);
+    spikeTransitions.set(gid, { startTime: count });
+
+    // Maintain original color logic
     const r = colors[index];
     const g = colors[index + 1];
     const b = colors[index + 2];
 
-    // Inhibitory (red) → white
     if (r === 1 && g === 0 && b === 0) {
-      colors[index] = 1;
       colors[index + 1] = 1;
       colors[index + 2] = 1;
-    }
-    // Excitatory (blue) → yellow
-    else if (r === 0 && g === 0 && b === 1) {
+    } else if (r === 0 && g === 0 && b === 1) {
       colors[index] = 1;
       colors[index + 1] = 1;
       colors[index + 2] = 0;
     }
-
-    // Store spike time
-    spikeTimes.set(gid, count);
   });
 
-  geometry.attributes.size.needsUpdate = true;
   geometry.attributes.color.needsUpdate = true;
 }
 
 function twoMilisecondStay_Without_Connection(currentTime) {
   const sizes = geometry.attributes.size.array;
   const colors = geometry.attributes.color.array;
-  const fadeDuration = 2.0;
 
-  spikeTimes.forEach((spikeTime, gid) => {
-    if (currentTime - spikeTime >= fadeDuration) {
-      const GIDindex = gids_activity_indexes[gid];
-      if (GIDindex === undefined) return;
+  spikeTransitions.forEach((state, gid) => {
+    const GIDindex = gids_activity_indexes[gid];
+    if (GIDindex === undefined) return;
 
-      const index = GIDindex * 3;
+    const index = GIDindex * 3;
+    const elapsed = currentTime - state.startTime;
+    const t = Math.min(elapsed / fadeDuration, 1); // normalized 0 → 1
 
-      sizes[GIDindex] = 30; // Reset size
+    // Smooth scale up and down using a full sine wave: 0→π
+    const eased = Math.sin(t * Math.PI); // 0 → 1 → 0
+    sizes[GIDindex] = baseSize + (spikeNeuronSize - baseSize) * eased;
 
+    // Reset color at the end
+    if (t >= 1) {
       const r = colors[index];
       const g = colors[index + 1];
       const b = colors[index + 2];
 
-      // Reset white to red (inhibitory)
       if (r === 1 && g === 1 && b === 1) {
         colors[index] = 1;
         colors[index + 1] = 0;
         colors[index + 2] = 0;
-      }
-      // Reset yellow to blue (excitatory)
-      else if (r === 1 && g === 1 && b === 0) {
+      } else if (r === 1 && g === 1 && b === 0) {
         colors[index] = 0;
         colors[index + 1] = 0;
         colors[index + 2] = 1;
       }
 
-      spikeTimes.delete(gid); // Done fading
+      sizes[GIDindex] = baseSize;
+      spikeTransitions.delete(gid);
+      spikeTimes.delete(gid);
     }
   });
 
@@ -1996,7 +1906,8 @@ function resetParticles() {
   for (let i = 0; i < sizes.length; i++) {
     sizes[i] = parameters.SphereSize || 30;
   }
-
+  spikeTimes.clear();
+  spikeTransitions.clear();
   geometry.attributes.color.needsUpdate = true;
   geometry.attributes.size.needsUpdate = true;
 }
