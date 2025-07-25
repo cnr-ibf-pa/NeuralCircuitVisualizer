@@ -2996,17 +2996,19 @@ function hexToNormalizedRGB(hex) {
   return [r, g, b];
 }
 
+// Optimized movie recording setup for high quality WebM export
 function startRecording(mainCanvas, hudCanvas) {
   combinedCanvas = document.createElement("canvas");
   combinedCanvas.width = mainCanvas.width;
   combinedCanvas.height = mainCanvas.height;
   combinedCtx = combinedCanvas.getContext("2d");
 
-  const fps = 30;
-  const interval = 1000 / fps;
-
+  const fps = 60;
   const stream = combinedCanvas.captureStream(fps);
-  mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+  mediaRecorder = new MediaRecorder(stream, {
+    mimeType: "video/webm;codecs=vp9",
+    videoBitsPerSecond: 10_000_000, // 10 Mbps for high quality
+  });
 
   recordedChunks = [];
 
@@ -3015,8 +3017,6 @@ function startRecording(mainCanvas, hudCanvas) {
   };
 
   mediaRecorder.onstop = () => {
-    clearInterval(recordingIntervalId);
-
     const blob = new Blob(recordedChunks, { type: "video/webm" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -3026,24 +3026,26 @@ function startRecording(mainCanvas, hudCanvas) {
     URL.revokeObjectURL(url);
   };
 
-  recordingIntervalId = setInterval(() => {
-    //  Then draw to combined canvas
-    combinedCtx.clearRect(0, 0, combinedCanvas.width, combinedCanvas.height);
-    combinedCtx.drawImage(mainCanvas, 0, 0);
-    combinedCtx.drawImage(hudCanvas, 0, 0);
-  }, interval);
+  let lastTime = 0;
+  function drawFrame(time) {
+    if (mediaRecorder.state === "recording") {
+      if (time - lastTime >= 1000 / fps) {
+        combinedCtx.clearRect(0, 0, combinedCanvas.width, combinedCanvas.height);
+        combinedCtx.drawImage(mainCanvas, 0, 0);
+        combinedCtx.drawImage(hudCanvas, 0, 0);
+        lastTime = time;
+      }
+      requestAnimationFrame(drawFrame);
+    }
+  }
 
   mediaRecorder.start();
+  requestAnimationFrame(drawFrame);
 }
 
 function stopRecording() {
   if (mediaRecorder && mediaRecorder.state !== "inactive") {
-    mediaRecorder.stop(); //  Will trigger .onstop and download
-  }
-
-  if (recordingIntervalId !== null) {
-    clearInterval(recordingIntervalId);
-    recordingIntervalId = null;
+    mediaRecorder.stop();
   }
 }
 
