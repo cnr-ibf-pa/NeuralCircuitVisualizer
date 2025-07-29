@@ -39,7 +39,7 @@
         void main() {
         vColor = color; // Using Three.js's built-in color attribute
         vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-        vScale = 40.0 / length(mvPosition.xyz);
+        vScale = 200.0 / length(mvPosition.xyz); //200 size for when closer to the camersa
         gl_PointSize = size * vScale;
         gl_Position = projectionMatrix * mvPosition;
         }
@@ -1741,6 +1741,31 @@
               <canvas id="neuronCanvas"></canvas>
               <canvas id="hudCanvas" width="1024" height="768" style="position: absolute; top: 0; left: 0; pointer-events: none; display: none"></canvas>
               <div id="gidTooltip" style="position: absolute; display: none; color: white; background: rgba(0, 0, 0, 0.75); padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 12px; pointer-events: none; z-index: 999"></div>
+
+              {% comment %}
+              <div id="neuron-popup" class="col col-md-3 justify-content-md-end" style="position: fixed; padding: 8px; z-index: 100000; pointer-events: none; font-family: Arial, sans-serif; font-size: 14px"></div>
+              {% endcomment %}
+              <div id="neuron-popup" style="display: none; opacity: 0; transition: opacity 0.3s ease">
+                <div class="popup-content">
+                  <h4>Neuron Information</h4>
+                  <div class="info-row">
+                    <span class="info-label">GID:</span>
+                    <span id="neuron-gid" class="info-value"></span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">X:</span>
+                    <span id="neuron-x" class="info-value"></span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Y:</span>
+                    <span id="neuron-y" class="info-value"></span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Z:</span>
+                    <span id="neuron-z" class="info-value"></span>
+                  </div>
+                </div>
+              </div>
 
               <div id="networkspikes" class="col-12 col-md-3 d-flex justify-content-center justify-content-md-end gap-3">
                 <span id="lblnetwork" class="badge rounded-pill bg-dark text-light shadow-sm px-3 py-2"># neurons: 0</span>

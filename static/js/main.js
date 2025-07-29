@@ -54,7 +54,7 @@ let pt = 2;
 let colorsArray;
 let vertexColors = [];
 let particles;
-const scalingFactor = 0.1;
+// const scalingFactor = 0.1;
 let r = 0;
 let spikeTimes = new Map();
 
@@ -1138,6 +1138,7 @@ function CreateScene() {
     alpha: true,
     antialias: true,
     preserveDrawingBuffer: true, //  ADD THIS
+    logarithmicDepthBuffer: true,
   });
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap at 2 for performance
@@ -1146,17 +1147,8 @@ function CreateScene() {
   renderer.autoClear = false; // So we can render both scenes
 
   scene = new THREE.Scene();
-  const light = new THREE.DirectionalLight(0xffffff, 3);
-  light.position.set(1, 1, 1).normalize();
-  scene.add(light);
-  camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.01, 100000);
+  camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 1, 100000);
   camera.position.z = 1000;
-  //   camera.position.set(-1090, 0, 1450);
-
-  //   renderer.toneMapping = THREE.ReinhardToneMapping;
-  renderer.toneMapping = 2;
-  renderer.toneMappingExposure = 1000;
-
   controls = new TrackballControls(camera, canvas);
   controls.rotateSpeed = 20.0;
   controls.zoomSpeed = 10;
@@ -1355,9 +1347,12 @@ function VisualizateNeurons() {
       if (ishalf) {
         NetworkArray.forEach((net) => {
           net.forEach((p) => {
-            const x = p.x * scalingFactor;
-            const y = p.y * scalingFactor;
-            const z = p.z * scalingFactor;
+            // const x = p.x * scalingFactor;
+            // const y = p.y * scalingFactor;
+            // const z = p.z * scalingFactor;
+            const x = p.x;
+            const y = p.y;
+            const z = p.z;
             positions.push(x, y, z);
             sizes.push(30);
             gIDs.push(p.id);
@@ -1374,9 +1369,9 @@ function VisualizateNeurons() {
       } else {
         NetworkArray.forEach((net) => {
           net.forEach((p) => {
-            const x = p.x * scalingFactor;
-            const y = p.y * scalingFactor;
-            const z = p.z * scalingFactor;
+            const x = p.x;
+            const y = p.y;
+            const z = p.z;
             positions.push(x, y, z);
             sizes.push(30);
             gIDs.push(p.id);
@@ -1394,9 +1389,9 @@ function VisualizateNeurons() {
     } else {
       NetworkArray.forEach((net) => {
         net.forEach((p) => {
-          const x = p.x * scalingFactor;
-          const y = p.y * scalingFactor;
-          const z = p.z * scalingFactor;
+          const x = p.x;
+          const y = p.y;
+          const z = p.z;
           positions.push(x, y, z);
           sizes.push(30);
           gIDs.push(p.id);
@@ -1421,9 +1416,9 @@ function VisualizateNeurons() {
       totalParticles += filteredParticles.length;
 
       filteredParticles.forEach((p) => {
-        const x = p.x * scalingFactor;
-        const y = p.y * scalingFactor;
-        const z = p.z * scalingFactor;
+        const x = p.x;
+        const y = p.y;
+        const z = p.z;
 
         if (p.type === 1) {
           const ntype = Number(p.ntype);
@@ -1458,7 +1453,7 @@ function VisualizateNeurons() {
   geometry.setAttribute("gid", new THREE.Float32BufferAttribute(gIDs, 1));
   geometry.setAttribute("originalColor", new THREE.Float32BufferAttribute(vertexColors, 3));
 
-  const uniforms = { pointTexture: { value: null }, uBrightness: { value: 2.5 } };
+  const uniforms = { pointTexture: { value: null } };
   material = new THREE.ShaderMaterial({
     uniforms,
     vertexShader: document.getElementById("vertexshader").textContent,
@@ -1472,6 +1467,13 @@ function VisualizateNeurons() {
   material.uniforms.uBrightness = { value: 10.0 };
   particles = new THREE.Points(geometry, material);
   scene.add(particles);
+
+  // Initialize raycaster with precise settings
+  initRaycaster();
+  initOriginalColors();
+  // Clear previous listeners
+  document.removeEventListener("pointermove", onPointerMove);
+  document.addEventListener("pointermove", onPointerMove, { passive: false });
 
   if (loadmouseflag) {
     resetCamera();
@@ -1500,13 +1502,13 @@ function VisualizateNeurons() {
         gui.domElement.id = "gui";
         panel.appendChild(gui.domElement);
         const pm = gui.addFolder("Sphere Material");
-        pm.add(parameters, "Neuron_Size", 1, 200).onChange((value) => {
+        pm.add(parameters, "Neuron_Size", 1, 500).onChange((value) => {
           const sizes = geometry.attributes.size.array;
           for (let i = 0; i < sizes.length; i++) sizes[i] = value;
           geometry.attributes.size.needsUpdate = true;
         });
 
-        pm.add(parameters, "Firing_Neuron_Size", 1, 500).onChange((value) => {
+        pm.add(parameters, "Firing_Neuron_Size", 1, 1000).onChange((value) => {
           const sizes = geometry.attributes.size.array;
           const colors = geometry.attributes.color.array;
           for (let i = 0; i < colors.length; i += 3) {
@@ -1829,9 +1831,25 @@ function animateParticles_Without_Connection(particleIds, targetSize) {
 
     const index = GIDindex * 3;
 
+    // Skip if currently hovered
+    if (hoveredIndex === GIDindex) return;
+
     // Save spike start time
     spikeTimes.set(gid, count);
     spikeTransitions.set(gid, { startTime: count });
+
+    // Initialize or update state
+    if (!originalColors[GIDindex]) {
+      originalColors[GIDindex] = {
+        r: colors[index],
+        g: colors[index + 1],
+        b: colors[index + 2],
+        isFiring: true,
+        isWhite: false,
+      };
+    } else {
+      originalColors[GIDindex].isFiring = true;
+    }
 
     // Maintain original color logic
     const r = colors[index];
@@ -2865,11 +2883,6 @@ function resetAndDisableAllCheckboxes() {
   removeTable();
 }
 
-CreateScene();
-
-disableAllElements();
-//createArrowOverlay();
-
 function updateSliderTrack(slider, value) {
   const min = parseFloat(slider.min);
   const max = parseFloat(slider.max);
@@ -2998,7 +3011,6 @@ function hexToNormalizedRGB(hex) {
   return [r, g, b];
 }
 
-// Optimized movie recording setup for high quality WebM export
 function startRecording(mainCanvas, hudCanvas) {
   combinedCanvas = document.createElement("canvas");
   combinedCanvas.width = mainCanvas.width;
@@ -3065,3 +3077,214 @@ stopBtn.addEventListener("click", () => {
   stopBtn.style.display = "none";
   startBtn.style.display = "inline-block";
 });
+
+function initRaycaster() {
+  if (!raycaster) {
+    raycaster = new THREE.Raycaster();
+  }
+  raycaster.params.Points.threshold = 3;
+
+  if (particles && particles.geometry) {
+    particles.geometry.computeBoundingSphere();
+    particles.geometry.computeBoundingBox();
+  }
+}
+
+function onPointerMove(event) {
+  // Check if particles exist and are in the scene
+  if (!particles || !scene.children.includes(particles)) {
+    hidePopup();
+    return;
+  }
+
+  // Get pointer position relative to canvas
+  const rect = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  // Update raycaster only if particles exist
+  raycaster.setFromCamera(pointer, camera);
+
+  try {
+    const intersects = raycaster.intersectObject(particles);
+
+    // Reset previous hover
+    if (hoveredIndex !== -1) {
+      resetParticleAppearance(hoveredIndex);
+      hoveredIndex = -1;
+    }
+
+    // Process new hover
+    if (intersects.length > 0) {
+      const intersection = intersects[0];
+      hoveredIndex = intersection.index;
+      highlightParticle(hoveredIndex);
+      //   enlargeParticle(hoveredIndex, 1.3);
+      showNeuronInfo(intersection, event);
+    } else if (popupVisible) {
+      //   checkMouseLeave(event);
+      if (!popupHideTimer) {
+        popupHideTimer = setTimeout(hidePopup, POPUP_HIDE_DELAY);
+      }
+    }
+  } catch (error) {
+    console.error("Raycasting error:", error);
+    hidePopup();
+  }
+}
+
+function initPopupSystem() {
+  document.addEventListener("pointermove", onPointerMove);
+  // Add mouse leave check for when pointer leaves window
+  document.addEventListener("mouseout", (e) => {
+    if (!e.relatedTarget && popupVisible) {
+      hidePopup();
+    }
+  });
+}
+
+function highlightParticle(index) {
+  const colorAttribute = geometry.attributes.color;
+  const colors = colorAttribute.array;
+
+  // Initialize if not exists
+  if (!originalColors[index]) {
+    originalColors[index] = {
+      r: colors[index * 3],
+      g: colors[index * 3 + 1],
+      b: colors[index * 3 + 2],
+      isFiring: false,
+      isWhite: false,
+    };
+  }
+
+  // Detect current state
+  const isYellow = colors[index * 3] === 1 && colors[index * 3 + 1] === 1 && colors[index * 3 + 2] === 0;
+  const isWhite = colors[index * 3] === 1 && colors[index * 3 + 1] === 1 && colors[index * 3 + 2] === 1;
+
+  // Update state tracking
+  originalColors[index].isFiring = isYellow;
+  originalColors[index].isWhite = isWhite;
+
+  // Apply hover color (bright cyan)
+  colors[index * 3] = hoverColor.r;
+  colors[index * 3 + 1] = hoverColor.g;
+  colors[index * 3 + 2] = hoverColor.b;
+
+  colorAttribute.needsUpdate = true;
+}
+
+function resetParticleAppearance(index) {
+  const colorAttribute = geometry.attributes.color;
+  const colors = colorAttribute.array;
+
+  if (!originalColors[index]) return;
+
+  // Restore to appropriate state
+  if (originalColors[index].isFiring) {
+    // Return to yellow if was firing
+    colors[index * 3] = 1; // R
+    colors[index * 3 + 1] = 1; // G
+    colors[index * 3 + 2] = 0; // B (yellow)
+  } else if (originalColors[index].isWhite) {
+    // Return to white if was white
+    colors[index * 3] = 1; // R
+    colors[index * 3 + 1] = 1; // G
+    colors[index * 3 + 2] = 1; // B (white)
+  } else {
+    // Return to original color otherwise
+    colors[index * 3] = originalColors[index].r;
+    colors[index * 3 + 1] = originalColors[index].g;
+    colors[index * 3 + 2] = originalColors[index].b;
+  }
+
+  colorAttribute.needsUpdate = true;
+}
+
+// In your initialization:
+function initOriginalColors() {
+  const colors = geometry.attributes.color.array;
+  originalColors = new Array(colors.length / 3);
+
+  for (let i = 0; i < originalColors.length; i++) {
+    const index = i * 3;
+    originalColors[i] = {
+      r: colors[index],
+      g: colors[index + 1],
+      b: colors[index + 2],
+      isFiring: false,
+      isWhite: colors[index] === 1 && colors[index + 1] === 1 && colors[index + 2] === 1,
+    };
+  }
+}
+function showNeuronInfo(intersection, event) {
+  if (!intersection || !event || !particles) return;
+
+  // Clear any pending hide timer
+  if (popupHideTimer) {
+    clearTimeout(popupHideTimer);
+    popupHideTimer = null;
+  }
+
+  const popup = document.getElementById("neuron-popup");
+  const gid = particles.geometry.attributes.gid.getX(intersection.index);
+  const position = intersection.point;
+
+  // Update values
+  document.getElementById("neuron-gid").textContent = gid;
+  document.getElementById("neuron-x").textContent = position.x.toFixed(2);
+  document.getElementById("neuron-y").textContent = position.y.toFixed(2);
+  document.getElementById("neuron-z").textContent = position.z.toFixed(2);
+
+  // Show popup if not already visible
+  if (!popupVisible) {
+    popup.style.display = "block";
+    popup.style.opacity = "1";
+    popupVisible = true;
+  }
+}
+
+function hidePopup() {
+  if (!popupVisible) return;
+
+  const popup = document.getElementById("neuron-popup");
+
+  // Start hide animation
+  popup.style.opacity = "0";
+
+  // Completely hide after animation completes
+  setTimeout(() => {
+    popup.style.display = "none";
+    popupVisible = false;
+  }, 900); // Must match CSS transition duration
+}
+
+document.getElementById("neuron-popup").addEventListener("mouseenter", () => {
+  if (popupHideTimer) {
+    clearTimeout(popupHideTimer);
+    popupHideTimer = null;
+  }
+});
+
+document.getElementById("neuron-popup").addEventListener("mouseleave", () => {
+  if (popupVisible) {
+    popupHideTimer = setTimeout(hidePopup, POPUP_HIDE_DELAY);
+  }
+});
+
+CreateScene();
+initPopupSystem();
+disableAllElements();
+//createArrowOverlay();
+
+let raycaster = new THREE.Raycaster();
+let hoveredIndex = -1;
+let pointer = new THREE.Vector2();
+let hoverColor = new THREE.Color(0, 1, 1); // Bright Cyan for hover
+let originalColors = [];
+let originalSizes = [];
+
+// Add these variables at the top of your file
+let popupVisible = false;
+let popupHideTimer = null;
+const POPUP_HIDE_DELAY = 900; // milliseconds

@@ -1333,3 +1333,97 @@ label {
     color: #f8f8f8;
   }
 }
+
+/* #neuron-popup {
+  position: fixed;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  pointer-events: none;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  max-width: 200px;
+  transition: opacity 0.15s ease;
+  backdrop-filter: blur(2px);
+}
+
+#neuron-popup.hidden {
+  opacity: 0;
+  pointer-events: none;
+} */
+
+/* #neuron-popup {
+  position: fixed;
+
+  bottom: 4.5rem;
+
+  right: 0.5rem;
+
+  z-index: 999;
+
+  width: auto;
+  height: auto;
+  overflow: auto;
+  color: #fff;
+} */
+#neuron-popup {
+  position: fixed;
+  padding: 12px;
+  z-index: 100000;
+  pointer-events: none;
+  font-family: Arial, sans-serif;
+
+  bottom: 4.5rem;
+
+  right: 0.5rem;
+
+  width: auto;
+  height: auto;
+  overflow: auto;
+  color: #fff;
+  transition: opacity 0.9s ease;
+  will-change: opacity; /* Improves animation performance */
+  display: none;
+
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+}
+#neuron-popup.visible {
+  opacity: 1;
+  display: block;
+}
+/* Add small delay before pointer can interact with popup */
+#neuron-popup:not(:hover) {
+  pointer-events: none;
+  transition-delay: 0.9s;
+}
+.popup-content h4 {
+  margin: 0 0 8px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #eee;
+  color: #ffffff;
+  font-size: 15px;
+}
+
+.info-row {
+  display: flex;
+  margin: 4px 0;
+}
+
+.info-label {
+  color: #ffffff;
+  min-width: 20px;
+  margin-right: 8px;
+  font-size: 12px;
+}
+
+.info-value {
+  color: #ffffff;
+  font-size: 12px;
+}
