@@ -3020,7 +3020,7 @@ function startRecording(mainCanvas, hudCanvas) {
   const fps = 60;
   const stream = combinedCanvas.captureStream(fps);
 
-  let options = { mimeType: "video/webm;codecs=vp9", videoBitsPerSecond: 10_000_000 };
+  let options = { mimeType: "video/webm;codecs=vp9", videoBitsPerSecond: 30_000_000 };
 
   if (!MediaRecorder.isTypeSupported(options.mimeType)) {
     console.warn("VP9 not supported, trying VP8...");
