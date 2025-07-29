@@ -3019,10 +3019,20 @@ function startRecording(mainCanvas, hudCanvas) {
 
   const fps = 60;
   const stream = combinedCanvas.captureStream(fps);
-  mediaRecorder = new MediaRecorder(stream, {
-    mimeType: "video/webm;codecs=vp9",
-    videoBitsPerSecond: 10_000_000, // 10 Mbps for high quality
-  });
+
+  let options = { mimeType: "video/webm;codecs=vp9", videoBitsPerSecond: 10_000_000 };
+
+  if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+    console.warn("VP9 not supported, trying VP8...");
+    options.mimeType = "video/webm;codecs=vp8";
+  }
+
+  if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+    console.warn("VP8 not supported, falling back to default...");
+    delete options.mimeType; // let browser choose
+  }
+
+  mediaRecorder = new MediaRecorder(stream, options);
 
   recordedChunks = [];
 
