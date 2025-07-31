@@ -1633,6 +1633,7 @@ function animateParticles_Connection(particleIds, targetSize) {
   }
 
   particleIds.forEach((particleId) => {
+    // Fire all CA1 postsynaptic connections
     if (ca3toca1connections[particleId]) {
       ca3toca1connections[particleId].forEach((ca1Id) => {
         const GIDindex = gIDsMap.get(ca1Id);
@@ -1643,6 +1644,15 @@ function animateParticles_Connection(particleIds, targetSize) {
         spikeTransitions.set(ca1Id, { startTime: count });
 
         sizes[GIDindex] = targetSize;
+
+        // Save original color
+        if (!originalColors[GIDindex]) {
+          originalColors[GIDindex] = {
+            r: colors[index],
+            g: colors[index + 1],
+            b: colors[index + 2],
+          };
+        }
 
         if (colors[index] === 1 && colors[index + 1] === 0 && colors[index + 2] === 0) {
           colors[index] = 1;
@@ -1655,7 +1665,7 @@ function animateParticles_Connection(particleIds, targetSize) {
         }
       });
     }
-
+    // Fire original CA3 particle as well
     const GIDindex = gids_activity_indexes[particleId];
     if (GIDindex !== undefined) {
       const index = GIDindex * 3;
@@ -1663,6 +1673,16 @@ function animateParticles_Connection(particleIds, targetSize) {
 
       spikeTimes.set(particleId, count);
       spikeTransitions.set(particleId, { startTime: count });
+
+      sizes[GIDindex] = targetSize;
+
+      if (!originalColors[GIDindex]) {
+        originalColors[GIDindex] = {
+          r: colors[index],
+          g: colors[index + 1],
+          b: colors[index + 2],
+        };
+      }
 
       if (colors[index] === 1 && colors[index + 1] === 0 && colors[index + 2] === 0) {
         colors[index] = 1;
@@ -1696,25 +1716,23 @@ function twoMilisecondStay_Connection(currentTime) {
 
     const index = GIDindex * 3;
     const elapsed = currentTime - state.startTime;
-    const t = Math.min(elapsed / 2.0, 1); // 2ms fade window
+    const t = Math.min(elapsed / fadeDuration, 1); // normalized 0-1
 
     const eased = Math.sin(t * Math.PI); // ease in-out
-    sizes[GIDindex] = 30 + (spikeNeuronSize - 30) * eased;
-
+    sizes[GIDindex] = baseSize + (spikeNeuronSize - baseSize) * eased;
     if (t >= 1) {
-      // Fade back to baseline colors
-      if (colors[index] === 1 && colors[index + 1] === 1 && colors[index + 2] === 1) {
-        colors[index] = 1;
-        colors[index + 1] = 0;
-        colors[index + 2] = 0;
-      } else {
-        colors[index] = 0;
-        colors[index + 1] = 0;
-        colors[index + 2] = 1;
+      // Restore original color
+      const original = originalColors[GIDindex];
+      if (original) {
+        colors[index] = original.r;
+        colors[index + 1] = original.g;
+        colors[index + 2] = original.b;
       }
-      sizes[GIDindex] = 30;
+
+      sizes[GIDindex] = baseSize;
       spikeTransitions.delete(gid);
       spikeTimes.delete(gid);
+      delete originalColors[GIDindex];
     }
   });
 
