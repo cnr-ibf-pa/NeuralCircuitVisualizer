@@ -98,8 +98,25 @@ const txttimeto = document.getElementById("txttimeto");
 const networkFileInput = document.getElementById("networkFileInput");
 const hdfFileInput = document.getElementById("activityFileInput");
 
-activitySelect.addEventListener("change", loadActivity);
+var modal = document.getElementById("myModal");
+// Get the image and insert it inside the modal - use its "alt" text as a caption
+var img = document.getElementById("histogramImage");
+var modalImg = document.getElementById("img01");
+var captionText = document.getElementById("caption");
+img.onclick = function () {
+  modal.style.display = "block";
+  modalImg.src = this.src;
+  captionText.innerHTML = this.alt;
+};
 
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+// When the user clicks on <span> (x), close the modal
+span.onclick = function () {
+  modal.style.display = "none";
+};
+
+activitySelect.addEventListener("change", loadActivity);
 document.getElementById("activitySelect").disabled = true;
 document.getElementById("btnLoadConnection").disabled = true;
 
@@ -808,27 +825,6 @@ dropdown.addEventListener("change", async function () {
   }
 });
 
-/*  Get the modal */
-var modal = document.getElementById("myModal");
-
-// Get the image and insert it inside the modal - use its "alt" text as a caption
-var img = document.getElementById("histogramImage");
-var modalImg = document.getElementById("img01");
-var captionText = document.getElementById("caption");
-img.onclick = function () {
-  modal.style.display = "block";
-  modalImg.src = this.src;
-  captionText.innerHTML = this.alt;
-};
-
-// Get the <span> element that closes the modal
-var span = document.getElementsByClassName("close")[0];
-
-// When the user clicks on <span> (x), close the modal
-span.onclick = function () {
-  modal.style.display = "none";
-};
-
 startTimeInput.addEventListener("change", () => {
   let newStart = parseFloat(startTimeInput.value) || 0.0;
 
@@ -924,9 +920,7 @@ timebar.addEventListener("input", (event) => {
   }
 });
 
-//////////////////
 const startButton = document.getElementById("startbtn");
-
 startButton.addEventListener("click", () => {
   let startVal = Math.max(0, parseFloat(startTimeInput.value)) || 0.0;
   let endVal = Math.max(0, parseFloat(endTimeInput.value)) || parseFloat(lasttime);
@@ -953,7 +947,6 @@ startButton.addEventListener("click", () => {
 });
 
 const stopButton = document.getElementById("pause");
-
 stopButton.addEventListener("click", () => {
   clearInterval(interval);
   interval = null;
@@ -963,7 +956,6 @@ stopButton.addEventListener("click", () => {
 });
 
 const restart = document.getElementById("restart");
-
 restart.addEventListener("click", () => {
   let startVal, endVal;
 
@@ -1018,25 +1010,6 @@ function resetSpikeState() {
   currentTimeDisplay.textContent = "0.0";
   timebar.value = 0;
 }
-
-const visualizeButton = document.getElementById("btnvisualize");
-visualizeButton.addEventListener("click", () => {
-  if (numberofneurosButton.value.length > 0 || animationtime.value.length > 0 || (txttimefrom.value.length > 0 && txttimeto.value.length > 0)) {
-    if (numberofneurosButton.value.length > 0) {
-      const number_of_neuros = numberofneurosButton.value;
-
-      document.getElementById("msgprogress").innerText = "Please wait a moment while we fetching your data for visualization. Your patience is appreciated";
-
-      GetNetworkData(number_of_neuros);
-
-      //   fetch_user_network_data_by_number(number_of_neuros);
-      //VisualizateNeurons(Networks); //fetchNetworkDataInChunks();
-    }
-  } else {
-    alert("Please fill any Visualization Parameter...");
-  }
-});
-
 window.addEventListener("resize", onWindowResize, false);
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;

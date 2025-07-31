@@ -39,7 +39,7 @@
         void main() {
         vColor = color; // Using Three.js's built-in color attribute
         vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-        vScale = 200.0 / length(mvPosition.xyz); //200 size for when closer to the camersa
+        vScale = 400.0 / length(mvPosition.xyz); //200 size for when closer to the camersa
         gl_PointSize = size * vScale;
         gl_Position = projectionMatrix * mvPosition;
         }
@@ -141,34 +141,6 @@
                     <div style="position: absolute; bottom: 10px; right: 10px">
                       <button type="button" class="btn btn-outline-light btn-sm p-1" data-bs-toggle="modal" data-bs-target="#fileDetailsModal" title="View file format details"><img src="{% static 'img/info2.png' %}" alt="Info" style="height: 22px" /></button>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="accordion-item" style="display: none">
-                <h2 class="accordion-header heading" id="flush-headingThree"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapsethree" aria-expanded="false" aria-controls="flush-collapsethree">VISUALIZATION PARAMETERS</button></h2>
-                <div id="flush-collapsethree" class="accordion-collapse collapse" aria-labelledby="flush-headingThree" data-bs-parent="#accordionFlushExample">
-                  <div class="accordion-body">
-                    <form>
-                      <div class="form-group mb-3">
-                        <label for="txtnumberofneuros">Number of Neurons to Visualize:</label>
-                        <input type="number" class="form-control" id="txtnumberofneuros" aria-describedby="txtnumberofneuros" />
-                      </div>
-
-                      <div class="d-grid gap-2 mb-3">
-                        <button type="button" class="btn btn-success" id="btnvisualize">Click to Visualize</button>
-                      </div>
-
-                      <div class="form-group mb-3">
-                        <label for="txtanimationtime">Timesteps per (ms):</label>
-                        <input type="number" class="form-control" id="txtanimationtime" aria-describedby="txtanimationtime" />
-                      </div>
-
-                      <div class="form-group mb-3">
-                        <label for="txtPersistenttime">Persistent Time (ms):</label>
-                        <input type="number" class="form-control" id="txtPersistenttime" aria-describedby="txtPersistenttime" min="2" />
-                      </div>
-                    </form>
                   </div>
                 </div>
               </div>
