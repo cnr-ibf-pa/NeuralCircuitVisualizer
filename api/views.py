@@ -83,17 +83,6 @@ def upload_and_save_Network_file(request):
                     elif file_type == 'activity':
                         # process_activity_csv(final_file_path,json_directory)
                         activity_file_path = os.path.join(file_directory, 'activity.csv')
-                        # Enforce 1-digit precision for activity CSV
-                        with open(final_file_path, 'r') as infile, open(final_file_path + '.tmp', 'w', newline='') as outfile:
-                            reader = csv.reader(infile)
-                            writer = csv.writer(outfile)
-                            for row in reader:
-                                if len(row) == 2:
-                                    row[1] = f"{float(row[1]):.1f}"
-                                writer.writerow(row)
-
-                        os.replace(final_file_path + '.tmp', final_file_path)
-
                         os.rename(final_file_path, activity_file_path)
                 elif ext == 'hdf5':
                     # list_hdf5_datasets(final_file_path)
@@ -189,6 +178,8 @@ def process_hdf5_file(file_path):
             spikes_data = hdf_file[dataset_name][:]
 
             if spikes_data.shape[1] == 2:
+                # Round second column (index 1)
+                spikes_data[:, 1] = np.round(spikes_data[:, 1], decimals=1)  # or change decimals=X as needed
                 df = pd.DataFrame(spikes_data)
                 df.to_csv(activity_csv_path, index=False, header=False)
             else:

@@ -717,86 +717,6 @@ hdfFileInput.addEventListener("change", async (event) => {
   }
 });
 
-async function fetchUserNetworkData(uniqueDirectory) {
-  const progressBar = document.getElementById("progress-percentage");
-  const loader = document.getElementById("page-loader");
-  const msg = document.getElementById("msgprogress");
-
-  progressBar.innerText = "0%";
-  loader.style.display = "block";
-  msg.innerText = "Uploading your file, please wait...";
-
-  // ✅ Simulated fetch progress bar
-  progressBar.innerText = "0%";
-  msg.innerText = "Processing your data for visualizing Circuit, please wait...";
-  let fetchProgress = 0;
-
-  const percentInterval = setInterval(() => {
-    if (fetchProgress < 99) {
-      fetchProgress += 1;
-      progressBar.innerText = `${fetchProgress}%`;
-    }
-  }, 100); // ~10 seconds to simulate fetch
-
-  const response = await fetch(`${baseURL}/api/fetch_user_network_data/?dir=${uniqueDirectory}`);
-  const data = await response.json();
-
-  clearInterval(percentInterval);
-  progressBar.innerText = "100%";
-  msg.innerText = "Data loaded successfully! Visualizing neurons...";
-
-  if (data.files.length > 0) {
-    document.getElementById("Neurons_firing_attributes").style.visibility = "visible";
-    document.getElementById("networkspikes").style.visibility = "visible";
-
-    vertexColors = [];
-    NetworkArray = [];
-    data.files.forEach((file) => {
-      NetworkArray.push(file.fileData);
-      total_neurons += file.total_neuros;
-    });
-
-    flag = true;
-    VisualizateNeurons();
-    resetCamera();
-    centerCameraToObject(particles);
-
-    if (parseInt(data.flag_check) === 1) {
-      document.getElementById("lblspikes").innerText = "# spikes :" + data.lstresponse.total_lines;
-
-      total_activity_files = data.lstresponse.total_activity_files;
-      firstLastKeys = data.lstresponse.first_last_keys;
-
-      if (!data.lstresponse.chunk_mfr_list || data.lstresponse.chunk_mfr_list.length === 0) {
-        return;
-      }
-
-      const dropdown = document.getElementById("ddactivity_chunks");
-      dropdown.innerHTML = "";
-
-      const defaultOption = document.createElement("option");
-      defaultOption.textContent = "Activity windows";
-      dropdown.appendChild(defaultOption);
-
-      data.lstresponse.chunk_mfr_list.forEach((chunk) => {
-        const option = document.createElement("option");
-        option.value = chunk.chunk_number;
-
-        const chunkNum = String(chunk.chunk_number);
-        const timeRange = `[${chunk.first_key} - ${chunk.last_key}]ms`;
-        const mfr = `MFR: ${chunk.MFR} Hz`;
-        option.textContent = `Chunk ${chunkNum}\u2003 ${timeRange}\u2003\u2003 ${mfr}`;
-
-        dropdown.appendChild(option);
-      });
-    } else {
-      console.log("No activity data available.");
-    }
-  } else {
-    console.log("No files found in the response.");
-  }
-}
-
 dropdown.addEventListener("change", async function () {
   resetSpikeState();
   resetPlaybackConfig();
@@ -1828,44 +1748,38 @@ function animateParticles_Without_Connection(particleIds, targetSize) {
   particleIds.forEach((gid) => {
     const GIDindex = gids_activity_indexes[gid];
     if (GIDindex === undefined) return;
+    if (hoveredIndex === GIDindex) return;
 
     const index = GIDindex * 3;
 
-    // Skip if currently hovered
-    if (hoveredIndex === GIDindex) return;
-
-    // Save spike start time
+    // Save current time for animation tracking
     spikeTimes.set(gid, count);
     spikeTransitions.set(gid, { startTime: count });
 
-    // Initialize or update state
+    // Set size to max immediately
+    sizes[GIDindex] = targetSize;
+
+    // Save original color if not already saved
     if (!originalColors[GIDindex]) {
       originalColors[GIDindex] = {
         r: colors[index],
         g: colors[index + 1],
         b: colors[index + 2],
-        isFiring: true,
-        isWhite: false,
       };
-    } else {
-      originalColors[GIDindex].isFiring = true;
     }
 
-    // Maintain original color logic
-    const r = colors[index];
-    const g = colors[index + 1];
-    const b = colors[index + 2];
-
-    if (r === 1 && g === 0 && b === 0) {
+    // Modify color for visual spike
+    if (colors[index] === 1 && colors[index + 1] === 0 && colors[index + 2] === 0) {
       colors[index + 1] = 1;
       colors[index + 2] = 1;
-    } else if (r === 0 && g === 0 && b === 1) {
+    } else if (colors[index] === 0 && colors[index + 1] === 0 && colors[index + 2] === 1) {
       colors[index] = 1;
       colors[index + 1] = 1;
       colors[index + 2] = 0;
     }
   });
 
+  geometry.attributes.size.needsUpdate = true;
   geometry.attributes.color.needsUpdate = true;
 }
 
@@ -1879,31 +1793,27 @@ function twoMilisecondStay_Without_Connection(currentTime) {
 
     const index = GIDindex * 3;
     const elapsed = currentTime - state.startTime;
-    const t = Math.min(elapsed / fadeDuration, 1); // normalized 0 → 1
 
-    // Smooth scale up and down using a full sine wave: 0→π
-    const eased = Math.sin(t * Math.PI); // 0 → 1 → 0
+    // Normalize elapsed time from 0 → 1
+    const t = Math.min(elapsed / fadeDuration, 1);
+
+    // Full sine wave scale (ease in-out)
+    const eased = Math.sin(t * Math.PI);
     sizes[GIDindex] = baseSize + (spikeNeuronSize - baseSize) * eased;
 
-    // Reset color at the end
+    // Once time is over, reset to original state
     if (t >= 1) {
-      const r = colors[index];
-      const g = colors[index + 1];
-      const b = colors[index + 2];
-
-      if (r === 1 && g === 1 && b === 1) {
-        colors[index] = 1;
-        colors[index + 1] = 0;
-        colors[index + 2] = 0;
-      } else if (r === 1 && g === 1 && b === 0) {
-        colors[index] = 0;
-        colors[index + 1] = 0;
-        colors[index + 2] = 1;
+      const original = originalColors[GIDindex];
+      if (original) {
+        colors[index] = original.r;
+        colors[index + 1] = original.g;
+        colors[index + 2] = original.b;
       }
 
       sizes[GIDindex] = baseSize;
       spikeTransitions.delete(gid);
       spikeTimes.delete(gid);
+      delete originalColors[GIDindex];
     }
   });
 

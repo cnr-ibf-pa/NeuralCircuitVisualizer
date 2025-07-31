@@ -120,21 +120,20 @@
                 <div id="flush-collapseOne" class="accordion-collapse show collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample">
                   <div class="accordion-body">
                     <div class="d-grid gap-2 col-9 mx-auto">
-                      <input type="file" id="networkFileInput" accept=".csv" style="display: none" multiple />
-                      <button type="button" id="btnnetworkFileInput" class="btnstyle" onclick="document.getElementById('networkFileInput').click()">.csv</button>
-
                       <input type="file" id="activityFileInput" accept=".h5, .hdf4, .hdf, .h4, .he5, .he2, .hdf5" style="display: none" multiple />
                       <button type="button" id="btnactivityFileInput" class="btnstyle" onclick="document.getElementById('activityFileInput').click()">.hdf5</button>
+                      <input type="file" id="networkFileInput" accept=".csv" style="display: none" multiple />
+                      <button type="button" id="btnnetworkFileInput" class="btnstyle" onclick="document.getElementById('networkFileInput').click()">.csv</button>
                     </div>
 
                     <p style="font-size: 12px; padding: 10px">
                       📂
-                      <strong>CSV files:</strong>
-                      Upload both Activity and Network files together.
-                      <br />
-                      📂
                       <strong>HDF5 files:</strong>
                       Upload a single HDF5 file containing two datasets: Activity and Network.
+                      <br />
+                      📂
+                      <strong>CSV files:</strong>
+                      Upload both Activity and Network files together.
                     </p>
 
                     <!-- Info icon aligned to bottom right -->
