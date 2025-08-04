@@ -1334,72 +1334,36 @@ label {
   }
 }
 
-/* #neuron-popup {
-  position: fixed;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid #ddd;
-  padding: 8px 12px;
-  border-radius: 4px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 100;
-  pointer-events: none;
-  font-family: Arial, sans-serif;
-  font-size: 13px;
-  line-height: 1.4;
-  max-width: 200px;
-  transition: opacity 0.15s ease;
-  backdrop-filter: blur(2px);
-}
-
-#neuron-popup.hidden {
-  opacity: 0;
-  pointer-events: none;
-} */
-
-/* #neuron-popup {
-  position: fixed;
-
-  bottom: 4.5rem;
-
-  right: 0.5rem;
-
-  z-index: 999;
-
-  width: auto;
-  height: auto;
-  overflow: auto;
-  color: #fff;
-} */
 #neuron-popup {
   position: fixed;
-  padding: 12px;
+  padding: 10px;
   z-index: 100000;
   pointer-events: none;
   font-family: Arial, sans-serif;
 
-  bottom: 4.5rem;
+  bottom: 4rem;
 
   right: 0.5rem;
 
-  width: auto;
+  max-width: 200px;
+  width: fit-content;
   height: auto;
   overflow: auto;
   color: #fff;
   transition: opacity 0.9s ease;
-  will-change: opacity; /* Improves animation performance */
+  will-change: opacity;
   display: none;
 
   border: 1px solid #ddd;
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 180px;
-  background-color: #2f3542;
+  min-width: 120px;
 }
 #neuron-popup.visible {
   opacity: 1;
   display: block;
 }
-/* Add small delay before pointer can interact with popup */
+
 #neuron-popup:not(:hover) {
   pointer-events: none;
   transition-delay: 0.9s;
@@ -1414,17 +1378,33 @@ label {
 
 .info-row {
   display: flex;
+  justify-content: space-between; /* This will push label to left and value to right */
   margin: 4px 0;
+  width: 100%; /* Ensure it takes full width */
 }
 
 .info-label {
   color: #ffffff;
-  min-width: 20px;
-  margin-right: 8px;
   font-size: 12px;
+  display: block;
+  text-align: left; /* Explicitly align text to left */
+
+  max-width: 80px; /* Adjust as needed */
+  overflow: hidden;
+  text-overflow: ellipsis; /* Adds "..." if text is too long */
+  white-space: nowrap;
 }
 
 .info-value {
   color: #ffffff;
   font-size: 12px;
+  text-align: right; /* Align text to right */
+
+  max-width: 80px; /* Adjust as needed */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hideable {
+  display: none;
 }

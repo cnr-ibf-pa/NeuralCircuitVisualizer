@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { TrackballControls } from "three/addons/controls/TrackballControls.js";
 import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 
+let isDownloadTriggered = false;
 let firstLastKeys;
 var chkpanle = false;
 var total_neurons = 0;
@@ -594,6 +595,11 @@ networkFileInput.addEventListener("change", async (event) => {
 });
 
 hdfFileInput.addEventListener("change", async (event) => {
+  isDownloadTriggered = event.target.hasAttribute("data-download-triggered");
+  if (isDownloadTriggered) {
+    event.target.removeAttribute("data-download-triggered");
+  }
+
   resetSpikeState();
   resetPlaybackConfig();
   resetTimeUI();
@@ -1205,6 +1211,7 @@ function VisualizateNeurons() {
     positions = [];
     sizes = [];
     gIDs = [];
+
     vertexColors = [];
 
     if (particles) {
@@ -1357,7 +1364,7 @@ function VisualizateNeurons() {
     depthWrite: true,
     blending: THREE.NormalBlending,
   });
-  material.uniforms.uBrightness = { value: 10.0 };
+
   particles = new THREE.Points(geometry, material);
   scene.add(particles);
 
@@ -3141,11 +3148,28 @@ function showNeuronInfo(intersection, event) {
   const gid = particles.geometry.attributes.gid.getX(intersection.index);
   const position = intersection.point;
 
-  // Update values
+  // Always show GID
   document.getElementById("neuron-gid").textContent = gid;
-  document.getElementById("neuron-x").textContent = position.x.toFixed(2);
-  document.getElementById("neuron-y").textContent = position.y.toFixed(2);
-  document.getElementById("neuron-z").textContent = position.z.toFixed(2);
+
+  // Only show additional info if triggered by download
+  if (isDownloadTriggered) {
+    const mtypeLabel = getmtypeLabel(gid);
+    const morphtypeLabel = getmorphclassLabel(gid);
+    const etypeLabel = getetypeLabel(gid);
+    const layerLabel = getlayerLabel(gid);
+    const regionLabel = getregionLabel(gid);
+
+    document.getElementById("neuron-etype").textContent = etypeLabel;
+    document.getElementById("neuron-layer").textContent = layerLabel;
+    document.getElementById("neuron-morph_class").textContent = morphtypeLabel;
+    document.getElementById("neuron-mtype").textContent = mtypeLabel;
+    document.getElementById("neuron-region").textContent = regionLabel;
+
+    // Show all elements
+    document.querySelectorAll(".hideable").forEach((el) => {
+      el.style.display = "flex"; // Use "flex" to match your .info-row class
+    });
+  }
 
   // Show popup if not already visible
   if (!popupVisible) {
@@ -3168,6 +3192,83 @@ function hidePopup() {
     popup.style.display = "none";
     popupVisible = false;
   }, 900); // Must match CSS transition duration
+}
+
+function getmtypeLabel(gid) {
+  if (gid >= 1 && gid <= 261843) return "SP_PC";
+  if (gid >= 261844 && gid <= 262437) return "TRI";
+  if (gid >= 262438 && gid <= 263959) return "SCA";
+  if (gid >= 263960 && gid <= 264524) return "PVBC";
+  if (gid >= 264525 && gid <= 266046) return "PPA";
+  if (gid >= 266047 && gid <= 267332) return "OLM";
+  if (gid >= 267333 && gid <= 279729) return "NGF";
+  if (gid >= 279730 && gid <= 284803) return "IVY";
+  if (gid >= 284804 && gid <= 285359) return "CCKBC";
+  if (gid >= 285360 && gid <= 287388) return "BS";
+  if (gid >= 287389 && gid <= 287487) return "BP";
+  if (gid >= 287488 && gid <= 288027) return "BP";
+  return "Unknown";
+}
+
+function getmorphclassLabel(gid) {
+  if (gid >= 1 && gid <= 261843) return "PYR";
+  if (gid >= 261844 && gid <= 262437) return "INT";
+  if (gid >= 262438 && gid <= 263959) return "INT";
+  if (gid >= 263960 && gid <= 264524) return "INT";
+  if (gid >= 264525 && gid <= 266046) return "INT";
+  if (gid >= 266047 && gid <= 267332) return "INT";
+  if (gid >= 267333 && gid <= 279729) return "INT";
+  if (gid >= 279730 && gid <= 284803) return "INT";
+  if (gid >= 284804 && gid <= 285359) return "INT";
+  if (gid >= 285360 && gid <= 287388) return "INT";
+  if (gid >= 287389 && gid <= 287487) return "INT";
+  if (gid >= 287488 && gid <= 288027) return "INT";
+  return "Unknown";
+}
+function getetypeLabel(gid) {
+  if (gid >= 1 && gid <= 261843) return "cACpyr";
+  if (gid >= 261844 && gid <= 262437) return "bAC";
+  if (gid >= 262438 && gid <= 263959) return "bIR";
+  if (gid >= 263960 && gid <= 264524) return "bNAC";
+  if (gid >= 264525 && gid <= 266046) return "bIR";
+  if (gid >= 266047 && gid <= 267332) return "bAC";
+  if (gid >= 267333 && gid <= 279729) return "nGC";
+  if (gid >= 279730 && gid <= 284803) return "bSTUT";
+  if (gid >= 284804 && gid <= 285359) return "bNAC";
+  if (gid >= 285360 && gid <= 287388) return "bNAC";
+  if (gid >= 287389 && gid <= 287487) return "bIR";
+  if (gid >= 287488 && gid <= 288027) return "nNAC";
+  return "Unknown";
+}
+function getlayerLabel(gid) {
+  if (gid >= 1 && gid <= 261843) return "SP";
+  if (gid >= 261844 && gid <= 262437) return "SO";
+  if (gid >= 262438 && gid <= 263959) return "SR";
+  if (gid >= 263960 && gid <= 264524) return "SP";
+  if (gid >= 264525 && gid <= 266046) return "SLM";
+  if (gid >= 266047 && gid <= 267332) return "SO";
+  if (gid >= 267333 && gid <= 279729) return "SLM";
+  if (gid >= 279730 && gid <= 284803) return "SP";
+  if (gid >= 284804 && gid <= 285359) return "SP";
+  if (gid >= 285360 && gid <= 287388) return "SP";
+  if (gid >= 287389 && gid <= 287487) return "SR";
+  if (gid >= 287488 && gid <= 288027) return "SP";
+  return "Unknown";
+}
+function getregionLabel(gid) {
+  if (gid >= 1 && gid <= 261843) return "CA1";
+  if (gid >= 261844 && gid <= 262437) return "CA1";
+  if (gid >= 262438 && gid <= 263959) return "CA1";
+  if (gid >= 263960 && gid <= 264524) return "CA1";
+  if (gid >= 264525 && gid <= 266046) return "CA1";
+  if (gid >= 266047 && gid <= 267332) return "CA1";
+  if (gid >= 267333 && gid <= 279729) return "CA1";
+  if (gid >= 279730 && gid <= 284803) return "CA1";
+  if (gid >= 284804 && gid <= 285359) return "CA1";
+  if (gid >= 285360 && gid <= 287388) return "CA1";
+  if (gid >= 287389 && gid <= 287487) return "CA1";
+  if (gid >= 287488 && gid <= 288027) return "CA1";
+  return "Unknown";
 }
 
 document.getElementById("neuron-popup").addEventListener("mouseenter", () => {
