@@ -603,7 +603,10 @@ hdfFileInput.addEventListener("change", async (event) => {
   resetTimeUI();
   clearScene();
   resetAndDisableAllCheckboxes();
+
   isDownloadTriggered = event.target.hasAttribute("data-download-triggered");
+  if (isDownloadTriggered) console.log("true");
+  else console.log("false");
 
   const files = event.target.files;
 
