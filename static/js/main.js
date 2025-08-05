@@ -603,6 +603,7 @@ hdfFileInput.addEventListener("change", async (event) => {
   resetTimeUI();
   clearScene();
   resetAndDisableAllCheckboxes();
+  isDownloadTriggered = event.target.hasAttribute("data-download-triggered");
 
   isDownloadTriggered = event.target.hasAttribute("data-download-triggered");
 
