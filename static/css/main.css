@@ -207,6 +207,7 @@ body {
   height: 100%;
   border-bottom: 2px solid #8a8a8a;
   border: 2px groove #bbb;
+  padding: 0px;
 }
 
 .txt {
@@ -1345,7 +1346,7 @@ label {
 
   right: 0.5rem;
 
-  max-width: 200px;
+  max-width: 400px;
   width: fit-content;
   height: auto;
   overflow: auto;
@@ -1357,7 +1358,7 @@ label {
   border: 1px solid #ddd;
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 120px;
+  min-width: 200px;
 }
 #neuron-popup.visible {
   opacity: 1;
@@ -1385,11 +1386,10 @@ label {
 
 .info-label {
   color: #ffffff;
-  font-size: 12px;
+  font-size: 11px;
   display: block;
   text-align: left; /* Explicitly align text to left */
 
-  max-width: 80px; /* Adjust as needed */
   overflow: hidden;
   text-overflow: ellipsis; /* Adds "..." if text is too long */
   white-space: nowrap;
@@ -1397,13 +1397,11 @@ label {
 
 .info-value {
   color: #ffffff;
-  font-size: 12px;
+  font-size: 11px;
   text-align: right; /* Align text to right */
 
-  max-width: 80px; /* Adjust as needed */
+  max-width: 150px; /* Adjust as needed */
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .hideable {
   display: none;

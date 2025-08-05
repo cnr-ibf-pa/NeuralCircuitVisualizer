@@ -3,6 +3,7 @@ import { TrackballControls } from "three/addons/controls/TrackballControls.js";
 import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 
 let isDownloadTriggered = false;
+let isHippocamome = false;
 let firstLastKeys;
 var chkpanle = false;
 var total_neurons = 0;
@@ -32,13 +33,14 @@ let spikeNeuronSize = 60;
 let interval;
 let gIDs = [];
 let gids_activity_indexes = {};
-var neuron_class = [];
+
 var lastKey;
 var firstKey;
 var counter_check = 0;
 var selectedChunkNumber = -1;
 var positions = [];
 var sizes = [];
+var neuron_class = [];
 let totalParticles = 0; // Initialize counter
 let xcord, ycord, zcord;
 let total_excitatory;
@@ -339,6 +341,7 @@ async function LoadHipForm() {
 
     document.getElementById("page-loader").style.display = "none";
     btnLoadConnection.disabled = false;
+    isHippocamome = true;
 
     document.getElementById("activitySelect").disabled = false;
   } catch (error) {
@@ -596,9 +599,6 @@ networkFileInput.addEventListener("change", async (event) => {
 
 hdfFileInput.addEventListener("change", async (event) => {
   isDownloadTriggered = event.target.hasAttribute("data-download-triggered");
-  if (isDownloadTriggered) {
-    event.target.removeAttribute("data-download-triggered");
-  }
 
   resetSpikeState();
   resetPlaybackConfig();
@@ -1092,6 +1092,19 @@ let ecRGB = hexToNormalizedRGB(colorPickers.EC.value);
 Object.entries(colorPickers).forEach(([region, picker]) => {
   picker.addEventListener("input", () => {
     const rgb = hexToNormalizedRGB(picker.value);
+
+    // Block white (1,1,1) and yellow (1,1,0)
+    if (rgb[0] === 1 && rgb[1] === 1 && rgb[2] === 1) {
+      picker.value = "#0000FF"; // Reset to blue
+      alert("Please select an other color because white color is used for spike ");
+      return;
+    }
+    if (rgb[0] === 1 && rgb[1] === 1 && rgb[2] === 0) {
+      picker.value = "#0000FF"; // Reset to magenta
+      alert("Please select an other color because yellow color is used for spike ");
+      return;
+    }
+
     switch (region) {
       case "DG":
         dgRGB = rgb;
@@ -1211,6 +1224,7 @@ function VisualizateNeurons() {
     positions = [];
     sizes = [];
     gIDs = [];
+    neuron_class = [];
 
     vertexColors = [];
 
@@ -1319,15 +1333,15 @@ function VisualizateNeurons() {
         const x = p.x;
         const y = p.y;
         const z = p.z;
-
+        const ntype = Number(p.ntype);
         if (p.type === 1) {
-          const ntype = Number(p.ntype);
           if (DG.includes(ntype)) vertexColors.push(...dgRGB);
           else if (CA3.includes(ntype)) vertexColors.push(...ca3RGB);
           else if (CA2.includes(ntype)) vertexColors.push(...ca2RGB);
           else if (CA1.includes(ntype)) vertexColors.push(...ca1RGB);
           else if (SUB.includes(ntype)) vertexColors.push(...subRGB);
           else if (EC.includes(ntype)) vertexColors.push(...ecRGB);
+
           total_excitatory++;
         } else {
           vertexColors.push(1.0, 0.0, 0.0);
@@ -1337,7 +1351,7 @@ function VisualizateNeurons() {
         positions.push(x, y, z);
         sizes.push(30);
         gIDs.push(p.id);
-        neuron_class.push(p.type);
+        neuron_class.push(p.ntype);
       });
     });
   }
@@ -1351,6 +1365,7 @@ function VisualizateNeurons() {
   geometry.setAttribute("color", new THREE.Float32BufferAttribute(vertexColors, 3));
   geometry.setAttribute("size", new THREE.Float32BufferAttribute(sizes, 1));
   geometry.setAttribute("gid", new THREE.Float32BufferAttribute(gIDs, 1));
+  geometry.setAttribute("mtype", new THREE.Float32BufferAttribute(neuron_class, 1));
   geometry.setAttribute("originalColor", new THREE.Float32BufferAttribute(vertexColors, 3));
 
   const uniforms = { pointTexture: { value: null } };
@@ -3170,9 +3185,186 @@ function showNeuronInfo(intersection, event) {
       el.style.display = "flex"; // Use "flex" to match your .info-row class
     });
   }
+  if (isHippocamome) {
+    const mtype = particles.geometry.attributes.mtype.getX(intersection.index);
+    const mtypeMap = {
+      1: "Granule",
+      2: "Hilar Ectopic Granule",
+      3: "Semilunar Granule",
+      4: "Mossy",
+      5: "Mossy MOLDEN",
+      6: "AIPRIM",
+      7: "DG Axo-axonic",
+      8: "DG Basket",
+      9: "DG Basket CCK+",
+      10: "HICAP",
+      11: "HIPP",
+      12: "HIPROM",
+      13: "MOCAP",
+      14: "MOLAX",
+      15: "DG Outer Molecular Layer",
+      16: "DG Total Molecular Layer",
+      17: "MOPP",
+      18: "DG Neurogliaform",
+      19: "CA3 Pyramidal",
+      20: "CA3c Pyramidal",
+      21: "CA3 Giant",
+      22: "CA3 Granule",
+      23: "CA3 Axo-axonic",
+      24: "CA3 Horizontal Axo-axonic",
+      25: "CA3 Basket",
+      26: "CA3 Basket CCK+",
+      27: "CA3 Bistratified",
+      28: "CA3 Ivy",
+      29: "CA3 LMR-Targeting",
+      30: "CA3 Lucidum LAX",
+      31: "CA3 Lucidum ORAX",
+      32: "CA3 Lucidum-Radiatum",
+      33: "CA3 Spiny Lucidum",
+      34: "CA3 Mossy Fiber-Associated",
+      35: "CA3 Mossy Fiber-Associated ORDEN",
+      36: "CA3 O-LM",
+      37: "CA3 Interneuron Specific Oriens",
+      38: "CA3 Interneuron Specific Quad",
+      39: "CA3 QuadD-LM",
+      40: "CA3 Radiatum",
+      41: "CA3 R-LM",
+      42: "CA3 SO-SO",
+      43: "CA3 Trilaminar",
+      44: "CA2 Pyramidal",
+      45: "CA2 Basket",
+      46: "CA2 Wide-Arbor Basket",
+      47: "CA2 Bistratified",
+      48: "CA2 SP-SR",
+      49: "CA1 Pyramidal",
+      50: "CA1 Cajal-Retzius",
+      51: "CA1 Radiatum Giant",
+      52: "CA1 Axo-axonic",
+      53: "CA1 Horizontal Axo-axonic",
+      54: "CA1 Back-Projection",
+      55: "CA1 Basket",
+      56: "CA1 Horizontal Basket",
+      57: "CA1 Basket CCK+",
+      58: "CA1 Bistratified",
+      59: "CA1 Hippocampo-subicular Projecting ENK+",
+      60: "CA1 Ivy",
+      61: "CA1 Interneuron Specific LM-R",
+      62: "CA1 Interneuron Specific LMO-O",
+      63: "CA1 LMR",
+      64: "CA1 Interneuron Specific LMR-R",
+      65: "CA1 LMR Projecting",
+      66: "CA1 Neurogliaform",
+      67: "CA1 Neurogliaform Projecting",
+      68: "CA1 O-LM",
+      69: "CA1 Recurrent O-LM",
+      70: "CA1 O-LMR",
+      71: "CA1 Interneuron Specific O-R",
+      72: "CA1 Interneuron Specific O-Targeting QuadD",
+      73: "CA1 Oriens/Alveus",
+      74: "CA1 Oriens-Bistratified",
+      75: "CA1 Oriens-QuadA Projecting",
+      76: "CA1 OR-LM",
+      77: "CA1 Perforant Path-Associated",
+      78: "CA1 Perforant Path-Associated QuadD",
+      79: "CA1 Quadrilaminar",
+      80: "CA1 Interneuron Specific R-O",
+      81: "CA1 R-Receiving Apical-Targeting",
+      82: "CA1 Radiatum",
+      83: "CA1 Interneuron Specific RO-O",
+      84: "Schaffer Collateral-Associated",
+      85: "Schaffer Collateral-Receiving R-Targeting",
+      86: "CA1 SO-SO",
+      87: "CA1 Trilaminar",
+      88: "CA1 Radial Trilaminar",
+      89: "Sub CA1-Projecting Pyramidal",
+      90: "Sub EC-Projecting Pyramidal",
+      91: "Sub Axo-axonic",
+      92: "LI-II Multipolar-Pyramidal",
+      93: "LI-II Pyramidal-Fan",
+      94: "MEC LII Oblique Pyramidal",
+      95: "MEC LII Stellate",
+      96: "MEC LII-III Pyramidal-Multiform",
+      97: "LII-III Pyramidal-Tripolar",
+      98: "LEC LIII Multipolar Principal",
+      99: "MEC LIII Multipolar Principal",
+      100: "LIII Small Pyramidal",
+      101: "LEC LIII Complex Pyramidal",
+      102: "MEC LIII Complex Pyramidal",
+      103: "MEC LIII Bipolar Complex Pyramidal",
+      104: "LIII Pyramidal",
+      105: "LIII Stellate",
+      106: "LIII-V Bipolar Pyramidal",
+      107: "LIV-V Pyramidal-Horizontal",
+      108: "LIV-VI Deep Multipolar Principal",
+      109: "MEC LV Multipolar-Pyramidal",
+      110: "MEC LV Pyramidal",
+      111: "LV Deep Pyramidal",
+      112: "MEC LV Superficial Pyramidal",
+      113: "MEC LV-VI Pyramidal-Polymorphic",
+      114: "LEC LVI Multipolar-Pyramidal",
+      115: "LII Axo-axonic",
+      116: "MEC LII Basket",
+      117: "LII Basket-Neurogliaform",
+      118: "LEC LIII Multipolar Interneuron",
+      119: "MEC LIII Multipolar Interneuron",
+      120: "MEC LIII Superficial Multipolar Interneuron",
+      121: "LIII Pyramidal-Looking Interneuron",
+      122: "MEC LIII Superficial Trilayered Interneuron",
+    };
 
-  // Show popup if not already visible
+    document.getElementById("neuron-mtype").textContent = mtypeMap[mtype] || "Unknown mtype";
+
+    if (mtype >= 1 && mtype <= 18) {
+      document.getElementById("neuron-region").textContent = "DG";
+      //   if (mtype == 14 || mtype == 17 || mtype == 18) document.getElementById("neuron-layer").textContent = "SMo";
+      //   if (mtype == 3 || mtype == 9 || mtype == 13 || mtype == 14 || mtype == 17) document.getElementById("neuron-layer").textContent = "SMi";
+      //   if (mtype == 1 || mtype == 2 || mtype == 7 || mtype == 8 || mtype == 10 || mtype == 11 || mtype == 14 || mtype == 15 || mtype == 16) document.getElementById("neuron-layer").textContent = "SG";
+      //   if (mtype == 4 || mtype == 5 || mtype == 6 || mtype == 10 || mtype == 11 || mtype == 12) document.getElementById("neuron-layer").textContent = "H";
+
+      if (mtype >= 1 && mtype <= 5) document.getElementById("neuron-morph_class").textContent = "PYR";
+      else document.getElementById("neuron-morph_class").textContent = "INT";
+    }
+    if (mtype >= 19 && mtype <= 43) {
+      document.getElementById("neuron-region").textContent = "CA3";
+
+      //   if (mtype == 29) document.getElementById("neuron-layer").textContent = "SLM";
+      //   if (mtype == 21 || mtype == 22 || mtype == 34 || mtype == 38 || mtype == 39 || mtype == 40 || mtype == 41) document.getElementById("neuron-layer").textContent = "SR";
+      //   if (mtype == 22 || mtype == 28 || mtype == 30 || mtype == 31 || mtype == 32 || mtype == 33 || mtype == 34 || mtype == 35 || mtype == 38 || mtype == 39) document.getElementById("neuron-layer").textContent = "SG";
+      //   if (mtype == 4 || mtype == 5 || mtype == 6 || mtype == 10 || mtype == 11 || mtype == 12) document.getElementById("neuron-layer").textContent = "H";
+
+      if (mtype >= 19 && mtype <= 22) document.getElementById("neuron-morph_class").textContent = "PYR";
+      else document.getElementById("neuron-morph_class").textContent = "INT";
+    }
+    if (mtype >= 44 && mtype <= 48) {
+      document.getElementById("neuron-region").textContent = "CA2";
+      if (mtype == 44) document.getElementById("neuron-morph_class").textContent = "PYR";
+      else document.getElementById("neuron-morph_class").textContent = "INT";
+    }
+    if (mtype >= 49 && mtype <= 88) {
+      document.getElementById("neuron-region").textContent = "CA1";
+      if (mtype >= 49 && mtype <= 51) document.getElementById("neuron-morph_class").textContent = "PYR";
+      else document.getElementById("neuron-morph_class").textContent = "INT";
+    }
+    if (mtype >= 89 && mtype <= 91) {
+      document.getElementById("neuron-region").textContent = "Sub";
+      if (mtype >= 89 && mtype <= 90) document.getElementById("neuron-morph_class").textContent = "PYR";
+      else document.getElementById("neuron-morph_class").textContent = "INT";
+    }
+    if (mtype >= 92 && mtype <= 122) {
+      document.getElementById("neuron-region").textContent = "EC";
+      if (mtype >= 92 && mtype <= 114) document.getElementById("neuron-morph_class").textContent = "PYR";
+      else document.getElementById("neuron-morph_class").textContent = "INT";
+    }
+
+    document.querySelectorAll(".hideable").forEach((el) => {
+      el.style.display = "flex"; // Use "flex" to match your .info-row class
+    });
+
+    document.getElementById("rwetype").style.display = "none";
+    document.getElementById("rwlayer").style.display = "none";
+  }
   if (!popupVisible) {
+    // Show popup if not already visible
     popup.style.display = "block";
     popup.style.opacity = "1";
     popupVisible = true;
