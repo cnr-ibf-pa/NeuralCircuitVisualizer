@@ -2702,6 +2702,8 @@ document.addEventListener("DOMContentLoaded", function () {
 function clearScene() {
   if (particles) {
     scene.remove(particles);
+    isHippocamome = false;
+    isDownloadTriggered = false;
 
     if (particles.geometry) particles.geometry.dispose();
 
@@ -2714,6 +2716,25 @@ function clearScene() {
     }
 
     particles = null;
+
+    // Clear popup content and hide
+    hidePopup();
+
+    // Reset all displayed values
+    document.getElementById("neuron-gid").textContent = "";
+    document.getElementById("neuron-etype").textContent = "";
+    document.getElementById("neuron-layer").textContent = "";
+    document.getElementById("neuron-morph_class").textContent = "";
+    document.getElementById("neuron-mtype").textContent = "";
+    document.getElementById("neuron-region").textContent = "";
+
+    // Hide all optional fields
+    document.querySelectorAll(".hideable").forEach((el) => {
+      el.style.display = "none";
+    });
+
+    // Reset state variables
+    hoveredIndex = -1;
   }
 
   // ✅ Clear all global arrays and counters
