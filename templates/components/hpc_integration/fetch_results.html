@@ -123,6 +123,10 @@
         const file = new File([blob], "activity_network.hdf5", { type: "application/octet-stream" });
         const dataTransfer = new DataTransfer();
         const hdfFileInput = document.getElementById("activityFileInput");
+
+        // Set a custom attribute to indicate this is a download-triggered change
+        hdfFileInput.setAttribute("data-download-triggered", "true");
+
         dataTransfer.items.add(file);
         hdfFileInput.files = dataTransfer.files;
         hdfFileInput.dispatchEvent(new Event("change"));
@@ -170,8 +174,6 @@
         const file = new File([blob], `${jobId}.hdf5`, { type: "application/octet-stream" });
         const dataTransfer = new DataTransfer();
         const hdfFileInput = document.getElementById("activityFileInput");
-        // Set a custom attribute to indicate this is a download-triggered change
-        hdfFileInput.setAttribute("data-download-triggered", "true");
         dataTransfer.items.add(file);
         hdfFileInput.files = dataTransfer.files;
         hdfFileInput.dispatchEvent(new Event("change"));
