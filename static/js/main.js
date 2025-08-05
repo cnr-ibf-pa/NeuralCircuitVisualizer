@@ -598,13 +598,12 @@ networkFileInput.addEventListener("change", async (event) => {
 });
 
 hdfFileInput.addEventListener("change", async (event) => {
-  isDownloadTriggered = event.target.hasAttribute("data-download-triggered");
-
   resetSpikeState();
   resetPlaybackConfig();
   resetTimeUI();
   clearScene();
   resetAndDisableAllCheckboxes();
+  isDownloadTriggered = event.target.hasAttribute("data-download-triggered");
 
   const files = event.target.files;
 
