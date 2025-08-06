@@ -3606,3 +3606,42 @@ let originalSizes = [];
 let popupVisible = false;
 let popupHideTimer = null;
 const POPUP_HIDE_DELAY = 900; // milliseconds
+
+document.addEventListener("keydown", (event) => {
+  const moveStep = 100;
+  const zoomStep = 100;
+
+  // Normalize key (for consistent behavior)
+  const key = event.key;
+
+  // Compute forward vector for zoom
+  const forward = new THREE.Vector3();
+  camera.getWorldDirection(forward);
+
+  switch (key) {
+    case "+":
+    case "=": // Some browsers (or layouts) require "=" for "+"
+      camera.position.addScaledVector(forward, zoomStep);
+      break;
+    case "-":
+    case "_": // Sometimes Shift + "-" gives "_"
+      camera.position.addScaledVector(forward, -zoomStep);
+      break;
+    case "ArrowUp":
+      event.preventDefault(); // prevent page scroll
+      camera.position.y += moveStep;
+      break;
+    case "ArrowDown":
+      event.preventDefault();
+      camera.position.y -= moveStep;
+      break;
+    case "ArrowLeft":
+      event.preventDefault();
+      camera.position.x -= moveStep;
+      break;
+    case "ArrowRight":
+      event.preventDefault();
+      camera.position.x += moveStep;
+      break;
+  }
+});
