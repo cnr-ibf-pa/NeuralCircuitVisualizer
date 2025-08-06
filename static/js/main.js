@@ -1420,7 +1420,7 @@ function VisualizateNeurons() {
         gui.domElement.id = "gui";
         panel.appendChild(gui.domElement);
         const pm = gui.addFolder("Sphere Material");
-        pm.add(parameters, "Neuron_Size", 1, 500).onChange((value) => {
+        pm.add(parameters, "Neuron_Size", 1, 1000).onChange((value) => {
           const sizes = geometry.attributes.size.array;
           for (let i = 0; i < sizes.length; i++) sizes[i] = value;
           geometry.attributes.size.needsUpdate = true;
@@ -1450,10 +1450,100 @@ function VisualizateNeurons() {
         bgcolor.close();
 
         const cameraFolder = gui.addFolder("Camera");
-        cameraFolder.add(camera.position, "x", 0, 1000).listen();
-        cameraFolder.add(camera.position, "y", 0, 1000).listen();
-        cameraFolder.add(camera.position, "z", 0, 1000).listen();
+        cameraFolder.add(camera.position, "x", 0, 100000).listen();
+        cameraFolder.add(camera.position, "y", 0, 100000).listen();
+        cameraFolder.add(camera.position, "z", 0, 100000).listen();
+
         cameraFolder.close();
+
+        // Additional camera navigation controls
+        const cameraNav = gui.addFolder("Camera Navigation");
+
+        // Zoom Slider
+        const zoomParams = { zoomAmount: 0 }; // start at 0
+        let lastZoomValue = 0;
+
+        cameraNav
+          .add(zoomParams, "zoomAmount", -10000, 10000)
+          .onChange((value) => {
+            const delta = value - lastZoomValue;
+            lastZoomValue = value;
+
+            // Compute the camera's forward vector
+            const forward = new THREE.Vector3();
+            camera.getWorldDirection(forward);
+
+            // Move camera forward/backward along that direction
+            camera.position.addScaledVector(forward, delta);
+          })
+          .name("Zoom Slider");
+
+        // Zoom In/Out Buttons
+        cameraNav
+          .add(
+            {
+              zoomIn: () => {
+                camera.position.z -= 1;
+              },
+            },
+            "zoomIn"
+          )
+          .name("Zoom In");
+        cameraNav
+          .add(
+            {
+              zoomOut: () => {
+                camera.position.z += 1;
+              },
+            },
+            "zoomOut"
+          )
+          .name("Zoom Out");
+
+        // Move Up/Down
+        cameraNav
+          .add(
+            {
+              moveUp: () => {
+                camera.position.y += 1;
+              },
+            },
+            "moveUp"
+          )
+          .name("Move Up");
+        cameraNav
+          .add(
+            {
+              moveDown: () => {
+                camera.position.y -= 1;
+              },
+            },
+            "moveDown"
+          )
+          .name("Move Down");
+        // Move Left/Right
+        cameraNav
+          .add(
+            {
+              moveLeft: () => {
+                camera.position.x -= 1;
+              },
+            },
+            "moveLeft"
+          )
+          .name("Move Left");
+        cameraNav
+          .add(
+            {
+              moveRight: () => {
+                camera.position.x += 1;
+              },
+            },
+            "moveRight"
+          )
+          .name("Move Right");
+
+        cameraNav.open();
 
         guiCreated = true;
       } else {
