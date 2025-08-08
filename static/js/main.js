@@ -17,7 +17,7 @@ let total_activity_files;
 let particleIndexes = [];
 let activity_file_no = 0;
 let activity_directory;
-let camera, scene, renderer, material, controls;
+let camera, camera2, scene, renderer, material, controls;
 let geometry;
 let lasttime;
 let timeRanges;
@@ -604,11 +604,6 @@ hdfFileInput.addEventListener("change", async (event) => {
   clearScene();
   resetAndDisableAllCheckboxes();
 
-  isDownloadTriggered = event.target.hasAttribute("data-download-triggered");
-  if (isDownloadTriggered) {
-    event.target.removeAttribute("data-download-triggered");
-  }
-
   const files = event.target.files;
 
   if (files.length > 0) {
@@ -698,6 +693,13 @@ hdfFileInput.addEventListener("change", async (event) => {
         resetCamera();
         centerCameraToObject(particles);
         startBtn.style.display = "block";
+
+        isDownloadTriggered = event.target.hasAttribute("data-download-triggered");
+        if (isDownloadTriggered) {
+          event.target.removeAttribute("data-download-triggered");
+          populateConnectionDropdown();
+          connectionPanel.style.visibility = "visible";
+        }
 
         if (parseInt(data.flag_check) === 1) {
           document.getElementById("lblspikes").innerText = "# spikes :" + data.lstresponse.total_lines;
@@ -1051,10 +1053,14 @@ function CreateScene() {
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 1, 100000);
   camera.position.z = 1000;
+
+  // Add camera2 for the secondary view
+  camera2 = new THREE.PerspectiveCamera(45, 1, 1, 100000); // Aspect ratio will be set in animate()
+
   controls = new TrackballControls(camera, canvas);
   controls.rotateSpeed = 20.0;
   controls.zoomSpeed = 10;
-  controls.panSpeed = 0.8;
+
   controls.minDistance = 0.1; // Allow very close zoom (default is 0)
   controls.maxDistance = 100000; // Increase if camera hits a limit
 
@@ -1063,6 +1069,13 @@ function CreateScene() {
   stopButton.disabled = true;
   startButton.disabled = true;
   restart.disabled = true;
+
+  //   const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+  //   directionalLight.position.set(100, 100, 100);
+  //   scene.add(directionalLight);
+
+  //   const ambientLight = new THREE.AmbientLight(0x444444); // soft fill light
+  //   scene.add(ambientLight);
 }
 
 // === HUD Text ===
@@ -1220,6 +1233,13 @@ function createArrowOverlayFromPCA(pcaAxes) {
 
   addAnatomicalArrowsFromPCA(arrowsScene, new THREE.Vector3(0, 0, 0), 1.0, pcaAxes);
 }
+
+let gidToPosition = new Map();
+let connectionLines = null;
+
+let allConnections = [];
+let activeConnections = [];
+let connectionsHidden = false;
 
 function VisualizateNeurons() {
   // Clear previous particles if any
@@ -1568,8 +1588,231 @@ function VisualizateNeurons() {
   const pcaAxes = computePCA(positions);
   createArrowOverlayFromPCA(pcaAxes);
 
+  // Step: Build GID → position map
+  gidToPosition.clear();
+  for (let i = 0; i < gIDs.length; i++) {
+    const x = positions[i * 3];
+    const y = positions[i * 3 + 1];
+    const z = positions[i * 3 + 2];
+    gidToPosition.set(gIDs[i], new THREE.Vector3(x, y, z));
+  }
+
+  // Step: Draw connections
+  drawNeuronConnections();
+
   animate();
 }
+
+function drawNeuronConnections() {
+  // always draw from activeConnections
+  if (connectionLines) {
+    scene.remove(connectionLines);
+    connectionLines = null;
+  }
+
+  const list = activeConnections || [];
+  if (!list.length || connectionsHidden) return; // nothing to render
+
+  const count = list.length;
+  const baseGeometry = new THREE.CylinderGeometry(0.1, 0.1, 1, 4, 1, true);
+  const baseMaterial = new THREE.MeshBasicMaterial({
+    color: 0xa0522d,
+    transparent: true,
+    opacity: 0.7,
+  });
+
+  const instancedMesh = new THREE.InstancedMesh(baseGeometry, baseMaterial, count);
+  const dummy = new THREE.Object3D();
+  const axis = new THREE.Vector3(0, 1, 0);
+
+  let i = 0;
+  for (const [sourceGID, targetGID] of list) {
+    const from = gidToPosition.get(sourceGID);
+    const to = gidToPosition.get(targetGID);
+    if (!from || !to) continue;
+
+    const dir = new THREE.Vector3().subVectors(to, from);
+    const length = dir.length();
+    const mid = new THREE.Vector3().addVectors(from, to).multiplyScalar(0.5);
+
+    dummy.position.copy(mid);
+    dummy.scale.set(1, length, 1);
+    dummy.quaternion.setFromUnitVectors(axis, dir.clone().normalize());
+    dummy.updateMatrix();
+
+    instancedMesh.setMatrixAt(i++, dummy.matrix);
+  }
+
+  instancedMesh.count = i;
+  instancedMesh.instanceMatrix.needsUpdate = true;
+
+  connectionLines = instancedMesh;
+  scene.add(connectionLines);
+}
+
+document.addEventListener("click", onNeuronClick, false);
+
+function onNeuronClick(event) {
+  if (connectionsHidden) return;
+
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObject(particles);
+
+  if (intersects.length > 0) {
+    const index = intersects[0].index;
+    const gid = gIDs[index];
+
+    const hasConnections = allConnections.some(([from]) => from === gid);
+    if (hasConnections) {
+      showOnlyConnectionsFrom(gid);
+    } else {
+      resetAllNeuronsAndConnections();
+    }
+  }
+}
+
+function resetAllNeuronsAndConnections() {
+  // reset neuron sizes/colors
+  const colors = geometry.attributes.color.array;
+  const sizes = geometry.attributes.size.array;
+
+  for (let i = 0; i < gIDs.length; i++) {
+    const base = i * 3;
+    const gid = gIDs[i];
+    const isExcitatory = gid < 261845;
+
+    sizes[i] = 30;
+    if (isExcitatory) {
+      colors[base] = 0;
+      colors[base + 1] = 0;
+      colors[base + 2] = 1;
+    } else {
+      colors[base] = 1;
+      colors[base + 1] = 0;
+      colors[base + 2] = 0;
+    }
+  }
+  geometry.attributes.size.needsUpdate = true;
+  geometry.attributes.color.needsUpdate = true;
+
+  // restore full connections
+  connectionsHidden = false;
+  activeConnections = allConnections;
+  drawNeuronConnections();
+}
+
+function showOnlyConnectionsFrom(sourceGID) {
+  // 1) Filter edges
+  activeConnections = allConnections.filter(([from, _to]) => from === sourceGID);
+
+  // 2) Compute which GIDs should stay visible (source + its targets)
+  const visibleGIDs = new Set([sourceGID]);
+  for (const [from, to] of activeConnections) {
+    visibleGIDs.add(to);
+  }
+
+  // 3) Hide all unrelated neurons by size (fastest for your shader)
+  const sizes = geometry.attributes.size.array;
+  for (let i = 0; i < gIDs.length; i++) {
+    const gid = gIDs[i];
+    sizes[i] = visibleGIDs.has(gid) ? 40 : 0; // 0 hides; 40 emphasizes
+  }
+  geometry.attributes.size.needsUpdate = true;
+
+  // 4) Rebuild wires for this subset
+  drawNeuronConnections();
+}
+
+async function populateConnectionDropdown() {
+  const dropdown = document.getElementById("connTypeDropdown");
+  try {
+    const res = await fetch(`${baseURL}/api/connection-types/`);
+    const data = await res.json();
+
+    if (data.types) {
+      data.types.forEach((type) => {
+        const opt = document.createElement("option");
+        opt.value = type;
+        opt.textContent = type;
+        dropdown.appendChild(opt);
+      });
+    }
+  } catch (error) {
+    console.error("Failed to load connection types:", error);
+  }
+}
+
+function hideConnections() {
+  connectionsHidden = true;
+  activeConnections = [];
+
+  if (connectionLines) {
+    scene.remove(connectionLines);
+    try {
+      connectionLines.geometry?.dispose?.();
+      connectionLines.material?.dispose?.();
+    } catch (_) {}
+    connectionLines = null;
+  }
+}
+
+const connectionPanel = document.getElementById("connectionPanel");
+document.addEventListener("DOMContentLoaded", () => {
+  const dropdown = document.getElementById("connTypeDropdown");
+  if (!dropdown) {
+    console.warn("connTypeDropdown not found");
+    return;
+  }
+
+  // Add server types below the Hide option
+  (async () => {
+    try {
+      const res = await fetch(`${baseURL}/api/connection-types/`);
+      const data = await res.json();
+      if (data.types) {
+        data.types.forEach((type) => {
+          const opt = document.createElement("option");
+          opt.value = type;
+          opt.textContent = type;
+          dropdown.appendChild(opt);
+        });
+      }
+    } catch (e) {
+      console.error("Failed to load connection types:", e);
+    }
+  })();
+
+  dropdown.addEventListener("change", async (e) => {
+    const selectedType = e.target.value;
+
+    if (selectedType === "hide") {
+      hideConnections();
+      return;
+    }
+
+    // selecting a dataset shows connections again
+    connectionsHidden = false;
+
+    try {
+      const res = await fetch(`${baseURL}/api/connections/?type=${selectedType}`);
+      const data = await res.json();
+      if (data.connections) {
+        allConnections = data.connections;
+        activeConnections = allConnections;
+        drawNeuronConnections();
+      }
+    } catch (err) {
+      console.error("Error loading selected connections:", err);
+    }
+  });
+});
+
+const mouse = new THREE.Vector2();
+
 function generateTable(total_neuros, total_excitatory, total_inhibitory) {
   const containerDiv = document.createElement("div");
   containerDiv.className = "container-fluid px-2 mt-3";
@@ -1614,33 +1857,83 @@ function removeTable() {
 function render() {
   renderer.render(scene, camera);
 }
+
 function animate() {
   requestAnimationFrame(animate);
+
+  //   if (connectionLines) {
+  //     connectionLines.traverse((obj) => {
+  //       if (obj.material && obj.material.uniforms?.time) {
+  //         obj.material.uniforms.time.value = performance.now() / 1000;
+  //       }
+  //     });
+  //   }
+
   if (controls) controls.update();
 
-  // ✅ Reset viewport and scissor for full screen
+  // Get renderer dimensions
   const width = renderer.domElement.clientWidth;
   const height = renderer.domElement.clientHeight;
 
+  // Main full-screen rendering
   renderer.setViewport(0, 0, width, height);
   renderer.setScissor(0, 0, width, height);
   renderer.setScissorTest(true);
   renderer.clear();
   renderer.render(scene, camera);
 
-  // 🔁 Mini arrows rendering (inset scene)
+  // --------- INSET CAMERA2 (Back view) ---------
+
+  // Inset size and position
+  const insetSize = Math.min(width, height) * 0.25; // 25% of screen size
+  const insetX = 10; // left margin
+  const insetY = 260; // top margin
+
+  // Compute center of the scene (or object group if applicable)
+  const bbox = new THREE.Box3().setFromObject(scene); // or use specific object/group
+  const center = new THREE.Vector3();
+  bbox.getCenter(center);
+
+  // Compute mirrored position (from center)
+  const viewDir = new THREE.Vector3().subVectors(center, camera.position).normalize();
+  const distance = camera.position.distanceTo(center);
+  const zoomDistance = distance * 0.7; // 0.5 = 2x closer
+  const mirroredPosition = new THREE.Vector3().copy(center).add(viewDir.multiplyScalar(zoomDistance));
+
+  // Update camera2
+  camera2.position.copy(mirroredPosition);
+  camera2.lookAt(center);
+  camera2.up.copy(camera.up);
+
+  if (camera.isPerspectiveCamera) {
+    // For more zoom in camera2
+    // const zoomFactor = 2.0; // 0.5 = 2x zoom, 0.25 = 4x zoom, etc.
+    // camera2.fov = camera.fov * zoomFactor;
+    camera2.fov = camera.fov;
+    camera2.updateProjectionMatrix();
+  } else if (camera.isOrthographicCamera) {
+    camera2.zoom = camera.zoom; // Orthographic zoom
+  }
+
+  camera2.aspect = insetSize / insetSize;
+  camera2.updateProjectionMatrix();
+
+  // Render camera2 view
+  renderer.clearDepth(); // clear depth buffer for second scene
+  renderer.setViewport(insetX, insetY, insetSize, insetSize);
+  renderer.setScissor(insetX, insetY, insetSize, insetSize);
+  renderer.setScissorTest(true);
+  renderer.render(scene, camera2);
+
+  // --------- MINI ARROWS (Optional) ---------
   if (arrowsScene && arrowsCamera) {
-    renderer.clearDepth(); // allow rendering over existing scene
+    renderer.clearDepth(); // allow rendering over inset
     arrowsScene.quaternion.copy(camera.quaternion);
 
     const size = 150;
-    const margin = 10;
+    const x = 10;
+    const y = 110;
 
-    // 📌 Bottom-left corner (or you can adjust for top-right)
-    const x = margin;
-    const y = margin + 110;
-
-    // Now set a smaller viewport just for the arrow scene
     renderer.setViewport(x, y, size, size);
     renderer.setScissor(x, y, size, size);
     renderer.setScissorTest(true);
@@ -2847,6 +3140,8 @@ function clearScene() {
   document.getElementById("networkspikes").style.visibility = "hidden";
   removeTable();
   startBtn.style.display = "none";
+  connectionPanel.style.visibility = "hidden";
+  hideConnections();
   //   chkpanle = false;
 }
 
