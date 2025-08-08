@@ -1,5 +1,6 @@
 from django.urls import path
 from api import views
+from .views import list_connection_types, get_connection_data
 
 
 urlpatterns = [
@@ -12,4 +13,8 @@ urlpatterns = [
     path("get_chunk_data/", views.get_chunk_data, name="get_chunk_data"),
     path("LoadHumanHipForm/", views.LoadHumanHipForm, name="LoadHumanHipForm"),
     path("LoadHumanActivityData/", views.LoadHumanActivityData, name="LoadHumanActivityData"),
+    path('connection-types/', list_connection_types),
+    path('connections/', get_connection_data),
+
+    
 ]

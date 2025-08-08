@@ -1,6 +1,6 @@
 
 import base64
-from django.http import JsonResponse
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import numpy as np
 import json, csv
@@ -1256,3 +1256,35 @@ def LoadHumanActivityData(request):
     except Exception as e:
         print("Error in LoadActivityData:", e)  # Debugging
         return JsonResponse({'error': str(e)}, status=500)
+
+
+
+
+def list_connection_types(request):
+    file_path = os.path.join(settings.MEDIA_ROOT,"connections_inh.hdf5")
+    
+    if not os.path.exists(file_path):
+        return JsonResponse({"error": "HDF5 file not found."}, status=404)
+
+    with h5py.File(file_path, "r") as f:
+        connection_types = list(f.keys())
+
+    return JsonResponse({"types": connection_types})
+
+def get_connection_data(request):
+    conn_type = request.GET.get("type")
+    if not conn_type:
+        return JsonResponse({"error": "Missing connection type."}, status=400)
+
+    file_path = os.path.join(settings.MEDIA_ROOT,"connections_inh.hdf5")
+    
+    if not os.path.exists(file_path):
+        return JsonResponse({"error": "HDF5 file not found."}, status=404)
+
+    with h5py.File(file_path, "r") as f:
+        if conn_type not in f:
+            return JsonResponse({"error": f"Connection type '{conn_type}' not found."}, status=404)
+        dataset = f[conn_type][()]
+        connections = dataset.tolist()
+
+    return JsonResponse({"connections": connections})

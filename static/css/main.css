@@ -1406,3 +1406,72 @@ label {
 .hideable {
   display: none;
 }
+
+.connection-panel {
+  visibility: hidden; /* 👈 Initially hidden */
+  position: fixed;
+  top: 9.8rem;
+  right: 15rem;
+  z-index: 1000;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.75rem;
+  background: rgba(20, 20, 20, 0.55);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  color: #f3f3f3;
+  font: 500 14px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+}
+
+.connection-panel label {
+  color: #ddd;
+  letter-spacing: 0.2px;
+}
+
+.connection-panel select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  padding: 0.45rem 0.9rem;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+
+  background-image: linear-gradient(45deg, transparent 50%, #fff 50%), linear-gradient(135deg, #fff 50%, transparent 50%);
+  background-position: calc(100% - 14px) calc(50% - 2px), calc(100% - 9px) calc(50% - 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
+}
+
+.connection-panel select:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.connection-panel select:focus {
+  box-shadow: 0 0 0 2px rgba(0, 150, 255, 0.35);
+}
+
+@media (max-width: 640px) {
+  .connection-panel {
+    top: 0.75rem;
+    right: 0.75rem;
+    padding: 0.45rem 0.6rem;
+    gap: 0.5rem;
+    font-size: 12px;
+  }
+  .connection-panel select {
+    padding: 0.35rem 0.7rem;
+  }
+}
