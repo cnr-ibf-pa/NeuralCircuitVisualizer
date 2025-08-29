@@ -64,7 +64,7 @@ def upload_and_save_Network_file(request):
                     for i in range(total_chunks):
                         part_path = os.path.join(file_directory, f"{uploaded_file.name}.part{i}")
                         # Retry mechanism
-                        for _ in range(8):  # Retry 5 times
+                        for _ in range(10):  # Retry 5 times
                             if os.path.exists(part_path):
                                 with open(part_path, 'rb') as part_file:
                                     final_file.write(part_file.read())
@@ -718,75 +718,75 @@ def count_csv_lines(file_path):
     with open(file_path, 'r') as f:
         return sum(1 for line in f)
 
-# @lru_cache(maxsize=1)  # Cache with single entry to avoid recomputation
-# def compute_connections():
-#     # Perform all setup computations
-#     json_directory = os.path.join(settings.MEDIA_ROOT, "hip_form")
-#     json_path = os.path.join(json_directory, "connections.json")
-#     # print(json_directory)
+""" @lru_cache(maxsize=1)  # Cache with single entry to avoid recomputation
+def compute_connections():
+    # Perform all setup computations
+    json_directory = os.path.join(settings.MEDIA_ROOT, "hip_form")
+    json_path = os.path.join(json_directory, "connections.json")
+    # print(json_directory)
 
-#     ca3_file_paths = [
-#         os.path.join(json_directory, 'CA3-sl.json'),
-#         os.path.join(json_directory, 'CA3-slm.json'),
-#         os.path.join(json_directory, 'CA3-so.json'),
-#         os.path.join(json_directory, 'CA3-sp.json'),
-#         os.path.join(json_directory, 'CA3-sr.json')
-#     ]
-#     ca1_file_paths = [
-#         os.path.join(json_directory, 'CA1-slm.json'),
-#         os.path.join(json_directory, 'CA1-so.json'),
-#         os.path.join(json_directory, 'CA1-sp.json'),
-#         os.path.join(json_directory, 'CA1-sr.json')
-#     ]
+    ca3_file_paths = [
+        os.path.join(json_directory, 'CA3-sl.json'),
+        os.path.join(json_directory, 'CA3-slm.json'),
+        os.path.join(json_directory, 'CA3-so.json'),
+        os.path.join(json_directory, 'CA3-sp.json'),
+        os.path.join(json_directory, 'CA3-sr.json')
+    ]
+    ca1_file_paths = [
+        os.path.join(json_directory, 'CA1-slm.json'),
+        os.path.join(json_directory, 'CA1-so.json'),
+        os.path.join(json_directory, 'CA1-sp.json'),
+        os.path.join(json_directory, 'CA1-sr.json')
+    ]
 
-#     ca3_neurons = pd.DataFrame(load_neurons_from_files(ca3_file_paths))
-#     ca1_neurons = pd.DataFrame(load_neurons_from_files(ca1_file_paths))
+    ca3_neurons = pd.DataFrame(load_neurons_from_files(ca3_file_paths))
+    ca1_neurons = pd.DataFrame(load_neurons_from_files(ca1_file_paths))
 
-#     ca3_pyramidal = ca3_neurons[ca3_neurons['ntype'] == 19].copy()
-#     ca1_pyramidal = ca1_neurons[ca1_neurons['ntype'] == 49].copy()
+    ca3_pyramidal = ca3_neurons[ca3_neurons['ntype'] == 19].copy()
+    ca1_pyramidal = ca1_neurons[ca1_neurons['ntype'] == 49].copy()
 
-#     MOUSE_VOLUME_SR = 2.83
-#     RAT_VOLUME_SR = 10.95
-#     MOUSE_VOLUME_SO = 1.5
-#     RAT_VOLUME_SO = 6.47
+    MOUSE_VOLUME_SR = 2.83
+    RAT_VOLUME_SR = 10.95
+    MOUSE_VOLUME_SO = 1.5
+    RAT_VOLUME_SO = 6.47
 
-#     SF_SR = calculate_scaling_factor(RAT_VOLUME_SR, MOUSE_VOLUME_SR)
-#     SF_SO = calculate_scaling_factor(RAT_VOLUME_SO, MOUSE_VOLUME_SO)
+    SF_SR = calculate_scaling_factor(RAT_VOLUME_SR, MOUSE_VOLUME_SR)
+    SF_SO = calculate_scaling_factor(RAT_VOLUME_SO, MOUSE_VOLUME_SO)
 
-#     L_SR_mouse = 4465.3 / SF_SR
-#     L_SO_mouse = 3795.59 / SF_SO
-#     L_SO_adjusted = L_SO_mouse / 2
-#     L_total_mouse = L_SR_mouse + L_SO_adjusted
-#     Inter_spine_distance = 1.09
-#     total_spines = L_total_mouse / Inter_spine_distance
-#     CA3_to_CA1_Per_Contacts = 1.62
-#     total_synapses = total_spines / CA3_to_CA1_Per_Contacts
-#     CA1PC_census = 159341
-#     CA3PC_census = 75376
-#     average_CA1_contacted_by_CA3 = total_synapses / (CA1PC_census / CA3PC_census)
+    L_SR_mouse = 4465.3 / SF_SR
+    L_SO_mouse = 3795.59 / SF_SO
+    L_SO_adjusted = L_SO_mouse / 2
+    L_total_mouse = L_SR_mouse + L_SO_adjusted
+    Inter_spine_distance = 1.09
+    total_spines = L_total_mouse / Inter_spine_distance
+    CA3_to_CA1_Per_Contacts = 1.62
+    total_synapses = total_spines / CA3_to_CA1_Per_Contacts
+    CA1PC_census = 159341
+    CA3PC_census = 75376
+    average_CA1_contacted_by_CA3 = total_synapses / (CA1PC_census / CA3PC_census)
 
-#     z_median_ca3 = ca3_neurons['z'].median()
-#     z_median_ca1 = ca1_neurons['z'].median()
-#     reference_point = np.array([ca3_neurons['x'].mean(), ca3_neurons['y'].mean()])
+    z_median_ca3 = ca3_neurons['z'].median()
+    z_median_ca1 = ca1_neurons['z'].median()
+    reference_point = np.array([ca3_neurons['x'].mean(), ca3_neurons['y'].mean()])
 
-#     ca3_pyramidal['dorsal_ventral'] = np.where(ca3_pyramidal['z'] > z_median_ca3, 'dorsal', 'ventral')
-#     ca3_pyramidal['prox_dist'] = np.where(np.linalg.norm(ca3_pyramidal[['x', 'y']].values - reference_point, axis=1) <
-#                                           np.median(np.linalg.norm(ca3_pyramidal[['x', 'y']].values - reference_point, axis=1)),
-#                                           'proximal', 'distal')
+    ca3_pyramidal['dorsal_ventral'] = np.where(ca3_pyramidal['z'] > z_median_ca3, 'dorsal', 'ventral')
+    ca3_pyramidal['prox_dist'] = np.where(np.linalg.norm(ca3_pyramidal[['x', 'y']].values - reference_point, axis=1) <
+                                          np.median(np.linalg.norm(ca3_pyramidal[['x', 'y']].values - reference_point, axis=1)),
+                                          'proximal', 'distal')
 
-#     ca1_pyramidal['dorsal_ventral'] = np.where(ca1_pyramidal['z'] > z_median_ca1, 'dorsal', 'ventral')
-#     ca1_pyramidal['prox_dist'] = np.where(np.linalg.norm(ca1_pyramidal[['x', 'y']].values - reference_point, axis=1) <
-#                                           np.median(np.linalg.norm(ca1_pyramidal[['x', 'y']].values - reference_point, axis=1)),
-#                                           'proximal', 'distal')
+    ca1_pyramidal['dorsal_ventral'] = np.where(ca1_pyramidal['z'] > z_median_ca1, 'dorsal', 'ventral')
+    ca1_pyramidal['prox_dist'] = np.where(np.linalg.norm(ca1_pyramidal[['x', 'y']].values - reference_point, axis=1) <
+                                          np.median(np.linalg.norm(ca1_pyramidal[['x', 'y']].values - reference_point, axis=1)),
+                                          'proximal', 'distal')
 
-#     # Connect CA3 and CA1 pyramidal cells
-#     connections = connect_all_pyramidal(ca3_pyramidal, ca1_pyramidal, average_CA1_contacted_by_CA3)
-#     # Save to JSON
-#     with open(json_path, 'w') as f:
-#         json.dump(connections, f)
+    # Connect CA3 and CA1 pyramidal cells
+    connections = connect_all_pyramidal(ca3_pyramidal, ca1_pyramidal, average_CA1_contacted_by_CA3)
+    # Save to JSON
+    with open(json_path, 'w') as f:
+        json.dump(connections, f)
         
-#     return json_path
-
+    return json_path
+ """
 
 
 @lru_cache(maxsize=1)
@@ -808,16 +808,44 @@ def compute_connections():
     ca3_pyramidal = ca3_neurons[ca3_neurons['ntype'] == 19].copy()
     ca1_pyramidal = ca1_neurons[ca1_neurons['ntype'] == 49].copy()
 
-    # Dendritic length-based synapse estimation
+
+
+    # 1. Scale lengths from rat to mouse
     SF_SR = calculate_scaling_factor(rat_volume=10.95, mouse_volume=2.83)
     SF_SO = calculate_scaling_factor(rat_volume=6.47, mouse_volume=1.5)
-    L_SR_mouse = 4465.3 / SF_SR
-    L_SO_mouse = (3795.59 / SF_SO) / 2
-    L_total_mouse = L_SR_mouse + L_SO_mouse
 
-    total_spines = L_total_mouse / 1.09  # spine spacing
-    total_synapses = total_spines / 1.62  # avg. synapses per connection
-    avg_targets = total_synapses / (159341 / 75376)  # CA1/CA3 ratio from census
+    # Apply the scaling factors to the original RAT lengths to get MOUSE lengths.
+    L_SR_mouse = 4465.3 * SF_SR  # Previously used division, which was incorrect.
+    L_SO_mouse = 3795.59 * SF_SO # Scale the full SO length first...
+    L_SO_mouse_effective = L_SO_mouse / 2 # ...then apply the 50% adjustment for SO
+    L_total_effective_mouse = L_SR_mouse + L_SO_mouse_effective # 100% of SR + 50% of SO
+
+    # 2. Calculate total spines (CORRECTED STEP)
+    spine_density = 0.92  # spines/micrometer
+    # The total number of spines is the effective length multiplied by the density.
+    total_spines = L_total_effective_mouse * spine_density
+    # The 'inter_spine_distance' variable is not needed for the calculation and can be removed.
+
+    # 3. & 4. Calculate unique presynaptic partners.
+    avg_contacts_per_connection = 7.24 # From Hippocampome CA3-CA3 data
+    unique_ca3_partners_per_ca1 = total_spines / avg_contacts_per_connection
+
+    # 5. Calculate CA3 output divergence
+    CA1PC_census = 159341
+    CA3PC_census = 75376
+    # The number of CA1 cells a single CA3 cell targets is given by:
+    # (Partners per CA1) * (Total CA1 Population / Total CA3 Population)
+    avg_ca1_targets_per_ca3 = unique_ca3_partners_per_ca1 * (CA1PC_census / CA3PC_census)
+
+    # --- Print results for verification ---
+    print(f"Scaling Factor SR: {SF_SR:.4f}")
+    print(f"Scaling Factor SO: {SF_SO:.4f}")
+    print(f"Scaled Mouse Length SR: {L_SR_mouse:.1f} µm")
+    print(f"Scaled Mouse Length SO: {L_SO_mouse:.1f} µm")
+    print(f"Effective Length for CA3 Input: {L_total_effective_mouse:.1f} µm")
+    print(f"Total CA3 Synapses per CA1 PC: {total_spines:.0f}")
+    print(f"Avg. CA3 Partners per CA1 PC: {unique_ca3_partners_per_ca1:.0f}")
+    print(f"Avg. CA1 Targets per CA3 PC: {avg_ca1_targets_per_ca3:.0f}")
 
     # Region classification
     z_median_ca3 = ca3_neurons['z'].median()
@@ -839,7 +867,7 @@ def compute_connections():
     )
 
     # Build region-constrained connections using Gaussian sampling
-    connections = connect_all_pyramidal(ca3_pyramidal, ca1_pyramidal, avg_targets)
+    connections = connect_all_pyramidal(ca3_pyramidal, ca1_pyramidal, avg_ca1_targets_per_ca3)
 
     with open(json_path, 'w') as f:
         json.dump(connections, f)
@@ -927,8 +955,7 @@ def load_json_file_generator(file_path):
         print(f"Error decoding JSON from {file_path}: {e}")
 
 def calculate_scaling_factor(rat_volume,mouse_volume):
-    # Formula: Scaling Factor = (Rat Volume / Mouse Volume)^(1/3)
-    scaling_factor = (rat_volume/mouse_volume) ** (1/3)
+    scaling_factor = (mouse_volume / rat_volume) ** (1/3)
     return scaling_factor
 
 def connect_all_pyramidal(ca3_neurons, ca1_neurons, average_CA1_contacted_by_CA3):
