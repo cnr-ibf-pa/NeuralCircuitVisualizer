@@ -64,7 +64,7 @@ def upload_and_save_Network_file(request):
                     for i in range(total_chunks):
                         part_path = os.path.join(file_directory, f"{uploaded_file.name}.part{i}")
                         # Retry mechanism
-                        for _ in range(8):  # Retry 5 times
+                        for _ in range(10):  # Retry 5 times
                             if os.path.exists(part_path):
                                 with open(part_path, 'rb') as part_file:
                                     final_file.write(part_file.read())
