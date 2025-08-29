@@ -24,7 +24,7 @@ import matplotlib.ticker as ticker
 import io
 import networkx as nx
 from collections import defaultdict
-import shutil
+import shutil, re
 
 # @csrf_exempt
 # def upload_and_save_Network_file(request):
@@ -97,7 +97,82 @@ import shutil
 
 
 
+PART_RE = re.compile(r"\.part(\d+)$")
 
+def _expected_sets(base_dir, fname, total):
+    z = [os.path.join(base_dir, f"{fname}.part{i}") for i in range(total)]           # 0..N-1
+    o = [os.path.join(base_dir, f"{fname}.part{i}") for i in range(1, total + 1)]    # 1..N
+    return z, o
+
+def _existing_indices(base_dir, fname):
+    # return {indices_found}, e.g. {0,1,2}
+    have = set()
+    prefix = os.path.join(base_dir, f"{fname}.part")
+    for entry in os.scandir(base_dir):
+        if not entry.is_file():
+            continue
+        name = entry.path
+        if not name.startswith(prefix):
+            continue
+        m = PART_RE.search(name)
+        if m:
+            have.add(int(m.group(1)))
+    return have
+
+def _assemble_if_complete(base_dir, fname, total, filetype):
+    """Try to assemble if either 0-based or 1-based set is complete.
+       Returns (assembled_bool, response_dict_or_None)."""
+    # detect which scheme we’re on using the current file list
+    have = _existing_indices(base_dir, fname)
+
+    # candidate schemes
+    zero = set(range(total))              # 0..N-1
+    one  = set(range(1, total + 1))       # 1..N
+
+    # figure out missing for both
+    miss_zero = sorted(list(zero - have))
+    miss_one  = sorted(list(one  - have))
+
+    # Prefer the scheme with fewer missing (ties prefer zero-based)
+    use_zero = (len(miss_zero) <= len(miss_one))
+    scheme_missing = miss_zero if use_zero else miss_one
+
+    if scheme_missing:
+        # Not complete yet
+        missing_paths = [
+            os.path.join(base_dir, f"{fname}.part{i}") for i in scheme_missing
+        ]
+        return False, {'status': 'part-received', 'missing': missing_paths[:50]}
+
+    # --- COMPLETE → assemble atomically ---
+    parts = [os.path.join(base_dir, f"{fname}.part{i}") for i in (zero if use_zero else one)]
+    final_path = os.path.join(base_dir, fname)
+    assembling = final_path + ".assembling"
+
+    with open(assembling, 'wb') as out_f:
+        for p in parts:
+            with open(p, 'rb') as in_f:
+                shutil.copyfileobj(in_f, out_f, length=1024 * 1024)
+        out_f.flush()
+        os.fsync(out_f.fileno())
+    os.replace(assembling, final_path)
+
+    # cleanup
+    for p in parts:
+        try: os.remove(p)
+        except FileNotFoundError: pass
+
+    # post-process
+    if filetype == 'csv':
+        file_type = detect_file_type(final_path)
+        if file_type == 'network':
+            process_network_csv(final_path)
+        elif file_type == 'activity':
+            os.replace(final_path, os.path.join(base_dir, 'activity.csv'))
+    elif filetype in ('hdf5', 'h5'):
+        process_hdf5_file(final_path)
+
+    return True, {'status': 'success', 'path': final_path}
 
 @csrf_exempt
 def upload_and_save_Network_file(request):
@@ -106,113 +181,43 @@ def upload_and_save_Network_file(request):
             return JsonResponse({'error': 'POST with file required'}, status=400)
 
         uploaded_file = request.FILES['file']
-        chunk_index = request.POST.get('chunkIndex')
-        total_chunks = request.POST.get('totalChunks')
-        unique_directory = request.POST.get('uniqueDirectory')
-        ext = (request.POST.get('fileType') or '').lower()
+        chunk_index   = request.POST.get('chunkIndex')
+        total_chunks  = request.POST.get('totalChunks')
+        unique_dir    = request.POST.get('uniqueDirectory')
+        ext           = (request.POST.get('fileType') or '').lower()
 
-        if not all([chunk_index, total_chunks, unique_directory, ext]):
+        if not all([chunk_index, total_chunks, unique_dir, ext]):
             return JsonResponse({'error': 'Missing parameters'}, status=400)
 
         try:
-            chunk_index = int(chunk_index)
+            chunk_index  = int(chunk_index)
             total_chunks = int(total_chunks)
-            if total_chunks <= 0:
-                raise ValueError
+            if total_chunks <= 0: raise ValueError
         except ValueError:
             return JsonResponse({'error': 'Invalid chunkIndex/totalChunks'}, status=400)
 
-        # Directory for this upload session
-        file_directory = os.path.join(settings.MEDIA_ROOT, 'csv', unique_directory)
-        os.makedirs(file_directory, exist_ok=True)
+        base_dir = os.path.join(settings.MEDIA_ROOT, 'csv', unique_dir)
+        os.makedirs(base_dir, exist_ok=True)
 
-        # Save this chunk EXACTLY as sent (do not assume 0- or 1-based here)
-        part_path = os.path.join(file_directory, f"{uploaded_file.name}.part{chunk_index}")
-        tmp_part = part_path + ".tmp"
-        with open(tmp_part, 'wb') as f:
-            for chunk_data in uploaded_file.chunks():
-                f.write(chunk_data)
+        # Save this chunk atomically
+        part_path = os.path.join(base_dir, f"{uploaded_file.name}.part{chunk_index}")
+        tmp_path  = part_path + ".tmp"
+        with open(tmp_path, 'wb') as f:
+            for ch in uploaded_file.chunks():
+                f.write(ch)
             f.flush()
             os.fsync(f.fileno())
-        os.replace(tmp_part, part_path)  # atomic publish
+        os.replace(tmp_path, part_path)
 
-        # If this looks like the last chunk (works for 0-based or 1-based uploaders)
-        is_last = (chunk_index == total_chunks - 1) or (chunk_index == total_chunks)
-        if is_last:
-            final_file_path = os.path.join(file_directory, uploaded_file.name)
-
-            # --- detect numbering scheme and build expected lists ---
-            zero_based_parts = [
-                os.path.join(file_directory, f"{uploaded_file.name}.part{i}")
-                for i in range(total_chunks)
-            ]
-            one_based_parts = [
-                os.path.join(file_directory, f"{uploaded_file.name}.part{i}")
-                for i in range(1, total_chunks + 1)
-            ]
-
-            # wait up to 60s for either scheme to become complete
-            deadline = time.time() + 60
-            chosen_parts = None
-            while time.time() < deadline:
-                if all(os.path.exists(p) for p in zero_based_parts):
-                    chosen_parts = zero_based_parts
-                    break
-                if all(os.path.exists(p) for p in one_based_parts):
-                    chosen_parts = one_based_parts
-                    break
-                time.sleep(1)
-
-            if chosen_parts is None:
-                # report whichever scheme is "closer" and what is missing (cap list length)
-                zero_missing = [p for p in zero_based_parts if not os.path.exists(p)]
-                one_missing  = [p for p in one_based_parts  if not os.path.exists(p)]
-                report_missing = zero_missing if len(zero_missing) < len(one_missing) else one_missing
-                return JsonResponse(
-                    {'error': 'Missing chunk files', 'missing': report_missing[:20]},
-                    status=409
-                )
-
-            # --- assemble atomically ---
-            assembling_path = final_file_path + ".assembling"
-            with open(assembling_path, 'wb') as out_f:
-                for p in chosen_parts:
-                    with open(p, 'rb') as in_f:
-                        shutil.copyfileobj(in_f, out_f, length=1024 * 1024)
-                out_f.flush()
-                os.fsync(out_f.fileno())
-            os.replace(assembling_path, final_file_path)
-
-            # cleanup parts
-            for p in chosen_parts:
-                try:
-                    os.remove(p)
-                except FileNotFoundError:
-                    pass
-
-            # --- post-process by file type ---
-            if ext == 'csv':
-                file_type = detect_file_type(final_file_path)  # your helper
-                if file_type == 'network':
-                    process_network_csv(final_file_path)
-                elif file_type == 'activity':
-                    activity_file_path = os.path.join(file_directory, 'activity.csv')
-                    try:
-                        os.replace(final_file_path, activity_file_path)
-                    except Exception as e:
-                        return JsonResponse({'error': f'Failed to move activity CSV: {e}'}, status=500)
-                # else: unknown CSV; leave as-is
-            elif ext in ('hdf5', 'h5'):
-                process_hdf5_file(final_file_path)  # your helper
-            # else: silently accept other types
-
-            return JsonResponse({'status': 'success', 'path': final_file_path})
-
-        # Not last chunk: acknowledge receipt
-        return JsonResponse({'status': 'part-received', 'chunkIndex': chunk_index})
+        # Try assemble immediately (don’t wait for "last")
+        assembled, payload = _assemble_if_complete(base_dir, uploaded_file.name, total_chunks, ext)
+        status_code = 200 if assembled or payload.get('status') == 'part-received' else 409
+        return JsonResponse(payload, status=status_code)
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
 
 def detect_file_type(file_path):
     """ Detects if the file is an activity (2 columns) or network (4 columns) file. """
