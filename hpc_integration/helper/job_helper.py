@@ -10,7 +10,6 @@ from hpc_integration.utils.decorators import check_hpc_supported
 
 
 def get_commands_scripts(circuit: str) -> tuple[str, str, str]:
-
     if circuit == 'human':
         pre_command = '/g100_work/EIRI_E_CNRIB2/NCV_Human/prepare_job.sh'
         command = './run_job.sh'
@@ -25,6 +24,29 @@ def get_commands_scripts(circuit: str) -> tuple[str, str, str]:
         raise ValueError(messages.INVALID_CIRCUIT)
 
     return pre_command, command, post_command
+
+
+def get_resources(circuit: str) -> dict:
+    if circuit == 'human':
+        return {
+            'Project': 'EIRI_E_CNRIB2',
+            'Nodes': 33,
+            # 'TotalCPUs': 48,
+            'CPUsPerNode': 24,
+            'Runtime': '24h',
+            'Queue': 'g100_usr_smem'
+        }
+
+    elif circuit == 'mouse':
+        return {
+            'Project': 'EIRI_E_CNRIB2',
+            'Nodes': 2,
+            'TotalCPUs': 48,
+            'CPUsPerNode': 24,
+            'Runtime': '3h',
+            'Queue': 'g100_usr_smem'
+        }
+    raise ValueError(messages.INVALID_CIRCUIT)
 
 
 class JobHelper:
@@ -101,6 +123,7 @@ class JobHelper:
         circuit = settings.pop('circuit')
         pre_command, command, post_command = get_commands_scripts(circuit)
         args = [str(settings[ss]) for ss in list(settings.keys())]
+        resources = get_resources(circuit)
 
         job_descriptor = {
             'User precommand': pre_command,
@@ -108,14 +131,7 @@ class JobHelper:
             'Arguments': args,
             'User postcommand': post_command,
             'Name': circuit[0].upper() + '_' + job_name,
-            'Resources': {
-                'Project': 'EIRI_E_CNRIB2',
-                'Nodes': 2,
-                'TotalCPUs': 48,
-                'CPUsPerNode': 24,
-                'Runtime': '3h',
-                'Queue': 'g100_usr_smem'
-            },
+            'Resources': resources,
             'Tags': UNICORE_JOB_TAGS
         }
 
