@@ -20,7 +20,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-@login_required
+# @login_required
 def submit_job(request):
     if request.method != 'POST':
         return HttpResponseNotAllowed('POST')
@@ -39,6 +39,7 @@ def submit_job(request):
         return JsonResponse(status=BAD_REQUEST, data=form.errors.get_json_data(escape_html=True), safe=False)
 
     data = form.cleaned_data
+    print(data)
 
     try:
         if request.session.get('job_already_submitted'):

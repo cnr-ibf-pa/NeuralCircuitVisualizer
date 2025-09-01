@@ -20,7 +20,8 @@
             <div class="mb-3">
               <label for="hpc-selector" class="form-label">Select HPC Platform:</label>
               <select class="form-select" id="hpc-selector" name="hpc">
-                <option value="CINECA - G100">CINECA - G100</option>
+                <option value="CINECA - G100" selected>CINECA - G100</option>
+                <option id="JUSUF-SA" data-show-for="mouse" value="JUSUF - ServiceAccount">JUSUF - JSC (behind the CLS-ServiceAccount)</option>
               </select>
             </div>
           </div>
@@ -113,12 +114,14 @@
     function onCircuitSelection(event) {
       let value = event.target.value;
       console.log(event);
+      document.getElementById('hpc-selector').value = "CINECA - G100";
       if (event.type === "load") {
         value = document.getElementById('circuit-selector').value;
       }
 
       if (value === "human") {
         // to hide
+        document.getElementById('JUSUF-SA').classList.add('d-none');
         document.getElementById('mouse-row-input-1').classList.add('d-none');
         document.getElementById('mouse-row-input-2').classList.add('d-none');
 
@@ -130,6 +133,7 @@
         document.getElementById('mouse-row-input-2').classList.remove('d-none');
 
         // to show
+        document.getElementById('JUSUF-SA').classList.remove('d-none');
         document.getElementById('human-row-input-1').classList.add('d-none');
       }
     };

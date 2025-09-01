@@ -4,7 +4,8 @@ from pyparsing import C
 
 
 HPC_LIST = [
-    ('CINECA - G100', 'CINECA - G100')
+    ('CINECA - G100', 'CINECA - G100'),
+    ('JUSUF - ServiceAccount', 'JUSUF - JSC (behind the CLS-ServiceAccount)' )
 ]
 
 CIRCUIT_LIST = [

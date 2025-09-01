@@ -1,36 +1,52 @@
 from collections import OrderedDict
 import pyunicore.client as unicore_client
 from pyunicore.credentials import OIDCToken
-import os
 import requests
+import json
+import os
 
-from neural_circuit_visualizer.settings import UNICORE_JOB_TAGS, BASE_DIR
+from neural_circuit_visualizer.settings import UNICORE_JOB_TAGS, SERVICE_ACCOUNT_APPKEY, \
+                                               SERVICE_ACCOUNT_URL, SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER
 from hpc_integration.utils import messages, errors, str_to_datetime
 from hpc_integration.utils.decorators import check_hpc_supported
 
 
-def get_commands_scripts(circuit: str) -> tuple[str, str, str]:
-
-    if circuit == 'human':
-        pre_command = '/g100_work/EIRI_E_CNRIB2/NCV_Human/prepare_job.sh'
-        command = './run_job.sh'
-        post_command = './postprocessing.sh'
-
-    elif circuit == 'mouse':
-        pre_command = '/g100_work/EIRI_E_CNRIB2/NCV_Mouse/prepare_job.sh'
-        command = './run_job.sh'
-        post_command = './postprocessing.sh'
-
-    else:
-        raise ValueError(messages.INVALID_CIRCUIT)
-
-    return pre_command, command, post_command
+import logging
+logger = logging.getLogger(__name__)
 
 
 class JobHelper:
 
     _G100_CINECA = 'CINECA - G100'
     _G100_URL = 'https://unicore.hpc.cineca.it:9111/CINECA-G100/rest/core'
+
+    _SA_JUSUF = 'JUSUF - ServiceAccount'
+
+    def _get_unicore_commands(self, hpc: str, circuit: str) -> tuple[str, str, str]:
+        """ Returns the commands and scripts to be executed on the HPC. """
+        if hpc == self._G100_CINECA:
+            if circuit == 'human':
+                pre_command = '/g100_work/EIRI_E_CNRIB2/NCV_Human/prepare_job.sh'
+                command = './run_job.sh'
+                post_command = './postprocessing.sh'
+            elif circuit == 'mouse':
+                pre_command = '/g100_work/EIRI_E_CNRIB2/NCV_Mouse/prepare_job.sh'
+                command = './run_job.sh'
+                post_command = './postprocessing.sh'
+            else:
+                raise ValueError(messages.INVALID_CIRCUIT)
+        else:
+            raise ValueError(messages.INVALID_HPC_ERROR.format(hpc))
+        return pre_command, command, post_command
+
+    def _get_service_account_commands(self, hpc: str, circuit: str, args: str) -> str:
+        if hpc == self._SA_JUSUF:
+            if circuit == 'mouse':
+                return f'sh /p/project1/icei-hbp-2020-0013/HIPPO_MOUSE/prepare_job.sh && sh $UC_WORKING_DIRECTORY/run_job.sh {args} && sh $UC_WORKING_DIRECTORY/postprocessing.sh'
+            else:
+                raise ValueError(messages.INVALID_CIRCUIT)
+        else:
+            raise ValueError(messages.INVALID_HPC_ERROR.format(hpc))
 
     def _initialize_unicore_client(self, hpc, token):
         """
@@ -99,7 +115,7 @@ class JobHelper:
         """
 
         circuit = settings.pop('circuit')
-        pre_command, command, post_command = get_commands_scripts(circuit)
+        pre_command, command, post_command = self._get_unicore_commands(circuit, hpc)
         args = [str(settings[ss]) for ss in list(settings.keys())]
 
         job_descriptor = {
@@ -180,6 +196,50 @@ class JobHelper:
         storage = job.working_dir
         return storage.listdir()
 
+    def _submit_on_service_account(self, hpc, token, settings, job_name):
+        circuit = settings.pop('circuit')
+        args = ' '.join([str(settings[ss]) for ss in list(settings.keys())])
+        hpc_value = None
+        project_value = None
+        if 'JUSUF' in hpc:
+            hpc_value = 'jusuf'
+            project_value = 'ncv_jusuf_01'
+        else:
+            raise errors.HPCException(messages.INVALID_HPC_ERROR)
+
+        base_headers = {
+            'Authorization': 'Bearer ' + token,
+            'Appkey': SERVICE_ACCOUNT_APPKEY
+        }
+        payload = {
+            'command': self._get_service_account_commands(hpc, circuit, args=' '.join(args)),
+            'hpc': hpc_value,
+            'project': project_value,
+            'node_number': 2,
+            'core_number': 48,
+            'runtime': 3.0,
+            'title': circuit[0].upper() + '_' + job_name
+        }
+        logger.info('Sending job to service account: %s', payload)
+        headers = base_headers.update({'Content-Type': 'application/json'})
+        r0 = requests.post(url=f'{SERVICE_ACCOUNT_URL}/job/', headers=headers, data=json.dumps(payload), timeout=360000)
+        logger.info('Service account response: %s', r0.content)
+        if r0.status_code == 201:
+            logger.info('Job created correctly... Uploading fake input file to start job')
+            zip_name: str = os.path.split(SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER)[1]
+            headers = base_headers.update({'Content-Type': 'application/zip',
+                                           'Content-Disposition': 'attachment;filename=' + zip_name})
+            sa_endpoint += str(r0.json().get('id')) + '/upload-input-file/'
+            with open(SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER, 'rb') as fd:
+                r1 = requests.patch(url=sa_endpoint, headers=headers, data=fd.read(), timeout=360000)
+                if r1.status_code == 200:
+                    logger.info('File uploaded correctly... Starting job')
+                else:
+                    logger.error('File upload failed: %s', r1.content)
+        else:
+            logger.error('Job creation failed: %s', r0.content)
+            raise errors.HPCException(messages.JOB_SUBMISSION_FAILED)
+
     def parse_raw_jobs(self, raw_jobs_list: list) -> dict:
         jobs = dict()
         for raw_job in raw_jobs_list:
@@ -201,6 +261,8 @@ class JobHelper:
     @check_hpc_supported
     def submit_job(cls, hpc, settings, token, job_name):
         job_handler = cls()
+        if 'ServiceAccount' in hpc:
+            return job_handler._submit_on_service_account(hpc, token, settings, job_name)
         return job_handler._submit_on_unicore(hpc, token, settings, job_name)
 
     @classmethod
