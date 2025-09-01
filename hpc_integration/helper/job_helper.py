@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from http import server
 import pyunicore.client as unicore_client
 from pyunicore.credentials import OIDCToken
 import requests
@@ -239,7 +240,10 @@ class JobHelper:
             'Appkey': SERVICE_ACCOUNT_APPKEY
         }
         sa_endpoint = f'{SERVICE_ACCOUNT_URL}/job/'
-        r0 = requests.get(url=sa_endpoint, headers=headers, timeout=360000)
+        query_params = {
+            'project': self._get_service_account_hpc_and_project_values(hpc)[1]
+        }
+        r0 = requests.get(url=sa_endpoint, headers=headers, params=query_params, timeout=360000)
         if r0.status_code == 200:
             return r0.json()
         else:
@@ -267,10 +271,10 @@ class JobHelper:
         if service_account:
             for raw_job in raw_jobs_list:
                 job = { raw_job['job_id']: {
-                        'status': job['stage'],
-                        'date': str_to_datetime(job['init_date']),
-                        'message': job['error'],
-                        'job_name': job.get('title'),
+                        'status': raw_job['stage'],
+                        'date': str_to_datetime(raw_job['init_date']),
+                        'message': raw_job['error'],
+                        'job_name': raw_job.get('title'),
                     }
                 }
                 jobs.update(job)
@@ -302,11 +306,13 @@ class JobHelper:
     @check_hpc_supported
     def fetch_jobs_list(cls, hpc, token):
         job_handler = cls()
+        service_account_flag = False
         if 'ServiceAccount' in hpc:
             raw_jobs = job_handler._get_service_account_jobs(hpc, token)
+            service_account_flag = True
         else:
             raw_jobs = job_handler._get_unicore_jobs(hpc, token)
-        jobs = job_handler.parse_raw_jobs(raw_jobs)
+        jobs = job_handler.parse_raw_jobs(raw_jobs, service_account_flag)
         return job_handler.sort_jobs(jobs)
 
     @classmethod
