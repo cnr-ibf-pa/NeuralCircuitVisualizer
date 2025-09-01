@@ -11,10 +11,6 @@ from hpc_integration.utils import messages, errors, str_to_datetime
 from hpc_integration.utils.decorators import check_hpc_supported
 
 
-import logging
-logger = logging.getLogger(__name__)
-
-
 class JobHelper:
 
     _G100_CINECA = 'CINECA - G100'
@@ -208,7 +204,7 @@ class JobHelper:
             raise errors.HPCException(messages.INVALID_HPC_ERROR)
 
         base_headers = {
-            'Authorization': 'Bearer ' + token,
+            'Authentication': 'Bearer ' + token,
             'Appkey': SERVICE_ACCOUNT_APPKEY
         }
         payload = {
@@ -220,24 +216,16 @@ class JobHelper:
             'runtime': 3.0,
             'title': circuit[0].upper() + '_' + job_name
         }
-        logger.info('Sending job to service account: %s', payload)
         headers = base_headers.update({'Content-Type': 'application/json'})
         r0 = requests.post(url=f'{SERVICE_ACCOUNT_URL}/job/', headers=headers, data=json.dumps(payload), timeout=360000)
-        logger.info('Service account response: %s', r0.content)
         if r0.status_code == 201:
-            logger.info('Job created correctly... Uploading fake input file to start job')
             zip_name: str = os.path.split(SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER)[1]
             headers = base_headers.update({'Content-Type': 'application/zip',
                                            'Content-Disposition': 'attachment;filename=' + zip_name})
             sa_endpoint += str(r0.json().get('id')) + '/upload-input-file/'
             with open(SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER, 'rb') as fd:
                 r1 = requests.patch(url=sa_endpoint, headers=headers, data=fd.read(), timeout=360000)
-                if r1.status_code == 200:
-                    logger.info('File uploaded correctly... Starting job')
-                else:
-                    logger.error('File upload failed: %s', r1.content)
         else:
-            logger.error('Job creation failed: %s', r0.content)
             raise errors.HPCException(messages.JOB_SUBMISSION_FAILED)
 
     def parse_raw_jobs(self, raw_jobs_list: list) -> dict:
