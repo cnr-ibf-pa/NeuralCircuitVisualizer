@@ -20,7 +20,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-# @login_required
+@login_required
 def submit_job(request):
     if request.method != 'POST':
         return HttpResponseNotAllowed('POST')
