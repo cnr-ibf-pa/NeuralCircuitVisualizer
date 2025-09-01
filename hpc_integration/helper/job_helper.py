@@ -210,7 +210,7 @@ class JobHelper:
             'Appkey': SERVICE_ACCOUNT_APPKEY
         }
         payload = {
-            'command': self._get_service_account_commands(hpc, circuit, args=' '.join(args)),
+            'command': self._get_service_account_commands(hpc, circuit, args),
             'hpc': hpc_value,
             'project': project_value,
             'node_number': 2,
