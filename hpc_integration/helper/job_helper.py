@@ -204,7 +204,7 @@ class JobHelper:
             raise errors.HPCException(messages.INVALID_HPC_ERROR)
 
         base_headers = {
-            'Authentication': 'Bearer ' + token,
+            'Authorization': 'Bearer ' + token,
             'Appkey': SERVICE_ACCOUNT_APPKEY
         }
         payload = {
@@ -216,12 +216,15 @@ class JobHelper:
             'runtime': 3.0,
             'title': circuit[0].upper() + '_' + job_name
         }
-        headers = base_headers.update({'Content-Type': 'application/json'})
-        r0 = requests.post(url=f'{SERVICE_ACCOUNT_URL}/job/', headers=headers, data=json.dumps(payload), timeout=360000)
+        headers = base_headers
+        headers['Content-Type'] = 'application/json'
+        sa_endpoint = f'{SERVICE_ACCOUNT_URL}/job/'
+        r0 = requests.post(url=sa_endpoint, headers=headers, data=json.dumps(payload), timeout=360000)
         if r0.status_code == 201:
             zip_name: str = os.path.split(SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER)[1]
-            headers = base_headers.update({'Content-Type': 'application/zip',
-                                           'Content-Disposition': 'attachment;filename=' + zip_name})
+            headers = base_headers
+            headers['Content-Type'] = 'application/zip'
+            headers['Content-Disposition'] = 'attachment;filename=' + zip_name
             sa_endpoint += str(r0.json().get('id')) + '/upload-input-file/'
             with open(SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER, 'rb') as fd:
                 r1 = requests.patch(url=sa_endpoint, headers=headers, data=fd.read(), timeout=360000)
