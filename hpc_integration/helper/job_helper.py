@@ -44,6 +44,14 @@ class JobHelper:
         else:
             raise ValueError(messages.INVALID_HPC_ERROR.format(hpc))
 
+    def _get_service_account_hpc_and_project_values(self, hpc: str) -> tuple[str, str]:
+        if 'JUSUF' in hpc:
+            hpc_value = 'jusuf'
+            project_value = 'ncv_jusuf_01'
+        else:
+            raise errors.HPCException(messages.INVALID_HPC_ERROR)
+        return hpc_value, project_value
+
     def _initialize_unicore_client(self, hpc, token):
         """
         Initialize the UNICORE client using the user token
@@ -195,14 +203,7 @@ class JobHelper:
     def _submit_on_service_account(self, hpc, token, settings, job_name):
         circuit = settings.pop('circuit')
         args = ' '.join([str(settings[ss]) for ss in list(settings.keys())])
-        hpc_value = None
-        project_value = None
-        if 'JUSUF' in hpc:
-            hpc_value = 'jusuf'
-            project_value = 'ncv_jusuf_01'
-        else:
-            raise errors.HPCException(messages.INVALID_HPC_ERROR)
-
+        hpc_value, project_value = self._get_service_account_hpc_and_project_values(hpc)
         base_headers = {
             'Authorization': 'Bearer ' + token,
             'Appkey': SERVICE_ACCOUNT_APPKEY
@@ -231,18 +232,59 @@ class JobHelper:
         else:
             raise errors.HPCException(messages.JOB_SUBMISSION_FAILED)
 
-    def parse_raw_jobs(self, raw_jobs_list: list) -> dict:
+    def _get_service_account_jobs(self, hpc, token):
+
+        headers = {
+            'Authorization': 'Bearer ' + token,
+            'Appkey': SERVICE_ACCOUNT_APPKEY
+        }
+        sa_endpoint = f'{SERVICE_ACCOUNT_URL}/job/'
+        r0 = requests.get(url=sa_endpoint, headers=headers, timeout=360000)
+        if r0.status_code == 200:
+            return r0.json()
+        else:
+            raise errors.HPCException(messages.HPC_CONNECTION_ERROR)
+
+    def _get_service_account_job_results(self, hpc, token, job_id):
+        headers = {
+            'Authorization': 'Bearer ' + token,
+            'Appkey': SERVICE_ACCOUNT_APPKEY
+        }
+        sa_endpoint = f'{SERVICE_ACCOUNT_URL}/job/results'
+        _, project_value = self._get_service_account_hpc_and_project_values(hpc)
+        query_params = {
+            'job_id': job_id,
+            'project': project_value
+        }
+        r0 = requests.get(url=sa_endpoint, headers=headers, params=query_params, timeout=360000)
+        if r0.status_code == 200:
+            raise NotImplementedError('Download function not implemented yet')
+        else:
+            raise errors.HPCException(messages.HPC_CONNECTION_ERROR)
+
+    def parse_raw_jobs(self, raw_jobs_list: list, service_account: bool = False) -> dict:
         jobs = dict()
-        for raw_job in raw_jobs_list:
-            props = raw_job.properties
-            job = { raw_job.job_id: {
-                    'status': props['status'],
-                    'date': str_to_datetime(props['submissionTime']),
-                    'message': props['statusMessage'],
-                    'job_name': props.get('name', raw_job.job_id),
+        if service_account:
+            for raw_job in raw_jobs_list:
+                job = { raw_job['job_id']: {
+                        'status': job['stage'],
+                        'date': str_to_datetime(job['init_date']),
+                        'message': job['error'],
+                        'job_name': job.get('title'),
+                    }
                 }
-            }
-            jobs.update(job)
+                jobs.update(job)
+        else:
+            for raw_job in raw_jobs_list:
+                props = raw_job.properties
+                job = { raw_job.job_id: {
+                        'status': props['status'],
+                        'date': str_to_datetime(props['submissionTime']),
+                        'message': props['statusMessage'],
+                        'job_name': props.get('name', raw_job.job_id),
+                    }
+                }
+                jobs.update(job)
         return jobs
 
     def sort_jobs(self, jobs: dict) -> dict:
@@ -260,7 +302,10 @@ class JobHelper:
     @check_hpc_supported
     def fetch_jobs_list(cls, hpc, token):
         job_handler = cls()
-        raw_jobs = job_handler._get_unicore_jobs(hpc, token)
+        if 'ServiceAccount' in hpc:
+            raw_jobs = job_handler._get_service_account_jobs(hpc, token)
+        else:
+            raw_jobs = job_handler._get_unicore_jobs(hpc, token)
         jobs = job_handler.parse_raw_jobs(raw_jobs)
         return job_handler.sort_jobs(jobs)
 
@@ -268,4 +313,6 @@ class JobHelper:
     @check_hpc_supported
     def fetch_job_files(cls, hpc, job_id, token):
         job_handler = cls()
+        if 'ServiceAccount' in hpc:
+            raw_jobs = job_handler._get_service_account_job_results(hpc, token, job_id)
         return job_handler._get_unicore_job_results(hpc, token, job_id)
