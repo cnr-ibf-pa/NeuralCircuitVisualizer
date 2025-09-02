@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from http import server
+import shutil
 import pyunicore.client as unicore_client
 from pyunicore.credentials import OIDCToken
 import requests
@@ -262,7 +262,7 @@ class JobHelper:
         }
         r0 = requests.get(url=sa_endpoint, headers=headers, params=query_params, timeout=360000)
         if r0.status_code == 200:
-            raise NotImplementedError('Download function not implemented yet')
+            return r0.content
         else:
             raise errors.HPCException(messages.HPC_CONNECTION_ERROR)
 
@@ -317,8 +317,31 @@ class JobHelper:
 
     @classmethod
     @check_hpc_supported
-    def fetch_job_files(cls, hpc, job_id, token):
+    def download_output_job_files(cls, hpc, job_id, token, download_dir) -> str:
         job_handler = cls()
         if 'ServiceAccount' in hpc:
-            raw_jobs = job_handler._get_service_account_job_results(hpc, token, job_id)
-        return job_handler._get_unicore_job_results(hpc, token, job_id)
+            content = job_handler._get_service_account_job_results(hpc, token, job_id)
+            output_zip_path = os.path.join(download_dir, 'output.zip')
+            with open(output_zip_path, 'wb') as fd:
+                fd.write(content)
+            return output_zip_path
+        file_list = job_handler._get_unicore_job_results(hpc, token, job_id)
+        output_file_path = os.path.join(download_dir, 'output.tar.gz')
+        file_list['output.tar.gz'].download(output_file_path)
+        return output_file_path
+
+    @classmethod
+    @check_hpc_supported
+    def download_activity_network_file(cls, hpc, job_id, token, download_dir) -> str:
+        job_handler = cls()
+        if 'ServiceAccount' in hpc:
+            output_zip = job_handler.download_output_job_files(hpc, job_id, token, download_dir)
+            shutil.unpack_archive(output_zip, download_dir)
+            for file in os.listdir(download_dir):
+                if file == 'activity_network.hdf5':
+                    return os.path.join(download_dir, file)
+        file_list = job_handler._get_unicore_job_results(hpc, token, job_id)
+        activity_file_name = 'activity_network.hdf5'
+        activity_file_path = os.path.join(download_dir, activity_file_name)
+        file_list[activity_file_name].download(activity_file_path)
+        return activity_file_path

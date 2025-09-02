@@ -1,7 +1,6 @@
 from http.client import BAD_REQUEST, OK
 import shutil
 import os
-from pyunicore.client import PathFile as UnicorePathFile
 
 from django.http import FileResponse, HttpResponseForbidden, HttpResponseServerError
 from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, HttpResponseNotAllowed
@@ -118,19 +117,21 @@ def download_job_results(request):
         request.session['download_dir'] = download_dir
 
     try:
-        file_list = JobHelper().fetch_job_files(hpc, job_id, request.session['oidc_access_token'])
-        try:
-            output_file_path = os.path.join(download_dir, 'output.tar.gz')
-            file_list['output.tar.gz'].download(output_file_path)
-        except KeyError:
-            return HttpResponse(status=511, content=messages.JOB_OUTPUT_NOT_FOUND)
-        response = HttpResponse(content_type='application/tar+gzip')
+        output_file_path = JobHelper().download_output_job_files(hpc, job_id, request.session['oidc_access_token'], download_dir)
+        response = None
+        if output_file_path.endswith('.tar.gz'):
+            response = HttpResponse(content_type='application/tar+gzip')
+        elif output_file_path.endswith('.zip'):
+            response = HttpResponse(content_type='application/zip')
+        else:
+            raise Exception('Invalid output file path: ' + output_file_path)
         response['Content-Disposition'] = f'attachment; filename={os.path.split(output_file_path)[1]}'
         with open(output_file_path, 'rb') as f:
             response.write(f.read())
         shutil.rmtree(download_dir)
         return response
-
+    except KeyError:
+                return HttpResponse(status=511, content=messages.JOB_OUTPUT_NOT_FOUND)
     except UnicoreClientException as err:
         logger.error(f'AUTH Error while downloading job results: {err}')
         return HttpResponse(status=401, content=str(err))
@@ -143,7 +144,6 @@ def download_job_results(request):
     except Exception as err:
         logger.error(f'GENERAL Error while downloading job results: {err}')
         return HttpResponseServerError(content=str(err))
-
 
 
 @login_required
@@ -173,9 +173,7 @@ def download_activity_network(request):
     activity_file_path = os.path.join(download_dir, activity_file_name)
     if not os.path.exists(activity_file_path):
         try:
-            file_list = JobHelper().fetch_job_files(hpc, job_id, request.session['oidc_access_token'])
-            file_list[activity_file_name].download(activity_file_path)
-
+            activity_file_path = JobHelper().download_activity_network_file(hpc, job_id, request.session['oidc_access_token'], download_dir)
         except UnicoreClientException as err:
             logger.error(f'AUTH Error while trying to download activity network: {err}')
             return HttpResponse(status=401, content=str(err))
