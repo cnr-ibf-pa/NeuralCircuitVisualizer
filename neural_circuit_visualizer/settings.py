@@ -180,6 +180,10 @@ SERVICE_ACCOUNT_APPKEY = env('SERVICE_ACCOUNT_APPKEY')
 SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER = env('SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER')
 
 
+LOG_DIR = BASE_DIR / '../logs'
+if not LOG_DIR.exists():
+    LOG_DIR.mkdir()
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
