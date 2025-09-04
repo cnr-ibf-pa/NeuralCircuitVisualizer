@@ -11,6 +11,9 @@ from neural_circuit_visualizer.settings import UNICORE_JOB_TAGS, SERVICE_ACCOUNT
 from hpc_integration.utils import messages, errors, str_to_datetime
 from hpc_integration.utils.decorators import check_hpc_supported
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class JobHelper:
 
@@ -221,16 +224,21 @@ class JobHelper:
         headers = base_headers
         headers['Content-Type'] = 'application/json'
         sa_endpoint = f'{SERVICE_ACCOUNT_URL}/job/'
+        logger.info('Submitting job on service account with payload: %s and headers: %s', payload, headers)
         r0 = requests.post(url=sa_endpoint, headers=headers, data=json.dumps(payload), timeout=360000)
+        logger.debug('Response: %s', r0)
         if r0.status_code == 201:
+            logger.info('Job submitted on service account with id: %s', r0.json().get('id'))
             zip_name: str = os.path.split(SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER)[1]
             headers = base_headers
             headers['Content-Type'] = 'application/zip'
             headers['Content-Disposition'] = 'attachment;filename=' + zip_name
             sa_endpoint += str(r0.json().get('id')) + '/upload-input-file/'
+            logger.info('Uploading input file on service account with headers: %s', headers)
             with open(SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER, 'rb') as fd:
                 r1 = requests.patch(url=sa_endpoint, headers=headers, data=fd.read(), timeout=360000)
         else:
+            logger.error('Error while submitting job on service account: %s', r0.content)
             raise errors.HPCException(messages.JOB_SUBMISSION_FAILED)
 
     def _get_service_account_jobs(self, hpc, token):
@@ -243,10 +251,14 @@ class JobHelper:
         query_params = {
             'project': self._get_service_account_hpc_and_project_values(hpc)[1]
         }
+        logger.info('Getting jobs on service account with headers: %s and params: %s', headers, query_params)
         r0 = requests.get(url=sa_endpoint, headers=headers, params=query_params, timeout=360000)
+        logger.debug('Response: %s', r0)
         if r0.status_code == 200:
+            logger.info('Got %s jobs on service account', len(r0.json()))
             return r0.json()
         else:
+            logger.error('Error while getting jobs on service account: %s', r0.content)
             raise errors.HPCException(messages.HPC_CONNECTION_ERROR)
 
     def _get_service_account_job_results(self, hpc, token, job_id):
@@ -260,10 +272,14 @@ class JobHelper:
             'job_id': job_id,
             'project': project_value
         }
+        logger.info('Getting job results on service account with headers: %s and params: %s', headers, query_params)
         r0 = requests.get(url=sa_endpoint, headers=headers, params=query_params, timeout=360000)
+        logger.debug('Response: %s', r0)
         if r0.status_code == 200:
+            logger.info('Got job results on service account')
             return r0.content
         else:
+            logger.error('Error while getting job results on service account: %s', r0.content)
             raise errors.HPCException(messages.HPC_CONNECTION_ERROR)
 
     def parse_raw_jobs(self, raw_jobs_list: list, service_account: bool = False) -> dict:

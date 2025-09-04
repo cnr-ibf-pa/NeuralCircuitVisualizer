@@ -195,9 +195,9 @@ LOGGING = {
     },
     'handlers': {
         'app_file': {
-            'level': 'DEBUG',   # prende tutto da DEBUG in su
+            'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, '../logs/app.log'),
+            'filename': LOG_DIR / 'app.log',
             'formatter': 'verbose',
         },
     },
@@ -207,14 +207,10 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
-        'neural_circuit_visualizer': {   # il tuo progetto
+        'neural_circuit_visualizer': {
             'handlers': ['app_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
-    },
-    'root': {
-        'handlers': ['app_file'],
-        'level': 'WARNING',
-    },
+    }
 }
