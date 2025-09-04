@@ -178,3 +178,45 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 9242880000  # 9GB
 SERVICE_ACCOUNT_URL = env('SERVICE_ACCOUNT_URL')
 SERVICE_ACCOUNT_APPKEY = env('SERVICE_ACCOUNT_APPKEY')
 SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER = env('SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER')
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'app_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, '../logs/app.log'),
+            'formatter': 'verbose',
+        },
+        'app_error': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, '../logs/app_error.log'),
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['app_file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'neural_circuit_visualizer': {
+            'handlers': ['app_file', 'app_error'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+    'root': {
+        'handlers': ['app_error'],
+        'level': 'WARNING',
+    },
+}
