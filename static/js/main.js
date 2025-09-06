@@ -1858,84 +1858,178 @@ function render() {
   renderer.render(scene, camera);
 }
 
+// function animate() {
+//   requestAnimationFrame(animate);
+
+//   if (controls) controls.update();
+
+//   // Get renderer dimensions
+//   const width = renderer.domElement.clientWidth;
+//   const height = renderer.domElement.clientHeight;
+
+//   // Main full-screen rendering
+//   renderer.setViewport(0, 0, width, height);
+//   renderer.setScissor(0, 0, width, height);
+//   renderer.setScissorTest(true);
+//   renderer.clear();
+//   renderer.render(scene, camera);
+
+//   // --------- INSET CAMERA2 (Back view) ---------
+
+//   // Inset size and position
+//   const insetSize = Math.min(width, height) * 0.25; // 25% of screen size
+//   const insetX = 10; // left margin
+//   const insetY = 260; // top margin
+
+//   // Compute center of the scene (or object group if applicable)
+//   const bbox = new THREE.Box3().setFromObject(scene); // or use specific object/group
+//   const center = new THREE.Vector3();
+//   bbox.getCenter(center);
+
+//   // Compute mirrored position (from center)
+//   const viewDir = new THREE.Vector3().subVectors(center, camera.position).normalize();
+//   const distance = camera.position.distanceTo(center);
+//   const zoomDistance = distance * 0.7; // 0.5 = 2x closer
+//   const mirroredPosition = new THREE.Vector3().copy(center).add(viewDir.multiplyScalar(zoomDistance));
+
+//   // Update camera2
+//   camera2.position.copy(mirroredPosition);
+//   camera2.lookAt(center);
+//   camera2.up.copy(camera.up);
+
+//   if (camera.isPerspectiveCamera) {
+//     // For more zoom in camera2
+//     // const zoomFactor = 2.0; // 0.5 = 2x zoom, 0.25 = 4x zoom, etc.
+//     // camera2.fov = camera.fov * zoomFactor;
+//     camera2.fov = camera.fov;
+//     camera2.updateProjectionMatrix();
+//   } else if (camera.isOrthographicCamera) {
+//     camera2.zoom = camera.zoom; // Orthographic zoom
+//   }
+
+//   camera2.aspect = insetSize / insetSize;
+//   camera2.updateProjectionMatrix();
+
+//   // Render camera2 view
+//   renderer.clearDepth(); // clear depth buffer for second scene
+//   renderer.setViewport(insetX, insetY, insetSize, insetSize);
+//   renderer.setScissor(insetX, insetY, insetSize, insetSize);
+//   renderer.setScissorTest(true);
+//   renderer.render(scene, camera2);
+
+//   // --------- MINI ARROWS (Optional) ---------
+//   if (arrowsScene && arrowsCamera) {
+//     renderer.clearDepth(); // allow rendering over inset
+//     arrowsScene.quaternion.copy(camera.quaternion);
+
+//     const size = 150;
+//     const x = 10;
+//     const y = 110;
+
+//     renderer.setViewport(x, y, size, size);
+//     renderer.setScissor(x, y, size, size);
+//     renderer.setScissorTest(true);
+//     renderer.render(arrowsScene, arrowsCamera);
+//   }
+// }
+
 function animate() {
   requestAnimationFrame(animate);
-
-  //   if (connectionLines) {
-  //     connectionLines.traverse((obj) => {
-  //       if (obj.material && obj.material.uniforms?.time) {
-  //         obj.material.uniforms.time.value = performance.now() / 1000;
-  //       }
-  //     });
-  //   }
-
   if (controls) controls.update();
 
-  // Get renderer dimensions
-  const width = renderer.domElement.clientWidth;
-  const height = renderer.domElement.clientHeight;
+  // ----- sizes in CSS pixels -----
+  const cssW = renderer.domElement.clientWidth;
+  const cssH = renderer.domElement.clientHeight;
 
-  // Main full-screen rendering
-  renderer.setViewport(0, 0, width, height);
-  renderer.setScissor(0, 0, width, height);
+  // scale to drawing-buffer pixels (important on Retina)
+  const dpr = renderer.getPixelRatio();
+  const W = Math.round(cssW * dpr);
+  const H = Math.round(cssH * dpr);
+
+  // ----- MAIN VIEW -----
+  renderer.setViewport(0, 0, W, H);
+  renderer.setScissor(0, 0, W, H);
   renderer.setScissorTest(true);
   renderer.clear();
   renderer.render(scene, camera);
 
-  // --------- INSET CAMERA2 (Back view) ---------
+  // ----- INSET CAMERA2 (Back view) -----
+  // inset position/size in CSS px
+  const insetSizeCSS = Math.min(cssW, cssH) * 0.25; // 25% of screen
+  const insetXCSS = 10; // left margin
+  const insetYCSS = 300; // top margin
+  const borderCSS = 1; // border thickness
 
-  // Inset size and position
-  const insetSize = Math.min(width, height) * 0.25; // 25% of screen size
-  const insetX = 10; // left margin
-  const insetY = 260; // top margin
+  // convert to drawing-buffer px
+  const insetSize = Math.round(insetSizeCSS * dpr);
+  const insetX = Math.round(insetXCSS * dpr);
+  const insetY = Math.round(insetYCSS * dpr);
+  const border = Math.max(1, Math.round(borderCSS * dpr));
 
-  // Compute center of the scene (or object group if applicable)
-  const bbox = new THREE.Box3().setFromObject(scene); // or use specific object/group
+  // Compute center of scene
+  const bbox = new THREE.Box3().setFromObject(scene);
   const center = new THREE.Vector3();
   bbox.getCenter(center);
 
-  // Compute mirrored position (from center)
+  // Mirrored back view wrt current camera
   const viewDir = new THREE.Vector3().subVectors(center, camera.position).normalize();
   const distance = camera.position.distanceTo(center);
-  const zoomDistance = distance * 0.7; // 0.5 = 2x closer
+  const zoomDistance = distance * 0.7; // adjust zoom of inset
   const mirroredPosition = new THREE.Vector3().copy(center).add(viewDir.multiplyScalar(zoomDistance));
 
   // Update camera2
   camera2.position.copy(mirroredPosition);
   camera2.lookAt(center);
   camera2.up.copy(camera.up);
-
   if (camera.isPerspectiveCamera) {
-    // For more zoom in camera2
-    // const zoomFactor = 2.0; // 0.5 = 2x zoom, 0.25 = 4x zoom, etc.
-    // camera2.fov = camera.fov * zoomFactor;
     camera2.fov = camera.fov;
-    camera2.updateProjectionMatrix();
   } else if (camera.isOrthographicCamera) {
-    camera2.zoom = camera.zoom; // Orthographic zoom
+    camera2.zoom = camera.zoom;
   }
-
-  camera2.aspect = insetSize / insetSize;
+  camera2.aspect = 1; // square inset
   camera2.updateProjectionMatrix();
 
-  // Render camera2 view
-  renderer.clearDepth(); // clear depth buffer for second scene
-  renderer.setViewport(insetX, insetY, insetSize, insetSize);
-  renderer.setScissor(insetX, insetY, insetSize, insetSize);
+  // Render BORDER + BG then the inset
+  renderer.clearDepth();
+
+  const oldColor = new THREE.Color();
+  const oldAlpha = renderer.getClearAlpha();
+  renderer.getClearColor(oldColor);
+
+  // 1) Border (slightly larger rect)
+  renderer.setScissor(insetX - border, insetY - border, insetSize + 2 * border, insetSize + 2 * border);
+  renderer.setViewport(insetX - border, insetY - border, insetSize + 2 * border, insetSize + 2 * border);
   renderer.setScissorTest(true);
+  renderer.setClearColor(0xffffff, 1); // border color    0xffffff   0x808080
+  renderer.clear(true, false, false); // color only
+
+  // 2) Inset background (optional)
+  renderer.setScissor(insetX, insetY, insetSize, insetSize);
+  renderer.setViewport(insetX, insetY, insetSize, insetSize);
+  renderer.setClearColor(0x000000, 0.2); // translucent bg
+  renderer.clear(true, false, false);
+
+  // Restore previous clear color
+  renderer.setClearColor(oldColor, oldAlpha);
+
+  // 3) Render the inset view
   renderer.render(scene, camera2);
 
-  // --------- MINI ARROWS (Optional) ---------
+  // ----- MINI ARROWS (Optional) -----
   if (arrowsScene && arrowsCamera) {
-    renderer.clearDepth(); // allow rendering over inset
+    renderer.clearDepth();
     arrowsScene.quaternion.copy(camera.quaternion);
 
-    const size = 150;
-    const x = 10;
-    const y = 110;
+    // arrows panel in CSS px -> convert to drawing-buffer px
+    const arrowsSizeCSS = 180,
+      arrowsXCSS = 10,
+      arrowsYCSS = 130;
+    const aSize = Math.round(arrowsSizeCSS * dpr);
+    const aX = Math.round(arrowsXCSS * dpr);
+    const aY = Math.round(arrowsYCSS * dpr);
 
-    renderer.setViewport(x, y, size, size);
-    renderer.setScissor(x, y, size, size);
+    renderer.setViewport(aX, aY, aSize, aSize);
+    renderer.setScissor(aX, aY, aSize, aSize);
     renderer.setScissorTest(true);
     renderer.render(arrowsScene, arrowsCamera);
   }
