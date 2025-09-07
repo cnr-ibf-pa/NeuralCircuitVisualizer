@@ -173,3 +173,44 @@ ACTIVITY_GLOBAL_VARIABLE = None
 JSON_DIR = None
 DATA_UPLOAD_MAX_MEMORY_SIZE = 9242880000  # 9GB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 9242880000  # 9GB
+
+
+SERVICE_ACCOUNT_URL = env('SERVICE_ACCOUNT_URL')
+SERVICE_ACCOUNT_APPKEY = env('SERVICE_ACCOUNT_APPKEY')
+SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER = env('SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER')
+
+
+LOG_DIR = BASE_DIR / '../logs'
+if not LOG_DIR.exists():
+    LOG_DIR.mkdir()
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'app_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': LOG_DIR / 'app.log',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['app_file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'hpc_integration': {
+            'handlers': ['app_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    }
+}
