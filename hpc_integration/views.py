@@ -38,7 +38,7 @@ def submit_job(request):
         return JsonResponse(status=BAD_REQUEST, data=form.errors.get_json_data(escape_html=True), safe=False)
 
     data = form.cleaned_data
-    print(data)
+    logger.info(f'Form data: {data}')
 
     try:
         if request.session.get('job_already_submitted'):

@@ -207,7 +207,7 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
-        'neural_circuit_visualizer': {
+        'hpc_integration': {
             'handlers': ['app_file'],
             'level': 'DEBUG',
             'propagate': False,
