@@ -1,6 +1,4 @@
-from email.policy import default
 from django import forms
-from pyparsing import C
 
 
 HPC_LIST = [
@@ -9,7 +7,7 @@ HPC_LIST = [
 ]
 
 CIRCUIT_LIST = [
-    ('human', 'Human'),
+    # ('human', 'Human'),
     ('mouse', 'Mouse')
 ]
 

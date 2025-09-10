@@ -11,7 +11,7 @@
             <div class="mb-3">
               <label for="circuit-selector" class="form-label">Select circuit:</label>
               <select class="form-select" id="circuit-selector" name="circuit" required onchange="onCircuitSelection(event)">
-                <option value="human" selected>Human</option>
+                {% comment %} <option value="human" selected>Human</option> {% endcomment %}
                 <option value="mouse">Mouse</option>
               </select>
             </div>
@@ -20,8 +20,8 @@
             <div class="mb-3">
               <label for="hpc-selector" class="form-label">Select HPC Platform:</label>
               <select class="form-select" id="hpc-selector" name="hpc">
-                <option value="CINECA - G100" selected>CINECA - G100</option>
-                <option id="JUSUF-SA" data-show-for="mouse" value="JUSUF - ServiceAccount">JUSUF - JSC (behind the CLS-ServiceAccount)</option>
+                <option selected id="JUSUF-SA" data-show-for="mouse" value="JUSUF - ServiceAccount">JUSUF - JSC (all users via service account)</option>
+                <option value="CINECA - G100">CINECA - G100 (icei project users)</option>
               </select>
             </div>
           </div>
@@ -111,10 +111,12 @@
       spinner.classList.add('d-none');
     })
 
+    window.onload = function () {
+      onCircuitSelection({ type: "load" });
+    }
+
     function onCircuitSelection(event) {
-      let value = event.target.value;
-      console.log(event);
-      document.getElementById('hpc-selector').value = "CINECA - G100";
+      // document.getElementById('hpc-selector').value = "CINECA - G100";
       if (event.type === "load") {
         value = document.getElementById('circuit-selector').value;
       }
