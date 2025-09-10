@@ -1059,23 +1059,15 @@ function CreateScene() {
 
   controls = new TrackballControls(camera, canvas);
   controls.rotateSpeed = 20.0;
-  controls.zoomSpeed = 10;
+  //   controls.zoomSpeed = 10;
 
   controls.minDistance = 0.1; // Allow very close zoom (default is 0)
   controls.maxDistance = 100000; // Increase if camera hits a limit
-
-  controls.dynamicDampingFactor = 0.25;
+  //   controls.dynamicDampingFactor = 0.25;
 
   stopButton.disabled = true;
   startButton.disabled = true;
   restart.disabled = true;
-
-  //   const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
-  //   directionalLight.position.set(100, 100, 100);
-  //   scene.add(directionalLight);
-
-  //   const ambientLight = new THREE.AmbientLight(0x444444); // soft fill light
-  //   scene.add(ambientLight);
 }
 
 // === HUD Text ===
@@ -1476,94 +1468,61 @@ function VisualizateNeurons() {
 
         cameraFolder.close();
 
-        // Additional camera navigation controls
+        // ----------------- GUI: Camera Navigation (updated) -----------------
         const cameraNav = gui.addFolder("Camera Navigation");
 
-        // Zoom Slider
-        const zoomParams = { zoomAmount: 0 }; // start at 0
-        let lastZoomValue = 0;
+        // Zoom slider (unchanged from last fix)
+        const zoomParams = { zoomAmount: 0 };
+        let lastZoom = 0;
+        cameraNav
+          .add(zoomParams, "zoomAmount", -1000, 1000)
+          .name("Zoom Slider")
+          .onChange((v) => {
+            const delta = v - lastZoom;
+            lastZoom = v;
+            const sens = 0.002; // delta>0 => zoom IN
+            const scale = Math.exp(delta * sens);
+            dollyScale(scale);
+          });
 
-        cameraNav
-          .add(zoomParams, "zoomAmount", -10000, 10000)
-          .onChange((value) => {
-            const delta = value - lastZoomValue;
-            lastZoomValue = value;
+        // Zoom buttons (correct directions)
+        cameraNav.add({ zoomIn: () => dollyScale(Math.exp(+0.1)) }, "zoomIn").name("Zoom In  +");
+        cameraNav.add({ zoomOut: () => dollyScale(Math.exp(-0.1)) }, "zoomOut").name("Zoom Out -");
 
-            // Compute the camera's forward vector
-            const forward = new THREE.Vector3();
-            camera.getWorldDirection(forward);
-
-            // Move camera forward/backward along that direction
-            camera.position.addScaledVector(forward, delta);
-          })
-          .name("Zoom Slider");
-
-        // Zoom In/Out Buttons
-        cameraNav
-          .add(
-            {
-              zoomIn: () => {
-                camera.position.z -= 1;
-              },
-            },
-            "zoomIn"
-          )
-          .name("Zoom In");
-        cameraNav
-          .add(
-            {
-              zoomOut: () => {
-                camera.position.z += 1;
-              },
-            },
-            "zoomOut"
-          )
-          .name("Zoom Out");
-
-        // Move Up/Down
-        cameraNav
-          .add(
-            {
-              moveUp: () => {
-                camera.position.y += 1;
-              },
-            },
-            "moveUp"
-          )
-          .name("Move Up");
-        cameraNav
-          .add(
-            {
-              moveDown: () => {
-                camera.position.y -= 1;
-              },
-            },
-            "moveDown"
-          )
-          .name("Move Down");
-        // Move Left/Right
-        cameraNav
-          .add(
-            {
-              moveLeft: () => {
-                camera.position.x -= 1;
-              },
-            },
-            "moveLeft"
-          )
-          .name("Move Left");
-        cameraNav
-          .add(
-            {
-              moveRight: () => {
-                camera.position.x += 1;
-              },
-            },
-            "moveRight"
-          )
-          .name("Move Right");
+        // ---- PAN buttons: labels match on-screen motion of the object ----
+        // (object moves up => camera+target move in -up direction)
+        cameraNav.add({ moveUp: () => panCamera(0, -camSpeed()) }, "moveUp").name("Move Up ↑");
+        cameraNav.add({ moveDown: () => panCamera(0, +camSpeed()) }, "moveDown").name("Move Down ↓");
+        cameraNav.add({ moveLeft: () => panCamera(+camSpeed(), 0) }, "moveLeft").name("Move Left ←");
+        cameraNav.add({ moveRight: () => panCamera(-camSpeed(), 0) }, "moveRight").name("Move Right →");
 
         cameraNav.open();
+
+        // ----------------- Scroll & Trackpad gestures -----------------
+        if (controls) controls.enableZoom = false; // avoid double-zoom (we handle wheel)
+
+        const WHEEL_ZOOM_SENS = 0.0015; // zoom feel
+        const WHEEL_PAN_SENS = 0.002; // pan feel
+
+        renderer.domElement.addEventListener(
+          "wheel",
+          (e) => {
+            e.preventDefault();
+
+            if (e.shiftKey || e.altKey) {
+              // SHIFT/ALT held => PAN with the wheel (two-finger trackpad works too)
+              // Object moves same direction as gesture => invert camera move
+              const dx = (e.deltaX || 0) * WHEEL_PAN_SENS * camSpeed();
+              const dy = (e.deltaY || 0) * WHEEL_PAN_SENS * camSpeed();
+              panCamera(-dx, -dy);
+            } else {
+              // no modifier => ZOOM
+              const scale = Math.exp(-e.deltaY * WHEEL_ZOOM_SENS); // wheel up => zoom IN
+              dollyScale(scale);
+            }
+          },
+          { passive: false }
+        );
 
         guiCreated = true;
       } else {
@@ -1601,6 +1560,39 @@ function VisualizateNeurons() {
   drawNeuronConnections();
 
   animate();
+}
+
+// ---- helpers (keep your bbox/controls.target code as before) ----
+function getBasis(cam) {
+  const f = new THREE.Vector3();
+  cam.getWorldDirection(f).normalize();
+  const r = new THREE.Vector3().crossVectors(f, cam.up).normalize();
+  const u = new THREE.Vector3().crossVectors(r, f).normalize();
+  return { forward: f, right: r, up: u };
+}
+function camSpeed(mult = 0.02) {
+  const d = camera.position.distanceTo(controls ? controls.target : new THREE.Vector3());
+  return Math.max(0.001, d * mult);
+}
+function panCamera(dx, dy) {
+  const { right, up } = getBasis(camera);
+  const v = new THREE.Vector3().addScaledVector(right, dx).addScaledVector(up, dy);
+  camera.position.add(v);
+  if (controls) controls.target.add(v);
+}
+
+// IMPORTANT: this mapping makes s>1 = zoom IN (closer), s<1 = zoom OUT
+function dollyScale(s) {
+  if (controls && controls.dollyIn) {
+    if (s > 1) controls.dollyIn(s); // zoom in
+    else controls.dollyOut(1 / s); // zoom out
+    controls.update();
+  } else {
+    // Fallback: move along forward vector by log(s) * speed
+    const { forward } = getBasis(camera);
+    const step = Math.log(s) * camSpeed(1); // log(s)>0 -> in; <0 -> out
+    camera.position.addScaledVector(forward, step);
+  }
 }
 
 function drawNeuronConnections() {
@@ -1857,83 +1849,84 @@ function removeTable() {
 function render() {
   renderer.render(scene, camera);
 }
-
-// function animate() {
-//   requestAnimationFrame(animate);
-
-//   if (controls) controls.update();
-
-//   // Get renderer dimensions
-//   const width = renderer.domElement.clientWidth;
-//   const height = renderer.domElement.clientHeight;
-
-//   // Main full-screen rendering
-//   renderer.setViewport(0, 0, width, height);
-//   renderer.setScissor(0, 0, width, height);
-//   renderer.setScissorTest(true);
-//   renderer.clear();
-//   renderer.render(scene, camera);
-
-//   // --------- INSET CAMERA2 (Back view) ---------
-
-//   // Inset size and position
-//   const insetSize = Math.min(width, height) * 0.25; // 25% of screen size
-//   const insetX = 10; // left margin
-//   const insetY = 260; // top margin
-
-//   // Compute center of the scene (or object group if applicable)
-//   const bbox = new THREE.Box3().setFromObject(scene); // or use specific object/group
-//   const center = new THREE.Vector3();
-//   bbox.getCenter(center);
-
-//   // Compute mirrored position (from center)
-//   const viewDir = new THREE.Vector3().subVectors(center, camera.position).normalize();
-//   const distance = camera.position.distanceTo(center);
-//   const zoomDistance = distance * 0.7; // 0.5 = 2x closer
-//   const mirroredPosition = new THREE.Vector3().copy(center).add(viewDir.multiplyScalar(zoomDistance));
-
-//   // Update camera2
-//   camera2.position.copy(mirroredPosition);
-//   camera2.lookAt(center);
-//   camera2.up.copy(camera.up);
-
-//   if (camera.isPerspectiveCamera) {
-//     // For more zoom in camera2
-//     // const zoomFactor = 2.0; // 0.5 = 2x zoom, 0.25 = 4x zoom, etc.
-//     // camera2.fov = camera.fov * zoomFactor;
-//     camera2.fov = camera.fov;
-//     camera2.updateProjectionMatrix();
-//   } else if (camera.isOrthographicCamera) {
-//     camera2.zoom = camera.zoom; // Orthographic zoom
-//   }
-
-//   camera2.aspect = insetSize / insetSize;
-//   camera2.updateProjectionMatrix();
-
-//   // Render camera2 view
-//   renderer.clearDepth(); // clear depth buffer for second scene
-//   renderer.setViewport(insetX, insetY, insetSize, insetSize);
-//   renderer.setScissor(insetX, insetY, insetSize, insetSize);
-//   renderer.setScissorTest(true);
-//   renderer.render(scene, camera2);
-
-//   // --------- MINI ARROWS (Optional) ---------
-//   if (arrowsScene && arrowsCamera) {
-//     renderer.clearDepth(); // allow rendering over inset
-//     arrowsScene.quaternion.copy(camera.quaternion);
-
-//     const size = 150;
-//     const x = 10;
-//     const y = 110;
-
-//     renderer.setViewport(x, y, size, size);
-//     renderer.setScissor(x, y, size, size);
-//     renderer.setScissorTest(true);
-//     renderer.render(arrowsScene, arrowsCamera);
-//   }
-// }
-
+//without border below
 function animate() {
+  requestAnimationFrame(animate);
+
+  if (controls) controls.update();
+
+  // Get renderer dimensions
+  const width = renderer.domElement.clientWidth;
+  const height = renderer.domElement.clientHeight;
+
+  // Main full-screen rendering
+  renderer.setViewport(0, 0, width, height);
+  renderer.setScissor(0, 0, width, height);
+  renderer.setScissorTest(true);
+  renderer.clear();
+  renderer.render(scene, camera);
+
+  // --------- INSET CAMERA2 (Back view) ---------
+
+  // Inset size and position
+  const insetSize = Math.min(width, height) * 0.25; // 25% of screen size
+  const insetX = 10; // left margin
+  const insetY = 300; // top margin
+
+  // Compute center of the scene (or object group if applicable)
+  const bbox = new THREE.Box3().setFromObject(scene); // or use specific object/group
+  const center = new THREE.Vector3();
+  bbox.getCenter(center);
+
+  // Compute mirrored position (from center)
+  const viewDir = new THREE.Vector3().subVectors(center, camera.position).normalize();
+  const distance = camera.position.distanceTo(center);
+  const zoomDistance = distance * 0.7; // 0.5 = 2x closer
+  const mirroredPosition = new THREE.Vector3().copy(center).add(viewDir.multiplyScalar(zoomDistance));
+
+  // Update camera2
+  camera2.position.copy(mirroredPosition);
+  camera2.lookAt(center);
+  camera2.up.copy(camera.up);
+
+  if (camera.isPerspectiveCamera) {
+    // For more zoom in camera2
+    // const zoomFactor = 2.0; // 0.5 = 2x zoom, 0.25 = 4x zoom, etc.
+    // camera2.fov = camera.fov * zoomFactor;
+    camera2.fov = camera.fov;
+    camera2.updateProjectionMatrix();
+  } else if (camera.isOrthographicCamera) {
+    camera2.zoom = camera.zoom; // Orthographic zoom
+  }
+
+  camera2.aspect = insetSize / insetSize;
+  camera2.updateProjectionMatrix();
+
+  // Render camera2 view
+  renderer.clearDepth(); // clear depth buffer for second scene
+  renderer.setViewport(insetX, insetY, insetSize, insetSize);
+  renderer.setScissor(insetX, insetY, insetSize, insetSize);
+  renderer.setScissorTest(true);
+  renderer.render(scene, camera2);
+
+  // --------- MINI ARROWS (Optional) ---------
+  if (arrowsScene && arrowsCamera) {
+    renderer.clearDepth(); // allow rendering over inset
+    arrowsScene.quaternion.copy(camera.quaternion);
+
+    const size = 180;
+    const x = 10;
+    const y = 130;
+
+    renderer.setViewport(x, y, size, size);
+    renderer.setScissor(x, y, size, size);
+    renderer.setScissorTest(true);
+    renderer.render(arrowsScene, arrowsCamera);
+  }
+}
+
+/*  with border below */
+/* function animate() {
   requestAnimationFrame(animate);
   if (controls) controls.update();
 
@@ -2033,7 +2026,7 @@ function animate() {
     renderer.setScissorTest(true);
     renderer.render(arrowsScene, arrowsCamera);
   }
-}
+} */
 
 let isFinished = false;
 function startAnimation(startVal, endVal) {
