@@ -1872,7 +1872,15 @@ function animate() {
   const insetSize = Math.min(width, height) * 0.25; // 25% of screen size
   const insetX = 10; // left margin
   const insetY = 300; // top margin
+  const border = 1; // 1px border
 
+  // ----- BORDER PASS -----
+  renderer.clearDepth();
+  renderer.setViewport(insetX - border, insetY - border, insetSize + border * 2, insetSize + border * 2);
+  renderer.setScissor(insetX - border, insetY - border, insetSize + border * 2, insetSize + border * 2);
+  renderer.setScissorTest(true);
+  renderer.setClearColor(0xffffff, 1); // border color (white here, change if needed)
+  renderer.clear();
   // Compute center of the scene (or object group if applicable)
   const bbox = new THREE.Box3().setFromObject(scene); // or use specific object/group
   const center = new THREE.Vector3();
