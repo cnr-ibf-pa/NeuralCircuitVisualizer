@@ -826,7 +826,7 @@ input[type="range"] {
 #togglePanelBtn {
   display: none;
   position: fixed;
-  top: 9.8rem;
+  top: 9.5rem;
   left: 25.3%;
   width: auto;
   min-width: 8vw;
@@ -852,7 +852,7 @@ input[type="range"] {
 
 @media (max-width: 576px) {
   #togglePanelBtn {
-    top: 1rem;
+    top: 0.9rem;
     left: 1rem;
     width: 80vw;
     font-size: 0.75rem;
@@ -872,7 +872,7 @@ input[type="range"] {
 }
 @media (min-width: 577px) and (max-width: 768px) {
   #togglePanelBtn {
-    top: 2rem;
+    top: 1.8rem;
     left: 5%;
     width: 60vw;
     font-size: 0.8rem;

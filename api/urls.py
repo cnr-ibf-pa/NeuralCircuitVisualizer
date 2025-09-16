@@ -15,6 +15,7 @@ urlpatterns = [
     path("LoadHumanActivityData/", views.LoadHumanActivityData, name="LoadHumanActivityData"),
     path('connection-types/', list_connection_types),
     path('connections/', get_connection_data),
+    # path("benchmark_accuracy/", views.benchmark_accuracy, name="benchmark_accuracy"),
 
     
 ]
