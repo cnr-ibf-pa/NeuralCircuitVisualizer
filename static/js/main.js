@@ -597,6 +597,384 @@ networkFileInput.addEventListener("change", async (event) => {
   }
 });
 
+// === Benchmark globals ===
+/* 
+let fpsSamples = [];
+let frameCount = 0;
+let lastFpsTime = performance.now();
+let isBenchmarkRun = false;
+let isBenchmarkActive = false; // prevents double-runs
+let cancelBenchmarks = false; // optional manual cancel (future-proof)
+
+// What the renderer actually displayed per time-bin (t_ms -> Set(gid))
+const shownSpikes = new Map();
+const SHOWN_KEEP_MS = 5000;
+
+// Start a lightweight FPS ticker independent of your setInterval playback
+(function fpsTick() {
+  requestAnimationFrame(fpsTick);
+  frameCount++;
+  const now = performance.now();
+  if (now - lastFpsTime >= 1000) {
+    fpsSamples.push(frameCount); // frames in the last second
+    frameCount = 0;
+    lastFpsTime = now;
+  }
+})();
+function clearShownSpikes() {
+  shownSpikes.clear();
+}
+function exportShownSpikesObject() {
+  return Object.fromEntries(Array.from(shownSpikes.entries(), ([t, set]) => [t, Array.from(set)]));
+}
+function recordShownSpikes(tms, gids) {
+  // keep a rolling window to bound memory
+  const key = Number(tms).toFixed(1); // same format you use for Activitys keys
+  if (!shownSpikes.has(key)) shownSpikes.set(key, new Set());
+  const s = shownSpikes.get(key);
+  for (const g of gids) s.add(g);
+
+  // prune old times
+  const cutoff = parseFloat(key) - SHOWN_KEEP_MS;
+  for (const k of shownSpikes.keys()) if (parseFloat(k) < cutoff) shownSpikes.delete(k);
+}
+
+// Expose current playback time (ms) for the benchmark runner
+function getPlaybackTimeMs() {
+  return parseFloat(count) || 0;
+}
+
+// Play until a target time using your existing startAnimation loop
+async function playUntil(tEnd) {
+  // resume if paused
+  isPaused = false;
+  isFinished = false;
+  const from = parseFloat(count) || 0;
+  // start/continue animation up to tEnd
+  startAnimation(from, tEnd);
+
+  // resolve when your loop finishes or count reaches tEnd
+  return new Promise((resolve) => {
+    (function waitFinish() {
+      const t = getPlaybackTimeMs();
+      if (isFinished || t >= tEnd) {
+        resolve();
+        return;
+      }
+      setTimeout(waitFinish, 30);
+    })();
+  });
+}
+
+
+// Hard stop for any playback timer and loop
+function stopAllPlayback() {
+  try {
+    if (typeof interval !== "undefined" && interval) {
+      clearInterval(interval);
+      interval = null;
+    }
+  } catch {}
+  isPaused = true;
+  isFinished = true;
+}
+
+// Simple stats helpers (for your CSV or logs)
+function fpsMean() {
+  return fpsSamples.length ? fpsSamples.reduce((s, x) => s + x, 0) / fpsSamples.length : 0;
+}
+function fpsPercentile(p) {
+  if (!fpsSamples.length) return 0;
+  const a = [...fpsSamples].sort((x, y) => x - y);
+  const i = Math.min(a.length - 1, Math.max(0, Math.floor((p / 100) * a.length)));
+  return a[i];
+}
+
+
+function quantile(arr, q) {
+  if (!arr.length) return 0;
+  const a = [...arr].sort((x, y) => x - y);
+  const pos = (a.length - 1) * q;
+  const base = Math.floor(pos);
+  const rest = pos - base;
+  return a[base] + (a[base + 1] !== undefined ? rest * (a[base + 1] - a[base]) : 0);
+}
+const median = (arr) => quantile(arr, 0.5);
+document.getElementById("runBenchmarksBtn").addEventListener("click", async () => {
+  if (isBenchmarkActive) {
+    benchLog("Benchmark already running…");
+    return;
+  }
+  benchLogEl.textContent = ""; // clear log
+  isBenchmarkActive = true;
+  cancelBenchmarks = false;
+  try {
+    await runSizeBenchmarksAggregated({ repeats: 3, windowMs: 8000 }); // 10k,100k,1M
+  } finally {
+    isBenchmarkActive = false;
+  }
+});
+
+async function runSizeBenchmarksAggregated({ repeats = 3, windowMs = 8000 } = {}) {
+  const sizes = [10_000, 100_000, 1_000_000];
+  const btn = document.getElementById("runBenchmarksBtn");
+  btn.disabled = true;
+
+  const hw = getHardwareInfo();
+  const totalRuns = sizes.length * repeats;
+  const perRunMs = 2000 + windowMs; // warm-up + window
+  benchLog(`Plan: ${totalRuns} runs × ${(perRunMs / 1000).toFixed(1)}s playback each (window ${windowMs / 1000}s + warm-up 2s).`);
+  benchLog(`GPU: ${hw.gpuVendor} | ${hw.gpuRenderer} | DPR ${hw.dpr} | ${hw.screenW}x${hw.screenH}`);
+
+  const originalNetwork = NetworkArray;
+  const csvRows = [];
+
+  try {
+    for (const N of sizes) {
+      if (cancelBenchmarks) break;
+      benchLog(`\n=== Dataset: ${N.toLocaleString()} neurons ===`);
+
+      const fpsAvgRuns = [],
+        fpsP05Runs = [],
+        fpsP95Runs = [];
+      const exactRuns = [],
+        precRuns = [],
+        recRuns = [];
+      const tpRuns = [],
+        fpRuns = [],
+        fnRuns = [],
+        binRuns = [];
+
+      for (let r = 1; r <= repeats; r++) {
+        if (cancelBenchmarks) break;
+        benchLog(`• Run ${r}/${repeats}`);
+
+        // Build synthetic N-sized dataset
+        NetworkArray = makeDataset(N);
+        flag = true;
+        ishuman = false;
+        ishalf = false;
+
+        // Rebuild scene
+        if (particles) {
+          scene.remove(particles);
+          particles.geometry?.dispose();
+          particles.material?.dispose?.();
+        }
+        VisualizateNeurons();
+
+        // Warm-up 2s
+        fpsSamples = [];
+        frameCount = 0;
+        lastFpsTime = performance.now();
+        await new Promise((res) => setTimeout(res, 2000));
+
+        // Measure one window
+        isBenchmarkRun = true;
+        clearShownSpikes();
+        fpsSamples = [];
+        frameCount = 0;
+        lastFpsTime = performance.now();
+
+        const t0 = getPlaybackTimeMs();
+        const tEnd = t0 + windowMs;
+        await playUntil(tEnd);
+        isBenchmarkRun = false;
+
+        // FPS stats for this run
+        const fAvg = +fpsMean().toFixed(2);
+        const f05 = +fpsPercentile(5).toFixed(2);
+        const f95 = +fpsPercentile(95).toFixed(2);
+        benchLog(`  FPS avg=${fAvg} [p05=${f05}, p95=${f95}]`);
+
+        // Accuracy
+        const acc = await sendAccuracyToServer({
+          dir: uniqueDirectory,
+          from_ms: t0,
+          to_ms: tEnd,
+          shown: exportShownSpikesObject(),
+        });
+        benchLog(`  Accuracy: exact=${(acc.exact_match * 100).toFixed(2)}% p=${(acc.precision * 100).toFixed(2)}% r=${(acc.recall * 100).toFixed(2)}% (TP=${acc.tp}, FP=${acc.fp}, FN=${acc.fn}, bins=${acc.bins})`);
+
+        fpsAvgRuns.push(fAvg);
+        fpsP05Runs.push(f05);
+        fpsP95Runs.push(f95);
+        exactRuns.push(acc.exact_match);
+        precRuns.push(acc.precision);
+        recRuns.push(acc.recall);
+        tpRuns.push(acc.tp);
+        fpRuns.push(acc.fp);
+        fnRuns.push(acc.fn);
+        binRuns.push(acc.bins);
+      }
+
+      // Aggregate across repeats
+      const agg = {
+        dataset_size: N,
+        runs: repeats,
+        fps_avg_median: +median(fpsAvgRuns).toFixed(2),
+        fps_p05_median: +median(fpsP05Runs).toFixed(2),
+        fps_p95_median: +median(fpsP95Runs).toFixed(2),
+        exact_median: +median(exactRuns).toFixed(6),
+        precision_median: +median(precRuns).toFixed(6),
+        recall_median: +median(recRuns).toFixed(6),
+        tp_median: Math.round(median(tpRuns)),
+        fp_median: Math.round(median(fpRuns)),
+        fn_median: Math.round(median(fnRuns)),
+        bins_median: Math.round(median(binRuns)),
+      };
+
+      benchLog(`→ Aggregated: FPS ${agg.fps_avg_median} [${agg.fps_p05_median}–${agg.fps_p95_median}] | exact=${(agg.exact_median * 100).toFixed(2)}%`);
+
+      // Resource snapshot (last build of this size)
+      const buf = estimateGPUBufferMB();
+      const mem = hw.memory
+        ? {
+            js_used_mb: +(hw.memory.usedJSHeapSize / 1e6).toFixed(1),
+            js_total_mb: +(hw.memory.totalJSHeapSize / 1e6).toFixed(1),
+          }
+        : { js_used_mb: null, js_total_mb: null };
+
+      csvRows.push({
+        timestamp: new Date().toISOString(),
+        gpu_vendor: hw.gpuVendor,
+        gpu_renderer: hw.gpuRenderer,
+        dpr: hw.dpr,
+        screen: `${hw.screenW}x${hw.screenH}`,
+        dataset_size: N,
+        repeats,
+        fps_avg_median: agg.fps_avg_median,
+        fps_p05_median: agg.fps_p05_median,
+        fps_p95_median: agg.fps_p95_median,
+        exact_median: agg.exact_median,
+        precision_median: agg.precision_median,
+        recall_median: agg.recall_median,
+        tp_median: agg.tp_median,
+        fp_median: agg.fp_median,
+        fn_median: agg.fn_median,
+        bins_median: agg.bins_median,
+        gpu_points: buf.n,
+        gpu_buffers_mb: +buf.mb.toFixed(1),
+        js_used_mb: mem.js_used_mb,
+        js_total_mb: mem.js_total_mb,
+      });
+    }
+
+    // Restore original dataset + scene
+    NetworkArray = originalNetwork;
+    if (particles) {
+      scene.remove(particles);
+      particles.geometry?.dispose();
+      particles.material?.dispose?.();
+    }
+    VisualizateNeurons();
+
+    // Download CSV
+    const shortGPU = (hw.gpuRenderer || "gpu").replace(/[^\w]+/g, "_").slice(0, 40);
+    downloadCSV(csvRows, `ncv_benchmarks_10k_100k_1M_${shortGPU}.csv`);
+    benchLog("\n✅ Benchmarks complete. CSV downloaded.");
+  } catch (e) {
+    console.error(e);
+    benchLog("❌ Benchmark error: " + e.message);
+  } finally {
+    // hard stop anything left and restore UI flags
+    stopAllPlayback();
+    btn.disabled = false;
+    isBenchmarkRun = false;
+  }
+}
+
+function makeDataset(targetCount) {
+  // Flatten first
+  const flat = NetworkArray.flat();
+  if (flat.length === 0) throw new Error("No network loaded yet.");
+
+  const out = [];
+  const base = flat.length;
+
+  // If we need more than available, tile deterministically
+  let i = 0,
+    nextId = 1;
+  while (out.length < targetCount) {
+    const p = flat[i % base];
+    // Copy & assign stable new id to avoid GID collisions
+    out.push({ id: nextId++, x: p.x, y: p.y, z: p.z, type: p.type ?? (p.id < 261845 ? 1 : 0), ntype: p.ntype ?? 49 });
+    i++;
+  }
+  return [out]; // same shape as NetworkArray
+}
+
+async function sendAccuracyToServer({ dir, from_ms, to_ms, shown }) {
+  const r = await fetch(`${baseURL}/api/benchmark_accuracy/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dir, from_ms, to_ms, shown }),
+  });
+
+  if (!r.ok) {
+    const err = await r.text();
+    throw new Error(`Accuracy API failed (${r.status}): ${err}`);
+  }
+  return r.json(); // { exact_match, precision, recall, tp, fp, fn, ... }
+}
+
+// Simple logger
+const benchLogEl = document.getElementById("benchLog");
+const benchLog = (msg) => {
+  benchLogEl.textContent += msg + "\n";
+  benchLogEl.scrollTop = benchLogEl.scrollHeight;
+};
+
+// CSV download
+function downloadCSV(rows, filename) {
+  if (!rows.length) return;
+  const header = Object.keys(rows[0]).join(",");
+  const lines = rows.map((r) =>
+    Object.values(r)
+      .map((v) => (typeof v === "string" && v.includes(",") ? `"${v}"` : v))
+      .join(",")
+  );
+  const csv = [header, ...lines].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// Hardware + memory snapshot
+function getHardwareInfo() {
+  const gl = renderer.getContext();
+  const ext = gl.getExtension("WEBGL_debug_renderer_info");
+  const vendor = ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR);
+  const rendererName = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+  const mem = performance.memory
+    ? {
+        jsHeapSizeLimit: performance.memory.jsHeapSizeLimit,
+        totalJSHeapSize: performance.memory.totalJSHeapSize,
+        usedJSHeapSize: performance.memory.usedJSHeapSize,
+      }
+    : null;
+  return {
+    userAgent: navigator.userAgent,
+    screenW: window.screen.width,
+    screenH: window.screen.height,
+    dpr: window.devicePixelRatio || 1,
+    gpuVendor: vendor,
+    gpuRenderer: rendererName,
+    memory: mem,
+  };
+}
+
+// Rough GPU buffer estimate
+function estimateGPUBufferMB() {
+  const n = geometry?.getAttribute("position")?.count || 0;
+  // position(3), color(3), size(1), gid(1) -> 8 floats * 4 bytes
+  const bytes = n * 8 * 4;
+  return { n, mb: bytes / 1e6 };
+} */
+
 hdfFileInput.addEventListener("change", async (event) => {
   resetSpikeState();
   resetPlaybackConfig();
@@ -2061,6 +2439,17 @@ function startAnimation(startVal, endVal) {
         clearInterval(interval);
         interval = null;
         resetParticles();
+
+        // ⬅️ key: DON'T reset timeline or restart when benchmarking
+        // if (!isBenchmarkRun) {
+        //   count = 0.0;
+        //   count = startVal; // your previous behavior
+        //   if (selectedChunkNumber > 0) {
+        //     count = parseFloat(firstKey).toFixed(1);
+        //     currentTimeDisplay.textContent = count;
+        //   }
+        // }
+
         count = 0.0;
         if (mediaRecorder && mediaRecorder.state === "recording") {
           stopRecording(); //  Automatically stop and download
@@ -2082,6 +2471,7 @@ function startAnimation(startVal, endVal) {
           currentTimeDisplay.textContent = count;
         }
         isFinished = true;
+
         return;
       }
       //   console.log("count:", count, "simTimestep:", simTimestep);
@@ -2226,6 +2616,8 @@ function animateTimeRange_Without_Connection(currentTime, targetSize) {
     const particleIds = Activitys[key];
 
     if (particleIds !== undefined) {
+      // NEW: record exactly what you displayed at this time-bin
+      /* recordShownSpikes(key, particleIds); */
       animateParticles_Without_Connection(particleIds, targetSize);
     }
   }

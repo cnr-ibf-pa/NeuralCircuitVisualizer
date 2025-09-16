@@ -80,20 +80,25 @@
       </div>
 
       <div class="container-fluid main-container g-0">
-        <div class="row align-items-center py-3 px-2 header-row" style="background-color: #2f3542">
+        <div class="row align-items-center py-2 px-2 header-row" style="background-color: #2f3542">
           <!-- Logo -->
           <div class="col-12 col-md-3 text-center text-md-start mb-2 mb-md-0">
             <!-- <object data="img/logoEscritta.svg" class="img-fluid" type="image/svg+xml" style="max-height: 60px"></object> -->
-            <img src="{% static 'img/logoEscritta.svg' %}" alt="Logo" style="max-height: 60px" />
+            <a href="https://ebrains-italy.eu/" title="Italian distributed research infrastructure" target="_blank" rel="noopener noreferrer"><img src="{% static 'img/logoEscritta.svg' %}" alt="Logo" style="max-height: 60px" /></a>
           </div>
 
           <!-- Title -->
-          <div class="col-12 col-md-6 text-center mb-2 mb-md-0 text-white">
-            <h2 class="visualizer-title">Neural Circuit Visualizer</h2>
+          <div class="col-12 col-md-6 text-center text-white">
+            <span class="visualizer-title">Neural Circuit Visualizer</span>
           </div>
 
           <!-- Header Icons -->
           <div class="col-12 col-md-3 d-flex align-items-center justify-content-end text-center text-md-end mb-2 mb-md-0 pe-4">
+            {% comment %} benchmark accuracy code {% endcomment %} {% comment %}
+            <button id="runBenchmarksBtn">Run Benchmarks</button>
+            <pre id="benchLog" style="max-height: 220px; overflow: auto"></pre>
+            {% endcomment %}
+
             <div class="connection-panel" id="connectionPanel">
               <label for="connTypeDropdown">Connections</label>
               <select id="connTypeDropdown">

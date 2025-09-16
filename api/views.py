@@ -26,83 +26,59 @@ import networkx as nx
 from collections import defaultdict
 import shutil, re
 
-# @csrf_exempt
-# def upload_and_save_Network_file(request):
-#     try:
-#         if request.method == 'POST' and request.FILES.get('file'):
-#             uploaded_file = request.FILES.get('file')
-#             chunk_index = request.POST.get('chunkIndex')
-#             total_chunks = request.POST.get('totalChunks')
-#             unique_directory = request.POST.get('uniqueDirectory')
-#             ext = request.POST.get('fileType')
+# benchmark accuracy code
+""" @csrf_exempt
+def benchmark_accuracy(request):
+    try:
+        if request.method != 'POST':
+            return JsonResponse({'error': 'POST required'}, status=400)
 
+        payload = json.loads(request.body.decode('utf-8'))
+        unique_directory = payload.get('dir')
+        from_ms = float(payload.get('from_ms', 0))
+        to_ms = float(payload.get('to_ms', 0))
+        shown = payload.get('shown', {})  # {"8.3":[gid,...], "8.4":[...], ...}
 
+        if not unique_directory or to_ms <= from_ms:
+            return JsonResponse({'error': 'Missing/invalid parameters'}, status=400)
 
-#             if not all([chunk_index, total_chunks, unique_directory,ext]):
-#                 return JsonResponse({'error': 'Missing parameters'}, status=400)
+        base_dir = os.path.join(settings.MEDIA_ROOT, 'csv', unique_directory)
+        activity_path = os.path.join(base_dir, "activity.csv")
+        if not os.path.exists(activity_path):
+            return JsonResponse({'error': 'activity.csv not found'}, status=404)
 
-#             try:
-#                 chunk_index = int(chunk_index)
-#                 total_chunks = int(total_chunks)
-#             except ValueError:
-#                 return JsonResponse({'error': 'Invalid parameters'}, status=400)
+        df = pd.read_csv(activity_path, header=None, names=['id','t'], dtype={'id': int, 't': float})
+        df = df[(df['t'] >= from_ms) & (df['t'] <= to_ms)]
 
-#             file_directory = os.path.join(settings.MEDIA_ROOT, 'csv', unique_directory)
-#             os.makedirs(file_directory, exist_ok=True)  # Ensure the directory exists
+        gt_map = {str(t): set(map(int, grp['id'].tolist())) for t, grp in df.groupby('t')}
+        sh_map = {str(float(t)): set(map(int, gids)) for t, gids in shown.items()}
+        times = set(gt_map.keys()) | set(sh_map.keys())
 
-#             # Save chunk to a temporary file
-#             temp_file_path = os.path.join(file_directory, f"{uploaded_file.name}.part{chunk_index}")
-#             with open(temp_file_path, 'wb+') as temp_file:
-#                 for chunk_data in uploaded_file.chunks():
-#                     temp_file.write(chunk_data)
+        tp = fp = fn = exact_hits = 0
+        total_bins = 0
+        for t in times:
+            gt = gt_map.get(t, set())
+            sh = sh_map.get(t, set())
+            total_bins += 1
+            if gt == sh: exact_hits += 1
+            tp += len(gt & sh)
+            fp += len(sh - gt)
+            fn += len(gt - sh)
 
+        precision = tp / (tp + fp) if (tp + fp) else 1.0
+        recall    = tp / (tp + fn) if (tp + fn) else 1.0
+        exact     = exact_hits / total_bins if total_bins else 1.0
 
-#             # Process the file after the last chunk is uploaded
-#             if chunk_index == total_chunks - 1:
-#                 final_file_path = os.path.join(file_directory, uploaded_file.name)
-#                 with open(final_file_path, 'wb') as final_file:
-#                     for i in range(total_chunks):
-#                         part_path = os.path.join(file_directory, f"{uploaded_file.name}.part{i}")
-#                         # Retry mechanism
-#                         for _ in range(10):  # Retry 5 times
-#                             if os.path.exists(part_path):
-#                                 with open(part_path, 'rb') as part_file:
-#                                     final_file.write(part_file.read())
-#                                 os.remove(part_path)  # Optionally, remove the part file after it is read
-#                                 break
-#                             else:
-#                                 time.sleep(2)  # Wait 0.5 seconds before retrying
-#                         else:
-#                             return JsonResponse({'error': f'Part file not found: {part_path}'}, status=500)
-
-
-#                 if ext == 'csv':
-#                     file_type = detect_file_type(final_file_path)
-#                     if file_type == 'network':
-#                         process_network_csv(final_file_path)
-#                     elif file_type == 'activity':
-#                         # process_activity_csv(final_file_path,json_directory)
-#                         activity_file_path = os.path.join(file_directory, 'activity.csv')
-#                         os.rename(final_file_path, activity_file_path)
-#                 elif ext == 'hdf5':
-#                     # list_hdf5_datasets(final_file_path)
-#                     process_hdf5_file(final_file_path)
-
-#             response_data = {'status': 'success'}
-#             return JsonResponse(response_data, safe=False, content_type='application/json')
-
-#     except Exception as e:
-#         return JsonResponse({'error': str(e)}, status=500)
-
-
-
+        return JsonResponse({
+            'from_ms': from_ms, 'to_ms': to_ms,
+            'precision': precision, 'recall': recall, 'exact_match': exact,
+            'tp': tp, 'fp': fp, 'fn': fn, 'bins': total_bins
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    """ 
 
 PART_RE = re.compile(r"\.part(\d+)$")
-
-def _expected_sets(base_dir, fname, total):
-    z = [os.path.join(base_dir, f"{fname}.part{i}") for i in range(total)]           # 0..N-1
-    o = [os.path.join(base_dir, f"{fname}.part{i}") for i in range(1, total + 1)]    # 1..N
-    return z, o
 
 def _existing_indices(base_dir, fname):
     # return {indices_found}, e.g. {0,1,2}
