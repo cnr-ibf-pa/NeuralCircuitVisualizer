@@ -2475,7 +2475,7 @@ function animate() {
   // --------- INSET CAMERA2 (Back view) ---------
 
   // Inset size and position
-  const insetSize = Math.min(width, height) * 0.25; // 25% of screen size
+  const insetSize = Math.min(width, height) * 0.23; // 25% of screen size
   const insetX = 10; // left margin
   const insetY = 290; // top margin
   const border = 1; // 1px border
