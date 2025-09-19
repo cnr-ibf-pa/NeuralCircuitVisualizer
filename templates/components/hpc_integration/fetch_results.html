@@ -1,43 +1,37 @@
 {% block content %}
-<div class="accordion-item">
-  <h2 class="accordion-header" id="fetch-jobs-heading"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fetch-jobs-collapse" aria-expanded="false" aria-controls="fetch-jobs-collapse">FETCH RESULTS</button></h2>
-  <div id="fetch-jobs-collapse" class="accordion-collapse collapse" aria-labelledby="fetch-jobs-heading" data-bs-parent="#accordionFlushExample">
-    <div class="accordion-body">
-      <form id="fetch-jobs-form">
-        {% csrf_token %}
-        <div class="mb-3">
-          <label for="hpc-selector" class="form-label">Select HPC Platform:</label>
-          <select class="form-select" id="hpc-selector" name="hpc">
-            <option value="CINECA - G100">CINECA - G100</option>
-            <option id="JUSUF-SA" value="JUSUF - ServiceAccount">JUSUF - JSC (behind the CLS-ServiceAccount)</option>
-          </select>
-        </div>
-        <button type="submit" class="btn btn-success w-100 d-flex-inline" id="fetch-job-button">
-          <div class="spinner-border spinner-border-sm d-none" role="status" id="fetch-job-spinner">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          Fetch jobs
-        </button>
-      </form>
-      <div id="fetchedJobsDiv" class="d-block d-none">
-        <hr />
-        <div class="accordion" id="fetchedJobsAccordion">
-          <div class="accordion-item">
-            <h2 class="accordion-header" id="headingOne">
-              <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">Fetched Jobs</button>
-            </h2>
-            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#fetchedJobsAccordion">
-              <div class="accordion-body" style="padding: 0">
-                <div id="fetched-jobs-list"></div>
-              </div>
-            </div>
+<div class="accordion-body">
+  <form id="fetch-jobs-form">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="hpc-selector" class="form-label">Select HPC Platform:</label>
+      <select class="form-select" id="hpc-selector" name="hpc">
+        <option value="CINECA - G100">CINECA - G100</option>
+        <option id="JUSUF-SA" value="JUSUF - ServiceAccount">JUSUF - JSC (behind the CLS-ServiceAccount)</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-success w-100 d-flex-inline" id="fetch-job-button">
+      <div class="spinner-border spinner-border-sm d-none" role="status" id="fetch-job-spinner">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      Fetch jobs
+    </button>
+  </form>
+  <div id="fetchedJobsDiv" class="d-block d-none">
+    <hr />
+    <div class="accordion" id="fetchedJobsAccordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">Fetched Jobs</button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#fetchedJobsAccordion">
+          <div class="accordion-body" style="padding: 0">
+            <div id="fetched-jobs-list"></div>
           </div>
         </div>
       </div>
     </div>
   </div>
 </div>
-
 <script>
   function addJobToList(jobId, details) {
     console.log("Adding job to list:", jobId, details);

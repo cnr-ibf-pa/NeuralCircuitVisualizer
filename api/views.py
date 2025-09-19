@@ -464,6 +464,9 @@ def get_chunk_data(request):
         # Generate visualization images
         # raster_img = generate_raster_plot(chunk_data)
         hist_img = generate_spike_histogram(chunk_data, chunk_number)
+        
+        # in get_chunk_data(...) right before the final JsonResponse
+        hist = compute_hist_data(chunk_data, chunk_number, bins=100)
 
        # Return both chunk data and GIDs activity indexes in a single response
         return JsonResponse({
@@ -471,6 +474,7 @@ def get_chunk_data(request):
             "total_spikes": total_spikes,  # Total spikes count
             # "raster_plot": raster_img,
             "histogram": hist_img,
+             "hist_data": hist,                     # NEW: JSON for interactive plot
             "gids_activity_indexes": gids_activity_indexes
         })
 
@@ -518,6 +522,149 @@ def generate_raster_plot(chunk_data):
 
 
 
+# def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="white"):
+#     try:
+#         if not chunk_data or not isinstance(chunk_data, dict):
+#             return "Error: No data available for plotting."
+
+#         # Convert spike times and collect active neurons
+#         all_spike_times = []
+#         active_neurons = set()
+#         for t_str, gids in chunk_data.items():
+#             t = float(t_str)
+#             all_spike_times.extend([t] * len(gids))
+#             active_neurons.update(gids)
+
+#         if not all_spike_times:
+#             return "Error: No spike times in chunk data."
+
+#         # Sort times to get actual range
+#         min_time = min(all_spike_times)
+#         max_time = max(all_spike_times)
+
+#         # Set time range based on chunk number
+#         if str(chunk_number) == "0":
+#             t_min = 0  # Start Chunk 0 from 0 ms
+#         else:
+#             t_min = min_time  # Start other chunks from first spike time
+
+#         t_max = max_time  # End all chunks at last spike time
+
+#         # Compute histogram
+#         bin_edges = np.linspace(t_min, t_max, bins + 1)
+#         spike_counts, _ = np.histogram(all_spike_times, bins=bin_edges)
+
+#         # Compute Mean Firing Rate (MFR)
+#         total_spikes = len(all_spike_times)
+#         total_neurons = len(active_neurons)
+#         total_time_sec = (t_max - t_min) / 1000.0  # ms → seconds
+#         mfr = (total_spikes / total_neurons) / total_time_sec if total_neurons > 0 and total_time_sec > 0 else 0
+
+#         # Plot histogram
+#         fig, ax = plt.subplots(figsize=(12, 6), dpi=300)
+#         fig.patch.set_facecolor("#33373d")
+#         ax.set_facecolor("#33373d")
+
+#         bars = ax.bar(bin_edges[:-1], spike_counts, width=np.diff(bin_edges), color=color, alpha=0.7, edgecolor="black")
+
+#         # Annotate legend
+#         legend_labels = {
+#             "# Max Spike": max(spike_counts),
+#             "# Min Spike": min(spike_counts),
+#             "# Spikes": total_spikes,
+#             "# Neurons": total_neurons,
+#             "# Min Time (ms)": round(t_min, 1),
+#             "# Max Time (ms)": round(t_max, 1),
+#         }
+#         legend_text = "\n".join([f"{key}: {value}" for key, value in legend_labels.items()])
+#         plt.gcf().text(0.80, 0.79, legend_text, fontsize=8, bbox=dict(facecolor='white', alpha=0.5), color='black')
+
+#         ax.set_xlim(t_min, t_max)
+#         ax.set_xlabel("Time (ms)", fontsize=16, fontweight="bold", color="white")
+#         ax.set_ylabel("Number of Firing Neurons", fontsize=16, fontweight="bold", color="white")
+#         ax.set_title(f"Chunk {chunk_number} - MFR: {mfr:.2f} Hz", fontsize=18, fontweight="bold", color="white")
+
+#         ax.tick_params(axis='x', colors='white')
+#         ax.tick_params(axis='y', colors='white')
+#         ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
+#         ax.grid(True, linestyle="--", alpha=0.4)
+
+#         for label in ax.get_xticklabels() + ax.get_yticklabels():
+#             label.set_color("white")
+
+#         # Convert to base64 image
+#         img_buffer = io.BytesIO()
+#         plt.savefig(img_buffer, format="png", bbox_inches="tight", dpi=300, facecolor=fig.get_facecolor())
+#         img_buffer.seek(0)
+#         img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+#         plt.close()
+
+#         return img_base64
+
+#     except Exception as e:
+#         return f"Error generating spike histogram: {str(e)}"
+
+
+
+def compute_hist_data(chunk_data, chunk_number, bins=100, total_neurons=None):
+    # flatten (t,gids)
+    times = []
+    times_gids = []  # list of (t, set(gids)) per unique t
+    gid_set = set()
+    for t_str, gids in chunk_data.items():
+        t = float(t_str)
+        gids_set = set(gids)
+        gid_set |= gids_set
+        times.extend([t] * len(gids))
+        times_gids.append((t, gids_set))
+
+    if not times:
+        return {"bin_edges": [], "bin_centers": [], "counts": [], "sd_poisson": [], "sd_binomial": [], "t_min": 0, "t_max": 0, "mfr": 0}
+
+    t_min = 0.0 if str(chunk_number) == "0" else min(times)
+    t_max = max(times)
+    edges = np.linspace(t_min, t_max, bins + 1)
+    counts, _ = np.histogram(times, bins=edges)
+
+    # Poisson SD
+    sd_poisson = np.sqrt(counts)
+
+    # Binomial SD (unique neurons per bin)
+    N = total_neurons if total_neurons is not None else (len(gid_set) or 1)
+    uniq_per_bin = np.zeros(bins, dtype=int)
+    # bucket times_gids by bin (fast pass)
+    for t, gids in times_gids:
+        if t < t_min or t >= t_max: 
+            continue
+        i = np.searchsorted(edges, t, side='right') - 1
+        if 0 <= i < bins:
+            # accumulate per-bin unique neurons
+            # WARNING: for huge data this set-per-bin can be heavy;
+            # replace with a counting bloom or skip if not needed.
+            pass
+    # Memory-light alternative: approximate k with counts capped at 1 per neuron per bin
+    # If you can compute uniqs, do:
+    # p = uniq_per_bin / float(N)
+    # sd_binomial = np.sqrt(N * p * (1.0 - p))
+    sd_binomial = None  # optional
+
+    total_spikes = len(times)
+    total_time_sec = max((t_max - t_min) / 1000.0, 1e-9)
+    mfr = (total_spikes / max(N, 1)) / total_time_sec
+
+    return {
+        "bin_edges": edges.tolist(),
+        "bin_centers": ((edges[:-1] + edges[1:]) / 2.0).tolist(),
+        "counts": counts.tolist(),
+        "sd_poisson": sd_poisson.tolist(),
+        "sd_binomial": sd_binomial.tolist() if sd_binomial is not None else [],
+        "t_min": float(t_min),
+        "t_max": float(t_max),
+        "mfr": float(mfr),
+    }
+    
+    
+    
 def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="white"):
     try:
         if not chunk_data or not isinstance(chunk_data, dict):
@@ -540,20 +687,30 @@ def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="white"):
 
         # Set time range based on chunk number
         if str(chunk_number) == "0":
-            t_min = 0  # Start Chunk 0 from 0 ms
+            t_min = 0
         else:
-            t_min = min_time  # Start other chunks from first spike time
+            t_min = min_time
 
-        t_max = max_time  # End all chunks at last spike time
+        t_max = max_time
 
         # Compute histogram
         bin_edges = np.linspace(t_min, t_max, bins + 1)
         spike_counts, _ = np.histogram(all_spike_times, bins=bin_edges)
 
+        # Compute per-bin standard deviation
+        std_per_bin = []
+        for i in range(len(bin_edges) - 1):
+            bin_start, bin_end = bin_edges[i], bin_edges[i + 1]
+            bin_spikes = [t for t in all_spike_times if bin_start <= t < bin_end]
+            if len(bin_spikes) > 1:
+                std_per_bin.append(np.std(bin_spikes))
+            else:
+                std_per_bin.append(0.0)  # No variation if ≤1 spike
+
         # Compute Mean Firing Rate (MFR)
         total_spikes = len(all_spike_times)
         total_neurons = len(active_neurons)
-        total_time_sec = (t_max - t_min) / 1000.0  # ms → seconds
+        total_time_sec = (t_max - t_min) / 1000.0
         mfr = (total_spikes / total_neurons) / total_time_sec if total_neurons > 0 and total_time_sec > 0 else 0
 
         # Plot histogram
@@ -561,9 +718,16 @@ def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="white"):
         fig.patch.set_facecolor("#33373d")
         ax.set_facecolor("#33373d")
 
-        bars = ax.bar(bin_edges[:-1], spike_counts, width=np.diff(bin_edges), color=color, alpha=0.7, edgecolor="black")
+        bars = ax.bar(bin_edges[:-1], spike_counts, width=np.diff(bin_edges), 
+                      color=color, alpha=0.7, edgecolor="black", align="edge")
 
-        # Annotate legend
+        # Annotate each bar with its std
+        for bar, std_val in zip(bars, std_per_bin):
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width() / 2, height + 0.5,
+                    f"{std_val:.1f}", ha="center", va="bottom", fontsize=6, color="yellow", rotation=90)
+
+        # Legend info
         legend_labels = {
             "# Max Spike": max(spike_counts),
             "# Min Spike": min(spike_counts),
@@ -573,7 +737,8 @@ def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="white"):
             "# Max Time (ms)": round(t_max, 1),
         }
         legend_text = "\n".join([f"{key}: {value}" for key, value in legend_labels.items()])
-        plt.gcf().text(0.80, 0.79, legend_text, fontsize=8, bbox=dict(facecolor='white', alpha=0.5), color='black')
+        plt.gcf().text(0.80, 0.79, legend_text, fontsize=8, 
+                       bbox=dict(facecolor='white', alpha=0.5), color='black')
 
         ax.set_xlim(t_min, t_max)
         ax.set_xlabel("Time (ms)", fontsize=16, fontweight="bold", color="white")
@@ -599,7 +764,6 @@ def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="white"):
 
     except Exception as e:
         return f"Error generating spike histogram: {str(e)}"
-
 
 
 def generate_network_graph(network_data):

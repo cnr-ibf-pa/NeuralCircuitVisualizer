@@ -1,146 +1,141 @@
 {% block content %}
-  <div class="accordion-item">
-    <h2 class="accordion-header" id="job-submission-heading">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#job-submission-collapse" aria-expanded="false" aria-controls="job-submission-collapse">RUN SIMULATION</button>
-    </h2>
-    <div id="job-submission-collapse" class="accordion-collapse collapse" aria-labelledby="job-submission-heading" data-bs-parent="#accordionFlushExample">
-      <div class="accordion-body">
-        <form id="optimization-settings-forms">
-          {% csrf_token %}
-          <div class="row">
-            <div class="mb-3">
-              <label for="circuit-selector" class="form-label">Select circuit:</label>
-              <select class="form-select" id="circuit-selector" name="circuit" required onchange="onCircuitSelection(event)">
-                {% comment %} <option value="human" selected>Human</option> {% endcomment %}
-                <option value="mouse">Mouse</option>
-              </select>
-            </div>
-          </div>
-          <div class="row">
-            <div class="mb-3">
-              <label for="hpc-selector" class="form-label">Select HPC Platform:</label>
-              <select class="form-select" id="hpc-selector" name="hpc">
-                <option selected id="JUSUF-SA" data-show-for="mouse" value="JUSUF - ServiceAccount">JUSUF - JSC (all users via service account)</option>
-                <option value="CINECA - G100">CINECA - G100 (icei project users)</option>
-              </select>
-            </div>
-          </div>
-          <div id="mouse-row-input-1" class="row d-none">
-            <div class="col">
-              <div class="mb-3">
-                <label for="pyr2pyr" class="form-label">PYR2PYR:</label>
-                <input type="number" class="form-control" id="pyr2pyr" name="pyr2pyr" min="1.0" max="10.0" step="0.1" value="3.0" aria-describedby="pyr2pyr-help" />
-              </div>
-            </div>
-            <div class="col">
-              <div class="mb-3">
-                <label for="inh2inh" class="form-label">INH2INH:</label>
-                <input type="number" class="form-control" id="inh2inh" name="inh2inh" min="1.0" max="10.0" step="0.1" value="1.0" aria-describedby="inh2inh-help" />
-              </div>
-            </div>
-          </div>
-          <div id="mouse-row-input-2" class="row d-none">
-            <div class="col">
-              <div class="mb-3">
-                <label for="inh2pyr" class="form-label">INH2PYR:</label>
-                <input type="number" class="form-control" id="inh2pyr" name="inh2pyr" min="1.0" max="10.0" step="0.1" value="3.0" aria-describedby="inh2py2-help" />
-              </div>
-            </div>
-            <div class="col">
-              <div class="mb-3">
-                <label for="pyr2inh" class="form-label">PYR2INH:</label>
-                <input type="number" class="form-control" id="pyr2inh" name="pyr2inh" min="1.0" max="10.0" step="0.1" value="1.0" aria-describedby="py2inh-help" />
-              </div>
-            </div>
-          </div>
-          <div id="human-row-input-1" class="row">
-            <div class="col">
-              <div class="mb-3">
-                <label for="background_frequency" class="form-label">Background frequency:</label>
-                <input type="number" class="form-control" id="background_frequency" name="background_frequency" min="1.0" max="10.0" step="0.1" value="1.0" aria-describedby="background-frequency" />
-              </div>
-            </div>
-          </div>
-          <div id="common-row-input-1" class="row">
-            <div class="col">
-              <div class="mb-3">
-                <label for="stimulus_1_synapses_weight" class="form-label">Stimulus 1 - Synapses weight:</label>
-                <input type="number" class="form-control" id="stimulus_1_synapses_weight" name="stimulus_1_synapses_weight" min="1.0" max="10.0" step="0.1" value="1.0" aria-describedby="stimulus_1_synapses_weight" />
-              </div>
-            </div>
-          </div>
-          <div id="common-row-input-2" class="row">
-            <div class="col">
-              <div class="mb-3">
-                <label for="simulation_duration" class="form-label">Simulation duration</label>
-                <input type="number" class="form-control" id="simulation_duration" name="simulation_duration" min="500.0" max="20000.0" step="0.1" value="2000.0" aria-describedby="simulation_duration" />
-              </div>
-            </div>
-          </div>
-          <button type="submit" class="btn btn-success w-100 d-flex-inline" id="submit-job-button">
-            <div class="spinner-border spinner-border-sm d-none" role="status" id="submit-job-spinner">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            Submit
-          </button>
-        </form>
+
+<div class="accordion-body">
+  <form id="optimization-settings-forms">
+    {% csrf_token %}
+    <div class="row">
+      <div class="mb-3">
+        <label for="circuit-selector" class="form-label">Select circuit:</label>
+        <select class="form-select" id="circuit-selector" name="circuit" required onchange="onCircuitSelection(event)">
+          {% comment %}
+          <option value="human" selected>Human</option>
+          {% endcomment %}
+          <option value="mouse">Mouse</option>
+        </select>
       </div>
     </div>
-  </div>
+    <div class="row">
+      <div class="mb-3">
+        <label for="hpc-selector" class="form-label">Select HPC Platform:</label>
+        <select class="form-select" id="hpc-selector" name="hpc">
+          <option selected id="JUSUF-SA" data-show-for="mouse" value="JUSUF - ServiceAccount">JUSUF - JSC (all users via service account)</option>
+          <option value="CINECA - G100">CINECA - G100 (icei project users)</option>
+        </select>
+      </div>
+    </div>
+    <div id="mouse-row-input-1" class="row d-none">
+      <div class="col">
+        <div class="mb-3">
+          <label for="pyr2pyr" class="form-label">PYR2PYR:</label>
+          <input type="number" class="form-control" id="pyr2pyr" name="pyr2pyr" min="1.0" max="10.0" step="0.1" value="3.0" aria-describedby="pyr2pyr-help" />
+        </div>
+      </div>
+      <div class="col">
+        <div class="mb-3">
+          <label for="inh2inh" class="form-label">INH2INH:</label>
+          <input type="number" class="form-control" id="inh2inh" name="inh2inh" min="1.0" max="10.0" step="0.1" value="1.0" aria-describedby="inh2inh-help" />
+        </div>
+      </div>
+    </div>
+    <div id="mouse-row-input-2" class="row d-none">
+      <div class="col">
+        <div class="mb-3">
+          <label for="inh2pyr" class="form-label">INH2PYR:</label>
+          <input type="number" class="form-control" id="inh2pyr" name="inh2pyr" min="1.0" max="10.0" step="0.1" value="3.0" aria-describedby="inh2py2-help" />
+        </div>
+      </div>
+      <div class="col">
+        <div class="mb-3">
+          <label for="pyr2inh" class="form-label">PYR2INH:</label>
+          <input type="number" class="form-control" id="pyr2inh" name="pyr2inh" min="1.0" max="10.0" step="0.1" value="1.0" aria-describedby="py2inh-help" />
+        </div>
+      </div>
+    </div>
+    <div id="human-row-input-1" class="row">
+      <div class="col">
+        <div class="mb-3">
+          <label for="background_frequency" class="form-label">Background frequency:</label>
+          <input type="number" class="form-control" id="background_frequency" name="background_frequency" min="1.0" max="10.0" step="0.1" value="1.0" aria-describedby="background-frequency" />
+        </div>
+      </div>
+    </div>
+    <div id="common-row-input-1" class="row">
+      <div class="col">
+        <div class="mb-3">
+          <label for="stimulus_1_synapses_weight" class="form-label">Stimulus 1 - Synapses weight:</label>
+          <input type="number" class="form-control" id="stimulus_1_synapses_weight" name="stimulus_1_synapses_weight" min="1.0" max="10.0" step="0.1" value="1.0" aria-describedby="stimulus_1_synapses_weight" />
+        </div>
+      </div>
+    </div>
+    <div id="common-row-input-2" class="row">
+      <div class="col">
+        <div class="mb-3">
+          <label for="simulation_duration" class="form-label">Simulation duration</label>
+          <input type="number" class="form-control" id="simulation_duration" name="simulation_duration" min="500.0" max="20000.0" step="0.1" value="2000.0" aria-describedby="simulation_duration" />
+        </div>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-success w-100 d-flex-inline" id="submit-job-button">
+      <div class="spinner-border spinner-border-sm d-none" role="status" id="submit-job-spinner">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      Submit
+    </button>
+  </form>
+</div>
 
-  <script>
-    document.getElementById('optimization-settings-forms').addEventListener('submit', async function (event) {
-      event.preventDefault()
-      document.querySelectorAll(`#optimization-settings-forms input`).forEach(el => el.classList.remove('is-invalid'));
-      const url = '/hpc-integration/submit-job';
-      const formData = new FormData(this);
-      const spinner = document.getElementById('submit-job-spinner');
-      spinner.classList.remove('d-none');
-      const button = document.getElementById('submit-job-button');
-      button.setAttribute('disabled', true);
-      const response = await fetch(url, {
-        method: 'POST',
-        body: formData
-      });
-      if (response.ok) {
-        showAlert("Job submitted successfully!", "success");
-      } else {
-        getError(response);
-      }
-      button.removeAttribute('disabled');
-      spinner.classList.add('d-none');
-    })
+<script>
+  document.getElementById("optimization-settings-forms").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    document.querySelectorAll(`#optimization-settings-forms input`).forEach((el) => el.classList.remove("is-invalid"));
+    const url = "/hpc-integration/submit-job";
+    const formData = new FormData(this);
+    const spinner = document.getElementById("submit-job-spinner");
+    spinner.classList.remove("d-none");
+    const button = document.getElementById("submit-job-button");
+    button.setAttribute("disabled", true);
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+    });
+    if (response.ok) {
+      showAlert("Job submitted successfully!", "success");
+    } else {
+      getError(response);
+    }
+    button.removeAttribute("disabled");
+    spinner.classList.add("d-none");
+  });
 
-    window.onload = function () {
-      onCircuitSelection({ type: "load" });
+  window.onload = function () {
+    onCircuitSelection({ type: "load" });
+  };
+
+  function onCircuitSelection(event) {
+    // document.getElementById('hpc-selector').value = "CINECA - G100";
+    if (event.type === "load") {
+      value = document.getElementById("circuit-selector").value;
     }
 
-    function onCircuitSelection(event) {
-      // document.getElementById('hpc-selector').value = "CINECA - G100";
-      if (event.type === "load") {
-        value = document.getElementById('circuit-selector').value;
-      }
+    if (value === "human") {
+      // to hide
+      document.getElementById("JUSUF-SA").classList.add("d-none");
+      document.getElementById("mouse-row-input-1").classList.add("d-none");
+      document.getElementById("mouse-row-input-2").classList.add("d-none");
 
-      if (value === "human") {
-        // to hide
-        document.getElementById('JUSUF-SA').classList.add('d-none');
-        document.getElementById('mouse-row-input-1').classList.add('d-none');
-        document.getElementById('mouse-row-input-2').classList.add('d-none');
+      // to show
+      document.getElementById("human-row-input-1").classList.remove("d-none");
+    } else {
+      // to hide
+      document.getElementById("mouse-row-input-1").classList.remove("d-none");
+      document.getElementById("mouse-row-input-2").classList.remove("d-none");
 
-        // to show
-        document.getElementById('human-row-input-1').classList.remove('d-none');
-      } else {
-        // to hide
-        document.getElementById('mouse-row-input-1').classList.remove('d-none');
-        document.getElementById('mouse-row-input-2').classList.remove('d-none');
-
-        // to show
-        document.getElementById('JUSUF-SA').classList.remove('d-none');
-        document.getElementById('human-row-input-1').classList.add('d-none');
-      }
-    };
-    // set right circuit on load page
-    window.addEventListener('load', onCircuitSelection);
-
-  </script>
+      // to show
+      document.getElementById("JUSUF-SA").classList.remove("d-none");
+      document.getElementById("human-row-input-1").classList.add("d-none");
+    }
+  }
+  // set right circuit on load page
+  window.addEventListener("load", onCircuitSelection);
+</script>
 {% endblock %}

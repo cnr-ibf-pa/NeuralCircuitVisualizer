@@ -24,9 +24,11 @@
 
 /* Optional: reduce font size of body text as well */
 #accordionFlushRegions .accordion-body {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   background-color: #f5f5f5;
-  color: #333;
+  color: #000000;
+
+  font-weight: bold;
 }
 
 #accordionFlushExample {
@@ -40,7 +42,7 @@
 }
 
 .accordion-collapse {
-  transition: transform 0.3s ease;
+  transition: transform 0.1s ease;
 }
 
 .accordion-collapse.collapsing {
@@ -569,14 +571,12 @@ select {
 #ddactivity_chunks {
   transition: 0.4s;
   /* background-color: #a8a8aa; */
+  min-width: 300px;
 }
 
 #ddactivity_chunks option {
   padding: 1px;
   font-weight: bold;
-}
-.time-display {
-  font-size: 20px;
 }
 
 input[type="range"] {
@@ -742,6 +742,7 @@ input[type="range"] {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+  font-size: 20px;
 }
 
 .time-display label {
@@ -823,6 +824,7 @@ input[type="range"] {
   overflow-y: auto;
   font-size: 14px;
 }
+
 #togglePanelBtn {
   display: none;
   position: fixed;
@@ -852,7 +854,7 @@ input[type="range"] {
 
 @media (max-width: 576px) {
   #togglePanelBtn {
-    top: 0.9rem;
+    top: 1rem;
     left: 1rem;
     width: 80vw;
     font-size: 0.75rem;
@@ -872,7 +874,7 @@ input[type="range"] {
 }
 @media (min-width: 577px) and (max-width: 768px) {
   #togglePanelBtn {
-    top: 1.8rem;
+    top: 2rem;
     left: 5%;
     width: 60vw;
     font-size: 0.8rem;
@@ -946,13 +948,24 @@ input[type="range"] {
 #histogramImage {
   display: none;
   width: 100%;
-  height: 72%;
+  height: 100%;
   object-fit: fill;
   background-color: #33373d;
   border: 2px outset #bbb;
   margin: 2px auto;
   cursor: pointer;
-  margin-bottom: 55px;
+}
+
+#histChart {
+  display: none;
+  width: 97%;
+  height: 100%;
+
+  background-color: #33373d;
+  color: white;
+  border: 2px outset #bbb;
+  margin: 2px auto;
+  cursor: pointer;
 }
 
 #networkspikes {
@@ -1197,66 +1210,80 @@ label {
 .custom-header {
   font-family: "Segoe UI", sans-serif;
 
-  /* Gradient background using #a8a8aa base */
   background: linear-gradient(to bottom, #d0d0d0, #a8a8aa);
 
-  /* Visual effects */
   border-bottom: 2px solid #8a8a8a;
-  border: 2px outset #bbb;
-  backdrop-filter: blur(2px);
-
-  /* Beveled/futuristic edge */
-  clip-path: polygon(0 0, 97% 0, 100% 100%, 0% 100%);
+  border: 1px outset #bbb;
 }
 
-/* Optional hover effect */
-/* .custom-header:hover {
-    background: linear-gradient(to bottom, #bababa 0%, #97979c 100%);
-} */
-
-/* Shared button styles */
-.ncv-button-group .ncv-btn {
-  background-color: #2d313f;
-  color: white;
-  border: none;
-  padding: 0.5rem 0.75rem;
-  border-radius: 4px;
-  font-size: 1.2rem;
-  display: flex;
+/* Icon buttons */
+.ncv-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: #2d313f;
+  color: #fff;
+  border: 1px solid #3f4553;
+  border-radius: 8px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s ease;
+  transition: transform 0.08s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.ncv-btn:hover {
+  background: #3a4050;
+  border-color: #586074;
+}
+.ncv-btn:active {
+  transform: translateY(1px);
 }
 
-.ncv-button-group .ncv-btn:hover {
-  background-color: #444;
+/* Inputs */
+.ncv-input {
+  min-width: 84px;
+  max-width: 96px;
+  background: #3a3f4b;
+  color: #e9ecef;
+  border: 1px solid #454b57;
+}
+.ncv-input:focus {
+  border-color: #ffb74d; /* orange accent */
+  box-shadow: 0 0 0 0.15rem rgba(255, 183, 77, 0.25);
 }
 
-/* Active glowing state */
-.ncv-btn.active {
-  animation: glowPulse 1s ease-in-out infinite alternate;
-  background-color: #78c2ff;
+/* Range slider styled to your orange accent */
+.ncv-range {
+  height: 4px;
+  background: linear-gradient(90deg, #ff9800 0%, #ffc107 100%);
+  border-radius: 999px;
+}
+.ncv-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #ff9800;
+}
+.ncv-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #ff9800;
 }
 
-/* Glow animation */
-@keyframes glowPulse {
-  0% {
-    box-shadow: 0 0 8px rgba(120, 194, 255, 0.4);
+/* Typography tweaks */
+.form-label-sm {
+  font-size: 0.75rem;
+}
+
+/* Make the row breathe less on small screens */
+@media (max-width: 576px) {
+  .control-panel {
+    padding: 0.5rem;
   }
-
-  100% {
-    box-shadow: 0 0 14px rgba(120, 194, 255, 0.9);
-  }
 }
-
-/* Disabled state */
-.ncv-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  filter: grayscale(100%);
-  box-shadow: none;
-}
-
 #timebar {
   -webkit-appearance: none;
   width: 100%;
@@ -1474,4 +1501,54 @@ label {
   .connection-panel select {
     padding: 0.35rem 0.7rem;
   }
+}
+
+/* Run Simulation button */
+#headingrunsim .accordion-button {
+  background-color: #3c3d37 !important; /* EBRAINS-like blue */
+  color: #fff !important;
+  font-weight: bold !important;
+}
+
+/* Fetch Job button */
+#headingfetchjob .accordion-button {
+  background-color: #524c42 !important; /* green */
+  color: #fff !important;
+  font-weight: bold !important;
+}
+
+/* On hover */
+#headingrunsim .accordion-button:hover {
+  background-color: #3c3d37 !important;
+}
+#headingfetchjob .accordion-button:hover {
+  background-color: #524c42 !important;
+}
+
+/* Container */
+.control-panel {
+  background: #696a6c;
+  font-family: "Segoe UI", sans-serif;
+
+  background: linear-gradient(to bottom, #d0d0d0, #696a6c);
+
+  border-bottom: 2px solid #8a8a8a;
+  border: 1px outset #bbb;
+}
+
+/* Small label stacked with input */
+.ncv-inline-label {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/* Select */
+.ncv-select {
+  background-color: #3a3f4b;
+  color: #e9ecef;
+  border: 1px solid #454b57;
+}
+.ncv-select:focus {
+  border-color: #000000;
+  box-shadow: 0 0 0 0.15rem rgba(110, 168, 254, 0.25);
 }

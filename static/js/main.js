@@ -29,7 +29,7 @@ let flagact = false;
 let count = 0.0;
 let x = 0.0;
 var isPaused = false;
-let spikeNeuronSize = 60;
+let spikeNeuronSize = 100;
 let interval;
 let gIDs = [];
 let gids_activity_indexes = {};
@@ -60,6 +60,12 @@ let particles;
 // const scalingFactor = 0.1;
 let r = 0;
 let spikeTimes = new Map();
+let gidToPosition = new Map();
+let connectionLines = null;
+
+let allConnections = [];
+let activeConnections = [];
+let connectionsHidden = false;
 
 // Global playback config
 const playbackConfig = {
@@ -73,6 +79,8 @@ let combinedCtx = null;
 let recordedChunks = [];
 const startBtn = document.getElementById("startRecordingBtn");
 const stopBtn = document.getElementById("stopRecordingBtn");
+
+const mouse = new THREE.Vector2();
 
 let isConnection = false;
 let container;
@@ -280,7 +288,7 @@ async function LoadHumanActivityData(file_id) {
         lasttime = parseInt(lastKey);
         totalTimeDisplay.textContent = lasttime;
         document.getElementById("timebar").max = lasttime;
-        // spikeNeuronSize = 300;
+        spikeNeuronSize = 100;
       }
 
       startButton.disabled = false;
@@ -1122,6 +1130,230 @@ hdfFileInput.addEventListener("change", async (event) => {
     }
   }
 });
+let histChart = null;
+let histMeta = null; // t_min, t_max, bin_edges
+let currentCursor = null;
+
+let histX = []; // ms
+let histY = []; // counts
+let histSD = []; // per-point SD
+let currentCursorMs = null;
+
+function smoothSeries(y, w = 7) {
+  // symmetric box smoother; w must be odd
+  if (w < 3 || w % 2 === 0) return y.slice();
+  const n = y.length,
+    k = (w - 1) / 2,
+    out = new Array(n).fill(0);
+  for (let i = 0; i < n; i++) {
+    let s = 0,
+      c = 0;
+    for (let j = -k; j <= k; j++) {
+      const t = i + j;
+      if (t >= 0 && t < n) {
+        s += y[t];
+        c++;
+      }
+    }
+    out[i] = s / c;
+  }
+  return out;
+}
+
+function buildOrUpdateHistChart(hist_data) {
+  const ctx = document.getElementById("histChart").getContext("2d");
+
+  // X=ms, Y=counts
+  histX = hist_data.bin_centers.map(Number);
+  histY = hist_data.counts.map(Number);
+  histSD = (hist_data.sd_poisson || []).map(Number);
+
+  // Optional smoothing
+  const ySmooth = smoothSeries(histY, 7);
+  const sdSmooth = smoothSeries(histSD, 7);
+
+  // Upper/lower band
+  const lower = ySmooth.map((v, i) => Math.max(0, v - (sdSmooth[i] || 0)));
+  const upper = ySmooth.map((v, i) => v + (sdSmooth[i] || 0));
+
+  // Points
+  const ptsMean = histX.map((x, i) => ({ x, y: ySmooth[i] }));
+  const ptsLower = histX.map((x, i) => ({ x, y: lower[i] }));
+  const ptsUpper = histX.map((x, i) => ({ x, y: upper[i] }));
+
+  // --- Plugins: define BEFORE config ---
+  const cursorPlugin = {
+    id: "timeCursor",
+    afterDraw(chart) {
+      if (currentCursorMs == null) return;
+      const {
+        ctx,
+        chartArea,
+        scales: { x },
+      } = chart;
+      if (currentCursorMs < x.min || currentCursorMs > x.max) return;
+      const xPix = x.getPixelForValue(currentCursorMs);
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(xPix, chartArea.top);
+      ctx.lineTo(xPix, chartArea.bottom);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(0,0,0,0.85)";
+      ctx.stroke();
+      ctx.restore();
+    },
+  };
+
+  const errorBarsPlugin = {
+    id: "errorBars",
+    afterDatasetsDraw(chart, args, pluginOptions) {
+      const { stride = 8, capWidth = 8, color = "rgba(0,0,0,0.9)", lineWidth = 1 } = pluginOptions || {};
+      const {
+        ctx,
+        scales: { x, y },
+      } = chart;
+      const meanMeta = chart.getDatasetMeta(2); // dataset 2 = mean curve
+      if (!meanMeta?.data?.length) return;
+
+      ctx.save();
+      ctx.lineWidth = lineWidth;
+      ctx.strokeStyle = color;
+
+      for (let i = 0; i < meanMeta.data.length; i += stride) {
+        const xMs = chart.config.data.datasets[2].data[i].x;
+        const yMean = chart.config.data.datasets[2].data[i].y;
+        const sd = chart.$histSD?.[i] ?? 0;
+        if (sd <= 0) continue;
+
+        const xPix = x.getPixelForValue(xMs);
+        const yTop = y.getPixelForValue(yMean + sd);
+        const yBot = y.getPixelForValue(Math.max(0, yMean - sd));
+
+        ctx.beginPath();
+        ctx.moveTo(xPix, yTop);
+        ctx.lineTo(xPix, yBot);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(xPix - capWidth / 2, yTop);
+        ctx.lineTo(xPix + capWidth / 2, yTop);
+        ctx.moveTo(xPix - capWidth / 2, yBot);
+        ctx.lineTo(xPix + capWidth / 2, yBot);
+        ctx.stroke();
+      }
+      ctx.restore();
+    },
+  };
+
+  const config = {
+    type: "line",
+    data: {
+      datasets: [
+        { label: "Lower", data: ptsLower, borderWidth: 0, pointRadius: 0, fill: false, tooltip: { enabled: false } },
+        { label: "SD band", data: ptsUpper, borderWidth: 0, pointRadius: 0, fill: "-1", backgroundColor: "rgba(128,128,128,0.2)", borderColor: "rgba(128,128,128,0.2)", tooltip: { enabled: false } },
+        { label: "Spikes/bin (smoothed)", data: ptsMean, borderWidth: 2, pointRadius: 0, spanGaps: true, tension: 0.3, borderColor: "orange", backgroundColor: "orange" },
+      ],
+    },
+    options: {
+      responsive: true,
+      animation: false,
+      parsing: false,
+      interaction: { mode: "nearest", axis: "x", intersect: false },
+
+      // === Axis text colors ===
+      scales: {
+        x: {
+          type: "linear",
+          title: { display: true, text: "Time (ms)", color: "#FFFFFF", font: { weight: "bold" } },
+          ticks: { maxTicksLimit: 10, color: "#FFD54F" }, // tick label color
+          grid: { color: "rgba(255,255,255,0.15)" },
+        },
+        y: {
+          title: { display: true, text: "Number of firing neurons", color: "#FFFFFF", font: { weight: "bold" } },
+          ticks: { color: "#FFD54F" },
+          grid: { color: "rgba(255,255,255,0.15)" },
+          beginAtZero: true,
+        },
+      },
+
+      plugins: {
+        legend: { display: false },
+
+        // === Tooltip text colors ===
+        tooltip: {
+          filter: (ctx) => ctx.dataset.label === "Spikes/bin (smoothed)",
+          backgroundColor: "rgba(0,0,0,0.90)",
+          titleColor: "#FFFFFF", // title text color
+          bodyColor: "#FFFFFF", // body text color
+          titleFont: { weight: "bold" },
+          bodyFont: { size: 12 },
+          callbacks: {
+            label: (ctx) => {
+              const idx = nearestIndex(histX, ctx.parsed.x);
+              const c = histY[idx];
+              const s = histSD[idx] ?? 0;
+              return `Count: ${c}  ±SD≈ ${s.toFixed(2)}`;
+            },
+          },
+        },
+
+        // === Error bar plugin options must live here ===
+        errorBars: {
+          stride: 8,
+          capWidth: 8,
+          color: "rgba(0,0,0,0.9)",
+          lineWidth: 1,
+        },
+      },
+
+      // click to seek
+      onClick: (evt, elements, chart) => {
+        const x = chart.scales.x.getValueForPixel(evt.x);
+        const idx = nearestIndex(histX, x);
+        if (idx != null) seekToTime(histX[idx]);
+      },
+    },
+
+    // Register plugins here
+    plugins: [Chart.registry.getPlugin("decimation") || { id: "noop" }, cursorPlugin, errorBarsPlugin],
+  };
+
+  // Rebuild
+  if (histChart) histChart.destroy();
+  histChart = new Chart(ctx, config);
+  histChart.$histSD = sdSmooth;
+
+  const ms0 = parseFloat(document.getElementById("timebar")?.value || hist_data.t_min || 0);
+  updateHistCursor(ms0);
+}
+
+function nearestIndex(xs, x) {
+  if (!xs?.length) return null;
+  // binary search
+  let lo = 0,
+    hi = xs.length - 1;
+  if (x <= xs[lo]) return lo;
+  if (x >= xs[hi]) return hi;
+  while (lo < hi - 1) {
+    const mid = (lo + hi) >> 1;
+    xs[mid] <= x ? (lo = mid) : (hi = mid);
+  }
+  // pick the closer of lo or hi
+  return x - xs[lo] <= xs[hi] - x ? lo : hi;
+}
+
+function updateHistCursor(ms) {
+  currentCursorMs = ms;
+  if (histChart) histChart.draw();
+}
+
+function seekToTime(ms) {
+  const slider = document.getElementById("timebar");
+  if (slider) slider.value = ms.toFixed(1);
+  currentTimeDisplay.textContent = (+ms).toFixed(1);
+  previousTimeDisplay = currentTimeDisplay.textContent;
+  updateHistCursor(+ms);
+  // renderAtTime(ms); // <- call your renderer if you have one
+}
 
 dropdown.addEventListener("change", async function () {
   resetSpikeState();
@@ -1168,6 +1400,11 @@ dropdown.addEventListener("change", async function () {
     }
 
     Activitys = data.chunk_data;
+
+    // ---- Build interactive histogram
+    if (data.hist_data && data.hist_data.bin_centers && data.hist_data.counts) {
+      buildOrUpdateHistChart(data.hist_data);
+    }
 
     const sortedKeys = Object.keys(Activitys).sort((a, b) => parseFloat(a) - parseFloat(b));
     if (sortedKeys.length > 0) {
@@ -1272,6 +1509,7 @@ timebar.addEventListener("input", (event) => {
   currentTimeDisplay.textContent = count.toFixed(1);
   resetParticles();
 
+  updateHistCursor(parseFloat(e.target.value));
   if (!particles) return;
 
   const geometry = particles.geometry;
@@ -1292,7 +1530,7 @@ timebar.addEventListener("input", (event) => {
     const isFiring = (r === 1 && g === 1 && b === 0) || (r === 1 && g === 1 && b === 1);
 
     sizes[i] = isFiring
-      ? parameters.Firing_Neuron_Size || 100 // fallback if not defined
+      ? parameters.Firing_Neuron_Size || 200 // fallback if not defined
       : parameters.Neuron_Size || 30;
   }
   geometry.attributes.color.needsUpdate = true;
@@ -1603,13 +1841,6 @@ function createArrowOverlayFromPCA(pcaAxes) {
 
   addAnatomicalArrowsFromPCA(arrowsScene, new THREE.Vector3(0, 0, 0), 1.0, pcaAxes);
 }
-
-let gidToPosition = new Map();
-let connectionLines = null;
-
-let allConnections = [];
-let activeConnections = [];
-let connectionsHidden = false;
 
 function VisualizateNeurons() {
   // Clear previous particles if any
@@ -2181,8 +2412,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-const mouse = new THREE.Vector2();
-
 function generateTable(total_neuros, total_excitatory, total_inhibitory) {
   const containerDiv = document.createElement("div");
   containerDiv.className = "container-fluid px-2 mt-3";
@@ -2227,7 +2456,6 @@ function removeTable() {
 function render() {
   renderer.render(scene, camera);
 }
-//without border below
 function animate() {
   requestAnimationFrame(animate);
 
@@ -2311,109 +2539,6 @@ function animate() {
   }
 }
 
-/*  with border below */
-/* function animate() {
-  requestAnimationFrame(animate);
-  if (controls) controls.update();
-
-  // ----- sizes in CSS pixels -----
-  const cssW = renderer.domElement.clientWidth;
-  const cssH = renderer.domElement.clientHeight;
-
-  // scale to drawing-buffer pixels (important on Retina)
-  const dpr = renderer.getPixelRatio();
-  const W = Math.round(cssW * dpr);
-  const H = Math.round(cssH * dpr);
-
-  // ----- MAIN VIEW -----
-  renderer.setViewport(0, 0, W, H);
-  renderer.setScissor(0, 0, W, H);
-  renderer.setScissorTest(true);
-  renderer.clear();
-  renderer.render(scene, camera);
-
-  // ----- INSET CAMERA2 (Back view) -----
-  // inset position/size in CSS px
-  const insetSizeCSS = Math.min(cssW, cssH) * 0.25; // 25% of screen
-  const insetXCSS = 10; // left margin
-  const insetYCSS = 300; // top margin
-  const borderCSS = 1; // border thickness
-
-  // convert to drawing-buffer px
-  const insetSize = Math.round(insetSizeCSS * dpr);
-  const insetX = Math.round(insetXCSS * dpr);
-  const insetY = Math.round(insetYCSS * dpr);
-  const border = Math.max(1, Math.round(borderCSS * dpr));
-
-  // Compute center of scene
-  const bbox = new THREE.Box3().setFromObject(scene);
-  const center = new THREE.Vector3();
-  bbox.getCenter(center);
-
-  // Mirrored back view wrt current camera
-  const viewDir = new THREE.Vector3().subVectors(center, camera.position).normalize();
-  const distance = camera.position.distanceTo(center);
-  const zoomDistance = distance * 0.7; // adjust zoom of inset
-  const mirroredPosition = new THREE.Vector3().copy(center).add(viewDir.multiplyScalar(zoomDistance));
-
-  // Update camera2
-  camera2.position.copy(mirroredPosition);
-  camera2.lookAt(center);
-  camera2.up.copy(camera.up);
-  if (camera.isPerspectiveCamera) {
-    camera2.fov = camera.fov;
-  } else if (camera.isOrthographicCamera) {
-    camera2.zoom = camera.zoom;
-  }
-  camera2.aspect = 1; // square inset
-  camera2.updateProjectionMatrix();
-
-  // Render BORDER + BG then the inset
-  renderer.clearDepth();
-
-  const oldColor = new THREE.Color();
-  const oldAlpha = renderer.getClearAlpha();
-  renderer.getClearColor(oldColor);
-
-  // 1) Border (slightly larger rect)
-  renderer.setScissor(insetX - border, insetY - border, insetSize + 2 * border, insetSize + 2 * border);
-  renderer.setViewport(insetX - border, insetY - border, insetSize + 2 * border, insetSize + 2 * border);
-  renderer.setScissorTest(true);
-  renderer.setClearColor(0xffffff, 1); // border color    0xffffff   0x808080
-  renderer.clear(true, false, false); // color only
-
-  // 2) Inset background (optional)
-  renderer.setScissor(insetX, insetY, insetSize, insetSize);
-  renderer.setViewport(insetX, insetY, insetSize, insetSize);
-  renderer.setClearColor(0x000000, 0.2); // translucent bg
-  renderer.clear(true, false, false);
-
-  // Restore previous clear color
-  renderer.setClearColor(oldColor, oldAlpha);
-
-  // 3) Render the inset view
-  renderer.render(scene, camera2);
-
-  // ----- MINI ARROWS (Optional) -----
-  if (arrowsScene && arrowsCamera) {
-    renderer.clearDepth();
-    arrowsScene.quaternion.copy(camera.quaternion);
-
-    // arrows panel in CSS px -> convert to drawing-buffer px
-    const arrowsSizeCSS = 180,
-      arrowsXCSS = 10,
-      arrowsYCSS = 130;
-    const aSize = Math.round(arrowsSizeCSS * dpr);
-    const aX = Math.round(arrowsXCSS * dpr);
-    const aY = Math.round(arrowsYCSS * dpr);
-
-    renderer.setViewport(aX, aY, aSize, aSize);
-    renderer.setScissor(aX, aY, aSize, aSize);
-    renderer.setScissorTest(true);
-    renderer.render(arrowsScene, arrowsCamera);
-  }
-} */
-
 let isFinished = false;
 function startAnimation(startVal, endVal) {
   if (interval) clearInterval(interval);
@@ -2477,6 +2602,9 @@ function startAnimation(startVal, endVal) {
       //   console.log("count:", count, "simTimestep:", simTimestep);
 
       count = parseFloat((parseFloat(count) + parseFloat(simTimestep)).toFixed(1));
+
+      // at each tick after you update `count`
+      updateHistCursor(+count);
     }
   }, playbackConfig.stepDuration);
 }

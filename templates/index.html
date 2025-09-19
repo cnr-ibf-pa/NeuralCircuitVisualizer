@@ -6,6 +6,7 @@
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>Neural Circuit Visualizer</title>
+      <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
       <link rel="shortcut icon" href="{% static 'img/favicon.svg' %}" type="image/x-icon" />
 
@@ -80,7 +81,7 @@
       </div>
 
       <div class="container-fluid main-container g-0">
-        <div class="row align-items-center py-2 px-2 header-row" style="background-color: #2f3542">
+        <div class="row align-items-center py-1 px-1" style="background-color: #2f3542">
           <!-- Logo -->
           <div class="col-12 col-md-3 text-center text-md-start mb-2 mb-md-0">
             <!-- <object data="img/logoEscritta.svg" class="img-fluid" type="image/svg+xml" style="max-height: 60px"></object> -->
@@ -124,45 +125,56 @@
           </div>
         </div>
 
-        <div class="row min-vh-100 m-1">
-          <div class="col-12 col-md-4 col-lg-3 d-flex flex-column" style="overflow-y: auto; max-height: 100vh">
+        <div class="row m-1" style="height: calc(100vh - 80px); min-height: 0">
+          <!-- adjust 80px to your header height -->
+          <div class="col-12 col-md-4 col-lg-3 d-flex flex-column" style="height: 100%; min-height: 0; overflow-y: auto">
             <div class="accordion accordion-flush" id="accordionFlushExample">
+              {% comment %} start here {% endcomment %}
+
               <div class="accordion-item">
-                <h2 class="accordion-header heading" id="flush-headingOne"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="true" aria-controls="flush-collapseOne">UPLOAD DATA</button></h2>
-                <div id="flush-collapseOne" class="accordion-collapse show collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample">
+                <h2 class="accordion-header heading" id="flush-headingfour">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapsefour" aria-expanded="false" aria-controls="flush-collapsefour">SIMULATION</button>
+                </h2>
+
+                <div id="flush-collapsefour" class="accordion-collapse show collapse" aria-labelledby="flush-headingfour" data-bs-parent="#accordionFlushExample">
                   <div class="accordion-body">
-                    <div class="d-grid gap-2 col-9 mx-auto">
-                      <input type="file" id="activityFileInput" accept=".h5, .hdf4, .hdf, .h4, .he5, .he2, .hdf5" style="display: none" multiple />
-                      <button type="button" id="btnactivityFileInput" class="btnstyle" onclick="document.getElementById('activityFileInput').click()">.hdf5</button>
-                      <input type="file" id="networkFileInput" accept=".csv" style="display: none" multiple />
-                      <button type="button" id="btnnetworkFileInput" class="btnstyle" onclick="document.getElementById('networkFileInput').click()">.csv</button>
-                    </div>
+                    <div class="col-12 col-md-4 col-lg-12 d-flex flex-column p-0" style="overflow-y: auto; max-height: 100vh">
+                      <!-- ONE shared inner accordion -->
+                      <div class="accordion accordion-flush" id="accordionSimInner">
+                        <!-- Run Simulation -->
+                        <div class="accordion-item">
+                          <h2 class="accordion-header" id="headingrunsim">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapserunsim" aria-expanded="false" aria-controls="collapserunsim">Run Simulation</button>
+                          </h2>
+                          <div id="collapserunsim" class="accordion-collapse collapse" aria-labelledby="headingrunsim" data-bs-parent="#accordionSimInner">
+                            <div class="accordion-body p-0">{% include 'components/hpc_integration/job_submission.html' %}</div>
+                          </div>
+                        </div>
 
-                    <p style="font-size: 12px; padding: 10px">
-                      📂
-                      <strong>HDF5 files:</strong>
-                      Upload a single HDF5 file containing two datasets: Activity and Network.
-                      <br />
-                      📂
-                      <strong>CSV files:</strong>
-                      Upload both Activity and Network files together.
-                    </p>
-
-                    <!-- Info icon aligned to bottom right -->
-                    <!-- Fixed info icon at bottom-right corner -->
-                    <div style="position: absolute; bottom: 10px; right: 10px">
-                      <button type="button" class="btn btn-outline-light btn-sm p-1" data-bs-toggle="modal" data-bs-target="#fileDetailsModal" title="View file format details"><img src="{% static 'img/info2.png' %}" alt="Info" style="height: 22px" /></button>
+                        <!-- Fetch Job -->
+                        <div class="accordion-item">
+                          <h2 class="accordion-header" id="headingfetchjob">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsefetchjob" aria-expanded="false" aria-controls="collapsefetchjob">Fetch Job</button>
+                          </h2>
+                          <div id="collapsefetchjob" class="accordion-collapse collapse" aria-labelledby="headingfetchjob" data-bs-parent="#accordionSimInner">
+                            <div class="accordion-body p-0">{% include 'components/hpc_integration/fetch_results.html' %}</div>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- /accordionSimInner -->
                     </div>
                   </div>
                 </div>
               </div>
 
+              {% comment %} end here {% endcomment %}
+
               <div class="accordion-item">
                 <h2 class="accordion-header heading" id="flush-headingTwo"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">VISUALIZE DEMO CIRCUIT</button></h2>
 
-                <div class="col-12 col-md-4 col-lg-12 d-flex flex-column p-0" style="overflow-y: auto; max-height: 100vh">
-                  <div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo" data-bs-parent="#accordionFlushExample">
-                    <div class="accordion-body">
+                <div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo" data-bs-parent="#accordionFlushExample">
+                  <div class="accordion-body">
+                    <div class="col-12 col-md-4 col-lg-12 d-flex flex-column p-0 m-0">
                       <!-- Sub Accordion Starts Here -->
                       <div class="accordion accordion-flush" id="accordionSubCircuits">
                         <!-- Human Circuit -->
@@ -172,7 +184,7 @@
                           <div id="collapseHuman" class="accordion-collapse collapse" aria-labelledby="headingHuman" data-bs-parent="#accordionSubCircuits">
                             <div class="accordion-body">
                               <!-- Content for Human Circuit -->
-                              <div class="col-12 col-md-4 col-lg-12 d-flex flex-column p-0" style="overflow-y: auto; max-height: 100vh">
+                              <div class="col-12 col-md-4 col-lg-12 d-flex flex-column p-0 m-0" style="overflow-y: auto; max-height: 100vh">
                                 <!-- Row with 2 buttons -->
                                 <div class="d-flex justify-content-center gap-2 mt-2 mb-2">
                                   <button type="button" id="btnLoadHumanNetwork_full" class="btnstyle">Load Full Circuit</button>
@@ -1607,10 +1619,38 @@
                     </div>
                   </div>
                 </div>
-                {% include 'components/hpc_integration/job_submission.html' %} {% include 'components/hpc_integration/fetch_results.html' %}
+              </div>
+
+              <div class="accordion-item">
+                <h2 class="accordion-header heading" id="flush-headingOne"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="true" aria-controls="flush-collapseOne">UPLOAD DATA</button></h2>
+                <div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample">
+                  <div class="accordion-body">
+                    <div class="d-grid gap-2 col-9 mx-auto">
+                      <input type="file" id="activityFileInput" accept=".h5, .hdf4, .hdf, .h4, .he5, .he2, .hdf5" style="display: none" multiple />
+                      <button type="button" id="btnactivityFileInput" class="btnstyle" onclick="document.getElementById('activityFileInput').click()">.hdf5</button>
+                      <input type="file" id="networkFileInput" accept=".csv" style="display: none" multiple />
+                      <button type="button" id="btnnetworkFileInput" class="btnstyle" onclick="document.getElementById('networkFileInput').click()">.csv</button>
+                    </div>
+
+                    <p style="font-size: 12px; padding: 10px">
+                      📂
+                      <strong>HDF5 files:</strong>
+                      Upload a single HDF5 file containing two datasets: Activity and Network.
+                      <br />
+                      📂
+                      <strong>CSV files:</strong>
+                      Upload both Activity and Network files together.
+                    </p>
+
+                    <!-- Info icon aligned to bottom right -->
+                    <!-- Fixed info icon at bottom-right corner -->
+                    <div style="position: absolute; bottom: 10px; right: 10px">
+                      <button type="button" class="btn btn-outline-light btn-sm p-1" data-bs-toggle="modal" data-bs-target="#fileDetailsModal" title="View file format details"><img src="{% static 'img/info2.png' %}" alt="Info" style="height: 22px" /></button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-
             <div id="Neurons_firing_attributes" class="mt-2 px-3 py-3 px-3">
               <div class="row justify-content-center align-items-center">
                 <!-- Excitatory Neurons -->
@@ -1641,14 +1681,19 @@
               </div>
             </div>
 
-            <div class="histogram-container">
-              <img id="histogramImage" />
+            <div id="plots">
+              <div class="histogram-container">
+                <canvas id="histChart"></canvas>
+                <img id="histogramImage" />
+              </div>
             </div>
+
             <!-- <img id="rasterImage" style="display:none; width: 100;" /> -->
           </div>
 
           <div id="" class="col-12 col-md-12 col-lg-9 d-flex flex-column">
-            <div class="row control-panel align-items-center custom-header">
+            {% comment %}
+            <div class="row control-panel align-items-center custom-header py-1">
               <!-- Activity Dropdown -->
               <div class="col-12 col-sm-6 col-md-4 col-lg-3">
                 <select id="ddactivity_chunks" class="form-select" style="background-color: #b8b8b7">
@@ -1692,7 +1737,63 @@
               </div>
 
               <!-- Workflow ID -->
-              <div class="col-12 col-md-6 col-lg-3">
+              <div class="col-12 col-md-6 col-lg-3 d-flex justify-content-start justify-content-md-end">
+                <div class="d-flex justify-content-start justify-content-md-end">{% include "components/workflow_id.html" %}</div>
+              </div>
+            </div>
+            {% endcomment %}
+
+            <div class="row align-items-center control-panel py-1">
+              <!-- Activity window dropdown -->
+              <div class="col-12 col-sm-6 col-md-auto">
+                <label class="form-label form-label-sm text-muted mb-1 d-block">Activity window</label>
+                <select id="ddactivity_chunks" class="form-select form-select-sm ncv-select">
+                  <option selected>Select Activity</option>
+                </select>
+              </div>
+
+              <!-- Transport controls -->
+              <div class="col-12 col-sm-6 col-md-auto">
+                <label class="form-label form-label-sm text-muted mb-1 d-block">Playback</label>
+                <div class="d-flex flex-wrap gap-2">
+                  <button id="startbtn" class="btn btn-sm ncv-btn" aria-label="Play" title="Play">
+                    <i class="bi bi-play-fill"></i>
+                  </button>
+                  <button id="pause" class="btn btn-sm ncv-btn" aria-label="Pause" title="Pause">
+                    <i class="bi bi-pause-fill"></i>
+                  </button>
+                  <button id="restart" class="btn btn-sm ncv-btn" aria-label="Restart" title="Restart">
+                    <i class="bi bi-arrow-clockwise"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Time + range (grows to fill) -->
+              <div class="col-12 col-lg d-flex flex-column gap-1">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 small text-light">
+                  <div id="time" class="fw-semibold">
+                    t =
+                    <span id="current-time">0.0</span>
+                    /
+                    <span id="total-time">0.0</span>
+                    ms
+                  </div>
+                  <div class="d-flex align-items-center flex-wrap gap-2">
+                    <label class="ncv-inline-label">
+                      <span class="text-muted">Start</span>
+                      <input type="number" id="start-time" class="form-control form-control-sm ncv-input" min="0" step="0.1" />
+                    </label>
+                    <label class="ncv-inline-label">
+                      <span class="text-muted">End</span>
+                      <input type="number" id="end-time" class="form-control form-control-sm ncv-input" min="0" step="0.1" />
+                    </label>
+                  </div>
+                </div>
+                <input type="range" id="timebar" step="0.1" value="0" class="form-range ncv-range" />
+              </div>
+
+              <!-- Workflow ID (right on md+) -->
+              <div class="col-12 col-md-auto ms-md-auto">
                 <div class="d-flex justify-content-start justify-content-md-end">{% include "components/workflow_id.html" %}</div>
               </div>
             </div>
