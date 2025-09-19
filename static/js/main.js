@@ -2477,7 +2477,7 @@ function animate() {
   // Inset size and position
   const insetSize = Math.min(width, height) * 0.25; // 25% of screen size
   const insetX = 10; // left margin
-  const insetY = 300; // top margin
+  const insetY = 290; // top margin
   const border = 1; // 1px border
 
   // ----- BORDER PASS -----
