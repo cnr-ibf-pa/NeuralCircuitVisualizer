@@ -1438,7 +1438,7 @@ label {
   visibility: hidden; /* 👈 Initially hidden */
   position: fixed;
   top: 9.8rem;
-  right: 15rem;
+  right: 20rem;
   z-index: 1000;
 
   display: inline-flex;
