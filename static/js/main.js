@@ -983,6 +983,15 @@ function estimateGPUBufferMB() {
   return { n, mb: bytes / 1e6 };
 } */
 
+function resetHistChart() {
+  if (typeof histChart !== "undefined" && histChart) {
+    histChart.destroy(); // destroy old instance
+    histChart = null;
+  }
+  const container = document.getElementById("histChartContainer");
+  if (container) container.style.display = "none";
+}
+
 hdfFileInput.addEventListener("change", async (event) => {
   resetSpikeState();
   resetPlaybackConfig();
@@ -1324,6 +1333,7 @@ function buildOrUpdateHistChart(hist_data) {
 
   const ms0 = parseFloat(document.getElementById("timebar")?.value || hist_data.t_min || 0);
   updateHistCursor(ms0);
+  document.getElementById("histChartContainer").style.display = "block";
 }
 
 function nearestIndex(xs, x) {
@@ -1397,6 +1407,7 @@ dropdown.addEventListener("change", async function () {
     if (data.histogram) {
       document.getElementById("histogramImage").src = "data:image/png;base64," + data.histogram;
       document.getElementById("histogramImage").style.display = "block";
+      document.getElementById("histChartContainer").style.display = "block";
     }
 
     Activitys = data.chunk_data;
@@ -1509,7 +1520,7 @@ timebar.addEventListener("input", (event) => {
   currentTimeDisplay.textContent = count.toFixed(1);
   resetParticles();
 
-  updateHistCursor(parseFloat(e.target.value));
+  updateHistCursor(parseFloat(event.target.value));
   if (!particles) return;
 
   const geometry = particles.geometry;
@@ -1547,74 +1558,192 @@ timebar.addEventListener("input", (event) => {
   }
 });
 
-const startButton = document.getElementById("startbtn");
-startButton.addEventListener("click", () => {
-  let startVal = Math.max(0, parseFloat(startTimeInput.value)) || 0.0;
-  let endVal = Math.max(0, parseFloat(endTimeInput.value)) || parseFloat(lasttime);
+// --- helpers ---
+let wasEverStarted = false; // track first start
 
+// make sure count is always a number
+const toNum1 = (v) => Number.parseFloat(Number(v).toFixed(1));
+
+const startButton = document.getElementById("startbtn");
+// startButton.addEventListener("click", () => {
+//   let startVal = Math.max(0, parseFloat(startTimeInput.value)) || 0.0;
+//   let endVal = Math.max(0, parseFloat(endTimeInput.value)) || parseFloat(lasttime);
+
+//   if (selectedChunkNumber > 0 && isFinished) {
+//     isFinished = false;
+
+//     isPaused = false;
+//     startVal = parseFloat(firstKey);
+//     count = parseFloat(startVal).toFixed(1);
+//     timebar.value = count;
+//   } else if (!interval || isPaused) {
+//     isPaused = false;
+//     count = Math.max(count, startVal); // Ensure within bounds
+//     timebar.value = count;
+//   }
+//   currentTimeDisplay.textContent = parseFloat(count).toFixed(1);
+//   startButton.disabled = true;
+//   stopButton.disabled = false;
+//   restart.disabled = false;
+//   timebar.min = count;
+//   timebar.max = endVal;
+//   startAnimation(startVal, endVal);
+// });
+
+// --- START button ---
+startButton.addEventListener("click", () => {
+  const startVal = Math.max(0, parseFloat(startTimeInput.value)) || 0.0;
+  const endVal = Math.max(0, parseFloat(endTimeInput.value)) || parseFloat(lasttime);
+
+  // === RESUME path ===
+  if (isPaused && interval === null) {
+    isPaused = false;
+
+    // DO NOT change timebar.min / max on resume
+    // DO NOT re-clamp 'count' to startVal
+    count = toNum1(count); // ensure number
+    timebar.value = count;
+    currentTimeDisplay.textContent = count.toFixed(1);
+
+    startButton.disabled = true;
+    stopButton.disabled = false;
+    restart.disabled = false;
+
+    // resume from *current* count
+    startAnimation(count, parseFloat(timebar.max) || endVal);
+    return;
+  }
+
+  // === FRESH start path ===
+  // If you just finished a chunk and are starting over:
   if (selectedChunkNumber > 0 && isFinished) {
     isFinished = false;
+    isPaused = false;
 
-    isPaused = false;
-    startVal = parseFloat(firstKey);
-    count = parseFloat(startVal).toFixed(1);
+    const freshStart = parseFloat(firstKey);
+    count = toNum1(freshStart); // keep as number
     timebar.value = count;
-  } else if (!interval || isPaused) {
-    isPaused = false;
-    count = Math.max(count, startVal); // Ensure within bounds
-    timebar.value = count;
+
+    currentTimeDisplay.textContent = count.toFixed(1);
+
+    // Set bounds only on fresh start
+    timebar.min = count;
+    timebar.max = endVal;
+
+    startButton.disabled = true;
+    stopButton.disabled = false;
+    restart.disabled = false;
+
+    startAnimation(freshStart, endVal);
+    wasEverStarted = true;
+    return;
   }
-  currentTimeDisplay.textContent = parseFloat(count).toFixed(1);
-  startButton.disabled = true;
-  stopButton.disabled = false;
-  restart.disabled = false;
-  timebar.min = count;
-  timebar.max = endVal;
-  startAnimation(startVal, endVal);
-});
 
+  // First ever start (or restarting with new inputs)
+  if (!interval && !isPaused) {
+    isPaused = false;
+    count = Math.max(Number(count) || 0, startVal); // stay within bounds
+    count = toNum1(count);
+    timebar.value = count;
+    currentTimeDisplay.textContent = count.toFixed(1);
+
+    // Set bounds only on fresh start
+    timebar.min = count;
+    timebar.max = endVal;
+
+    startButton.disabled = true;
+    stopButton.disabled = false;
+    restart.disabled = false;
+
+    startAnimation(count, endVal);
+    wasEverStarted = true;
+  }
+});
 const stopButton = document.getElementById("pause");
+// stopButton.addEventListener("click", () => {
+//   clearInterval(interval);
+//   interval = null;
+//   isPaused = true;
+//   startButton.disabled = false;
+//   stopButton.disabled = true;
+// });
+
+// --- PAUSE button (unchanged except ensuring state) ---
 stopButton.addEventListener("click", () => {
   clearInterval(interval);
   interval = null;
   isPaused = true;
+
   startButton.disabled = false;
   stopButton.disabled = true;
 });
-
 const restart = document.getElementById("restart");
+// restart.addEventListener("click", () => {
+//   let startVal, endVal;
+
+//   if (selectedChunkNumber > 0) {
+//     spikeTimes.clear();
+//     spikeTransitions.clear();
+//     startVal = parseFloat(firstKey).toFixed(1);
+
+//     endVal = parseFloat(lasttime).toFixed(1);
+//     count = startVal;
+
+//     currentTimeDisplay.textContent = parseFloat(count).toFixed(1);
+//   } else {
+//     startVal = parseFloat(startTimeInput.value) || 0.0;
+//     endVal = parseFloat(endTimeInput.value) || parseFloat(lasttime);
+//     count = startVal;
+//     currentTimeDisplay.textContent = parseFloat(count).toFixed(1);
+//     //totalTimeDisplay.textContent = count;
+//   }
+
+//   //   const startVal = parseFloat(startTimeInput.value) || 0.0;
+//   //   const endVal = parseFloat(endTimeInput.value) || parseFloat(lasttime);
+
+//   clearInterval(interval);
+//   interval = null;
+//   resetParticles();
+
+//   //   count = startVal;
+//   timebar.min = startVal;
+//   timebar.max = endVal;
+//   timebar.value = count;
+//   //   currentTimeDisplay.textContent = count.toFixed(1);
+
+//   isPaused = false;
+//   startButton.disabled = true;
+//   stopButton.disabled = false;
+
+//   startAnimation(startVal, endVal);
+// });
+
+// --- RESTART button (tiny safe tweak: keep numbers) ---
 restart.addEventListener("click", () => {
   let startVal, endVal;
 
   if (selectedChunkNumber > 0) {
     spikeTimes.clear();
     spikeTransitions.clear();
-    startVal = parseFloat(firstKey).toFixed(1);
-
-    endVal = parseFloat(lasttime).toFixed(1);
+    startVal = toNum1(firstKey);
+    endVal = toNum1(lasttime);
     count = startVal;
-
-    currentTimeDisplay.textContent = parseFloat(count).toFixed(1);
   } else {
     startVal = parseFloat(startTimeInput.value) || 0.0;
     endVal = parseFloat(endTimeInput.value) || parseFloat(lasttime);
-    count = startVal;
-    currentTimeDisplay.textContent = parseFloat(count).toFixed(1);
-    //totalTimeDisplay.textContent = count;
+    count = toNum1(startVal);
   }
 
-  //   const startVal = parseFloat(startTimeInput.value) || 0.0;
-  //   const endVal = parseFloat(endTimeInput.value) || parseFloat(lasttime);
+  currentTimeDisplay.textContent = count.toFixed(1);
 
   clearInterval(interval);
   interval = null;
   resetParticles();
 
-  //   count = startVal;
+  // On full restart, it’s OK to reset bounds
   timebar.min = startVal;
   timebar.max = endVal;
   timebar.value = count;
-  //   currentTimeDisplay.textContent = count.toFixed(1);
 
   isPaused = false;
   startButton.disabled = true;
@@ -1622,7 +1751,6 @@ restart.addEventListener("click", () => {
 
   startAnimation(startVal, endVal);
 });
-
 function resetSpikeState() {
   clearInterval(interval);
   interval = null;
@@ -3928,6 +4056,7 @@ function resetCamera() {
   document.getElementById("panel").style.display = "none";
   document.getElementById("playbackcontainer").style.display = "none";
   document.getElementById("histogramImage").style.display = "none";
+  resetHistChart();
   if (controls) {
     controls.reset(); // Reset TrackballControls
     controls.update();

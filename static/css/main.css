@@ -1438,7 +1438,7 @@ label {
   visibility: hidden; /* 👈 Initially hidden */
   position: fixed;
   top: 9.8rem;
-  right: 20rem;
+  right: 15rem;
   z-index: 1000;
 
   display: inline-flex;
@@ -1465,7 +1465,7 @@ label {
   -webkit-appearance: none;
   -moz-appearance: none;
 
-  padding: 0.45rem 3.9rem;
+  padding: 0.45rem 0.9rem;
   border-radius: 0.55rem;
   border: 1px solid rgba(255, 255, 255, 0.25);
   background: rgba(255, 255, 255, 0.1);
