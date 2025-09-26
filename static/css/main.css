@@ -1455,7 +1455,7 @@ label {
 }
 
 .connection-panel {
-  visibility: hidden !important;
+  visibility: hidden;
   position: fixed;
 
   /* Fallback (LTR): */
