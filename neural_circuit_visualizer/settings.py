@@ -200,15 +200,20 @@ LOGGING = {
             'filename': LOG_DIR / 'app.log',
             'formatter': 'verbose',
         },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'django': {
-            'handlers': ['app_file'],
+            'handlers': ['console'] if DEBUG else ['app_file'],
             'level': 'INFO',
             'propagate': True,
         },
         'hpc_integration': {
-            'handlers': ['app_file'],
+            'handlers': ['console'] if DEBUG else ['app_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
