@@ -24,6 +24,7 @@ class JobHelper:
 
     def _get_unicore_commands(self, hpc: str, circuit: str) -> tuple[str, str, str]:
         """ Returns the commands and scripts to be executed on the HPC. """
+        logger.info(f'Getting unicore command for {hpc} and {circuit} circuit')
         if hpc == self._G100_CINECA:
             if circuit == 'human':
                 pre_command = '/g100_work/EIRI_E_CNRIB2/NCV_Human/prepare_job.sh'
@@ -121,9 +122,8 @@ class JobHelper:
         job: Job
             the job object containing the job submission instance.
         """
-
         circuit = settings.pop('circuit')
-        pre_command, command, post_command = self._get_unicore_commands(circuit, hpc)
+        pre_command, command, post_command = self._get_unicore_commands(circuit=circuit, hpc=hpc)
         args = [str(settings[ss]) for ss in list(settings.keys())]
 
         job_descriptor = {
@@ -146,10 +146,12 @@ class JobHelper:
         client = self._initialize_unicore_client(hpc, token)
         try:
             job = client.new_job(job_description=job_descriptor)
+            logger.info('Job submitted correctly')
             return job
         except requests.HTTPError as err:
             raise errors.HPCException(messages.HPC_CONNECTION_ERROR)
         except Exception as err:
+            logger.error('Error on submitting job: %s', str(err))
             if str(err).find('500') >= 0 or str(err).find('503') >= 0:
                 raise errors.HPCException(messages.HPC_NOT_AVAILABLE)
             elif str(err).find('403') >= 0:
