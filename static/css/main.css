@@ -1,3 +1,13 @@
+/* Ensure html and body cover full viewport height */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+
+  /* Prevent body scroll by default */
+}
+
 @media (max-width: 768px) {
   #container .row {
     flex-wrap: wrap;
@@ -169,7 +179,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   /* Center the div both horizontally and vertically */
-  z-index: 1000;
+  z-index: 100000;
   display: none;
   text-align: center;
   width: 100%;
@@ -177,16 +187,6 @@
   /* Adjust the max-width as needed */
   padding-top: 25px;
   background-color: rgba(255, 255, 255, 0.9);
-}
-
-/* Ensure html and body cover full viewport height */
-html,
-body {
-  height: 100%;
-  margin: 0;
-  overflow: hidden;
-
-  /* Prevent body scroll by default */
 }
 
 /* Main container to allow scrolling */
@@ -812,7 +812,7 @@ input[type="range"] {
   background: #b8b8b7;
   position: fixed;
   left: 25.2%;
-  top: 13.4rem;
+  top: 13rem;
   width: 18vw;
   height: auto;
   z-index: 1000;
@@ -828,7 +828,7 @@ input[type="range"] {
 #togglePanelBtn {
   display: none;
   position: fixed;
-  top: 9.5rem;
+  top: 9.1rem;
   left: 25.3%;
   width: auto;
   min-width: 8vw;
@@ -843,7 +843,7 @@ input[type="range"] {
   text-align: center;
   white-space: nowrap;
   z-index: 1000;
-  border-radius: 4px;
+
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
@@ -948,6 +948,7 @@ input[type="range"] {
 #histogramImage {
   display: none;
   width: 100%;
+  max-width: 100%;
   height: 100%;
   object-fit: fill;
   background-color: #33373d;
@@ -958,14 +959,28 @@ input[type="range"] {
 
 #histChart {
   display: none;
-  width: 97%;
-  height: 100%;
-
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  object-fit: fill;
   background-color: #33373d;
   color: white;
   border: 2px outset #bbb;
   margin: 2px auto;
   cursor: pointer;
+}
+
+.histogram-container button {
+  float: right;
+}
+.btn-icon {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+}
+.btn-icon:hover {
+  border-color: #586074 !important;
 }
 
 #networkspikes {
@@ -1009,7 +1024,7 @@ input[type="range"] {
   background: #b8b8b7;
   color: #000;
   position: fixed;
-  top: 13.7rem;
+  top: 13rem;
 
   right: 0.4rem;
   width: 15vw;
@@ -1216,20 +1231,28 @@ label {
   border: 1px outset #bbb;
 }
 
-/* Icon buttons */
 .ncv-btn {
-  width: 32px;
-  height: 32px;
+  width: 2rem; /* scalable instead of fixed px */
+  aspect-ratio: 1 / 1; /* always square */
   padding: 0;
   background: #2d313f;
   color: #fff;
   border: 1px solid #3f4553;
-  border-radius: 8px;
-  display: inline-flex;
+  border-radius: 0.5rem;
+
+  display: flex;
   align-items: center;
   justify-content: center;
+
   transition: transform 0.08s ease, background 0.2s ease, border-color 0.2s ease;
 }
+
+.ncv-btn i {
+  font-size: 90%; /* scales with button size */
+  line-height: 1;
+  display: block;
+}
+
 .ncv-btn:hover {
   background: #3a4050;
   border-color: #586074;
@@ -1247,30 +1270,27 @@ label {
   border: 1px solid #454b57;
 }
 .ncv-input:focus {
-  border-color: #ffb74d; /* orange accent */
-  box-shadow: 0 0 0 0.15rem rgba(255, 183, 77, 0.25);
+  border-color: #000000; /* orange accent */
+  box-shadow: 0 0 0 0.15rem rgb(255, 255, 255);
 }
 
 /* Range slider styled to your orange accent */
 .ncv-range {
-  height: 4px;
-  background: linear-gradient(90deg, #ff9800 0%, #ffc107 100%);
-  border-radius: 999px;
+  height: 4px !important;
+  background: linear-gradient(90deg, #ffffff 0%, #000000 100%) !important;
+  border-radius: 999px !important;
 }
 .ncv-range::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: 2px solid #ff9800;
+  -webkit-appearance: none !important;
+
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  border: 2px solid #1f1d1d !important;
 }
 .ncv-range::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
+  border-radius: 50% !important;
   background: #ffffff;
-  border: 2px solid #ff9800;
+  border: 2px solid #ffffff !important;
 }
 
 /* Typography tweaks */
@@ -1435,71 +1455,129 @@ label {
 }
 
 .connection-panel {
-  visibility: hidden; /* 👈 Initially hidden */
+  visibility: hidden !important;
   position: fixed;
-  top: 9.8rem;
-  right: 20rem;
-  z-index: 1000;
 
+  /* Fallback (LTR): */
+
+  right: 10rem;
+
+  /* Logical props (for RTL-capable browsers). Keep fallbacks above. */
+  inset-block-start: 9.6rem;
+  inset-inline-end: 12rem;
+
+  z-index: 1000;
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
+  padding: 0rem 0.8rem;
 
-  padding: 0.6rem 0.8rem;
-  border-radius: 0.75rem;
+  /* Background + blur with safe fallback */
   background: rgba(20, 20, 20, 0.55);
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-  color: #f3f3f3;
-  font: 500 14px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+
+  font: 500 14px/1.2 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  max-width: min(92vw, 720px);
+  width: max-content;
+  flex-wrap: wrap; /* wrap on tiny screens */
+}
+
+/* If blur isn’t supported, increase opacity for contrast */
+@supports not ((-webkit-backdrop-filter: blur(6px)) or (backdrop-filter: blur(6px))) {
+  .connection-panel {
+    background: rgba(20, 20, 20, 0.85);
+  }
 }
 
 .connection-panel label {
   color: #ddd;
   letter-spacing: 0.2px;
+  margin-inline-end: 0.25rem;
 }
 
 .connection-panel select {
+  /* Normalize native styling */
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
 
-  padding: 0.45rem 0.9rem;
-  border-radius: 0.55rem;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.1);
+  padding: 0.55rem 2.1rem 0.55rem 0.9rem; /* bigger tap target */
+  min-height: 2.1rem;
+
+  background-color: rgba(255, 255, 255, 0.1);
   color: #fff;
   font-weight: 600;
   cursor: pointer;
   outline: none;
+  line-height: 1.1;
+  max-width: 100%;
 
-  background-image: linear-gradient(45deg, transparent 50%, #fff 50%), linear-gradient(135deg, #fff 50%, transparent 50%);
-  background-position: calc(100% - 14px) calc(50% - 2px), calc(100% - 9px) calc(50% - 2px);
-  background-size: 6px 6px, 6px 6px;
+  /* Custom arrow via SVG (works everywhere) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%23FFFFFF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  padding-right: 2rem;
+  background-position: right 0.6rem center;
+  background-size: 12px 8px;
+}
+
+/* Hide the old IE arrow if ever encountered (harmless elsewhere) */
+.connection-panel select::-ms-expand {
+  display: none;
 }
 
 .connection-panel select:hover {
   border-color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .connection-panel select:focus {
   box-shadow: 0 0 0 2px rgba(0, 150, 255, 0.35);
 }
 
+/* High-contrast preference */
+@media (prefers-contrast: more) {
+  .connection-panel {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+  }
+  .connection-panel select {
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .connection-panel {
+    transition: none !important;
+  }
+}
+
+/* ---------- Responsive tweaks ---------- */
 @media (max-width: 640px) {
   .connection-panel {
-    top: 0.75rem;
-    right: 0.75rem;
+    /* Respect notches / iOS safe areas */
+    top: max(0.75rem, env(safe-area-inset-top));
+    right: max(0.75rem, env(safe-area-inset-right));
+    inset-block-start: max(0.75rem, env(safe-area-inset-top));
+    inset-inline-end: max(0.75rem, env(safe-area-inset-right));
+
     padding: 0.45rem 0.6rem;
     gap: 0.5rem;
     font-size: 12px;
   }
   .connection-panel select {
-    padding: 0.35rem 0.7rem;
+    padding: 0.45rem 2rem 0.45rem 0.7rem;
+    min-height: 2rem;
+  }
+}
+
+/* Optional: clamp the inline offset so it never flies off-screen on mid sizes */
+@media (max-width: 1200px) {
+  .connection-panel {
+    right: 1rem;
+    inset-inline-end: 1rem;
   }
 }
 
@@ -1551,4 +1629,92 @@ label {
 .ncv-select:focus {
   border-color: #000000;
   box-shadow: 0 0 0 0.15rem rgba(110, 168, 254, 0.25);
+}
+
+/*camera gui*/
+#gui .gui-inline-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 3px 4px;
+  background: #b8b8b7;
+
+  width: 100%;
+  box-sizing: border-box;
+}
+#gui .gui-inline-row .cr,
+#gui .gui-inline-row .controller {
+  margin: 0 !important;
+  height: auto !important;
+  width: auto !important;
+  overflow: visible !important;
+  flex: 0 0 auto !important;
+}
+#gui .gui-inline-row button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 15px;
+  padding: 3px 4px;
+  line-height: 1;
+  white-space: nowrap;
+  border: 1px solid #3f4553;
+
+  background: #2d313f;
+  color: #fff;
+  cursor: pointer;
+
+  font-size: 10px; /* tweak if needed */
+  font-weight: 200;
+
+  overflow: visible; /* ← prevent cropping */
+}
+#gui .gui-inline-row button:hover {
+  background: #3a4050;
+  border-color: #586074;
+}
+
+/* the grid container */
+#gui .cam-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 3px 4px;
+  width: 100%;
+  box-sizing: border-box;
+  background: #b8b8b7; /* optional */
+
+  overflow: visible; /* ← avoid clipping */
+}
+
+/* make buttons roomy so text isn't cut off */
+#gui .cam-grid button {
+  display: inline-flex; /* center text nicely */
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 15px; /* give vertical room */
+  padding: 3px 4px; /* adjust to taste */
+  line-height: 1; /* avoid tight baseline */
+  box-sizing: border-box;
+
+  font-size: 10px; /* tweak if needed */
+  font-weight: 200;
+  white-space: nowrap;
+  overflow: visible; /* ← prevent cropping */
+
+  -webkit-appearance: none; /* macOS fix */
+  appearance: none;
+
+  border: 1px solid #3f4553;
+
+  background: #2d313f;
+  color: #fff;
+  cursor: pointer;
+}
+
+#gui .cam-grid button:hover {
+  background: #3a4050;
+  border-color: #586074;
 }

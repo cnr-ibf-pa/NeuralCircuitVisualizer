@@ -190,14 +190,6 @@
                                   <button type="button" id="btnLoadHumanNetwork_full" class="btnstyle">Load Full Circuit</button>
                                   <button type="button" id="btnLoadHumanNetwork_half" class="btnstyle">Load Half Circuit</button>
                                 </div>
-
-                                <!-- Select dropdown -->
-                                <div class="d-grid gap-2 col-12 mx-auto mt-2 mb-2">
-                                  <select id="HumanactivitySelect" class="form-select form-select-sm" disabled>
-                                    <option selected>Select Activity</option>
-                                    <option value="1">Example Activity</option>
-                                  </select>
-                                </div>
                               </div>
                             </div>
                           </div>
@@ -216,14 +208,6 @@
 
                               <!-- Info Icon Button -->
                               <button type="button" class="btn btn-outline-light btn-sm p-1" data-bs-toggle="modal" data-bs-target="#confileDetailsModal" title="View file format details"><img src="{% static 'img/info2.png' %}" alt="Info" style="height: 18px" /></button>
-                            </div>
-
-                            <div class="d-grid gap-2 col-11 mx-auto mt-2 mb-2">
-                              <select id="activitySelect" class="form-select form-select-sm">
-                                <option selected>Select Activity</option>
-                                <option value="1">Activity file for CA3</option>
-                                <option value="2">Activity file for MEC</option>
-                              </select>
                             </div>
 
                             <!-- Select/Unselect All -->
@@ -1684,6 +1668,9 @@
             <div id="plots">
               <div class="histogram-container">
                 <div id="histChartContainer" style="display: none">
+                  <button id="dlHistBtn" class="btn btn-sm btn-icon" title="Download PNG">
+                    <i class="bi bi-download"></i>
+                  </button>
                   <canvas id="histChart"></canvas>
                 </div>
                 <img id="histogramImage" />
@@ -1748,15 +1735,15 @@
             <div class="row align-items-center control-panel py-1">
               <!-- Activity window dropdown -->
               <div class="col-12 col-sm-6 col-md-auto">
-                <label class="form-label form-label-sm text-muted mb-1 d-block">Activity window</label>
+                <label class="form-label form-label-md text-muted mb-1 d-block">Activity window</label>
                 <select id="ddactivity_chunks" class="form-select form-select-sm ncv-select">
-                  <option selected>Select Activity</option>
+                  <option disabled selected>Select Activity</option>
                 </select>
               </div>
 
               <!-- Transport controls -->
-              <div class="col-12 col-sm-6 col-md-auto">
-                <label class="form-label form-label-sm text-muted mb-1 d-block">Playback</label>
+              <div class="col-12 col-sm-6 col-md-auto align-items-center flex-wrap">
+                <label class="form-label form-label-md text-muted mb-1 d-block">Playback</label>
                 <div class="d-flex flex-wrap gap-2">
                   <button id="startbtn" class="btn btn-sm ncv-btn" aria-label="Play" title="Play">
                     <i class="bi bi-play-fill"></i>

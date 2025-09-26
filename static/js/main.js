@@ -127,10 +127,7 @@ span.onclick = function () {
   modal.style.display = "none";
 };
 
-activitySelect.addEventListener("change", loadActivity);
-document.getElementById("activitySelect").disabled = true;
 document.getElementById("btnLoadConnection").disabled = true;
-
 const btnLoadConnection = document.getElementById("btnLoadConnection");
 btnLoadConnection.disabled = true;
 btnLoadConnection.addEventListener("click", function () {
@@ -142,14 +139,11 @@ btnLoadConnection.addEventListener("click", function () {
   fetchConnections();
 });
 
-HumanactivitySelect.addEventListener("change", loadHumanActivity);
-
 async function loadActivity() {
-  const selectedValue = activitySelect.value;
+  const ddindex = dropdown.selectedIndex;
 
-  if (selectedValue === "1" || selectedValue === "2") {
-    await LoadActivityData(selectedValue);
-    startBtn.style.display = "block";
+  if (ddindex === 1 || ddindex === 2) {
+    await LoadActivityData(ddindex);
   }
 }
 
@@ -163,17 +157,17 @@ async function LoadActivityData(file_id) {
 
     const ca3checkbox = document.getElementById("AllCA3RegSwitchCheck");
     const eccheckbox = document.getElementById("AllECRegSwitchCheck");
-    const selectedActivity = activitySelect.options[activitySelect.selectedIndex].text;
+    const selectedActivity = dropdown.options[dropdown.selectedIndex].text;
 
     if (selectedActivity.includes("CA3") && !ca3checkbox.checked) {
       alert("You selected a CA3 activity file. Please enable the CA3 region in the network.");
-      activitySelect.selectedIndex = 0;
+      dropdown.selectedIndex = 0;
       return;
     }
 
     if (selectedActivity.includes("EC") && !eccheckbox.checked) {
       alert("You selected an EC activity file. Please enable the EC region in the network.");
-      activitySelect.selectedIndex = 0;
+      dropdown.selectedIndex = 0;
       return;
     }
 
@@ -182,7 +176,7 @@ async function LoadActivityData(file_id) {
       formData.append("gIDs", JSON.stringify(gIDs));
     } else {
       alert("Select spike region from network.");
-      activitySelect.selectedIndex = 0;
+      dropdown.selectedIndex = 0;
       return;
     }
 
@@ -203,15 +197,6 @@ async function LoadActivityData(file_id) {
 
       document.getElementById("lblspikes").innerText = "# spikes: " + number_of_spikes;
 
-      //   const lasttime = parseFloat(timeRanges[timeRanges.length - 1]).toFixed(1);
-      //   //   document.getElementById("lblLasttime").innerHTML =
-      //   //     " / " + lasttime + "(ms)";
-
-      //   totalTimeDisplay.textContent = lasttime;
-      //   document.getElementById("timebar").max = lasttime;
-
-      //   count = 0.0;
-      // Extract and sort keys
       const sortedKeys = Object.keys(Activitys).sort((a, b) => parseFloat(a) - parseFloat(b));
 
       // Print the last key after sorting
@@ -225,6 +210,8 @@ async function LoadActivityData(file_id) {
       }
 
       startButton.disabled = false;
+
+      startBtn.style.display = "block";
     } else {
       const errorText = await response.text();
       console.error("Server Error:", errorText);
@@ -240,12 +227,13 @@ async function LoadActivityData(file_id) {
 
 // Function to load activity data based on selection human
 async function loadHumanActivity() {
-  const selectedValue = HumanactivitySelect.value;
+  const ddindex = dropdown.selectedIndex;
 
-  if (selectedValue === "1" || selectedValue === "2") {
-    await LoadHumanActivityData(selectedValue);
-    startBtn.style.display = "block";
-  }
+  if (ddindex == 1 || ddindex == 2) {
+    console.log(ddindex);
+    await LoadHumanActivityData(ddindex);
+    // startBtn.style.display = "block";
+  } else alert("select activity..");
 }
 
 async function LoadHumanActivityData(file_id) {
@@ -307,9 +295,6 @@ async function LoadHumanActivityData(file_id) {
 
 async function LoadHipForm() {
   try {
-    document.getElementById("HumanactivitySelect").selectedIndex = 0;
-
-    document.getElementById("HumanactivitySelect").disabled = true;
     clearScene();
     resetSpikeState();
     resetPlaybackConfig();
@@ -350,22 +335,24 @@ async function LoadHipForm() {
     document.getElementById("page-loader").style.display = "none";
     btnLoadConnection.disabled = false;
     isHippocamome = true;
-
-    document.getElementById("activitySelect").disabled = false;
   } catch (error) {
     console.error("Error fetching data:", error);
     document.getElementById("page-loader").style.display = "none";
   }
 }
-
+let circuitstatus = 0;
 window.addEventListener("load", function () {
+  const lst = ["Activity demo"];
   const btnLoadHumanNetwork_full = document.getElementById("btnLoadHumanNetwork_full");
   btnLoadHumanNetwork_full.addEventListener("click", function () {
     document.getElementById("msgprogress").innerText = `Loading full circuit, please wait...`;
     document.getElementById("progress-percentage").style.display = "none";
     document.getElementById("page-loader").style.display = "block";
     LoadHumanHipForm("full"); // Pass "full"
-    dropdown.innerHTML = "";
+    // dropdown.innerHTML = "";
+
+    popupDropdownActivity(lst);
+    circuitstatus = 1;
   });
 
   const btnLoadHumanNetwork_half = document.getElementById("btnLoadHumanNetwork_half");
@@ -375,18 +362,32 @@ window.addEventListener("load", function () {
     document.getElementById("page-loader").style.display = "block";
     LoadHumanHipForm("half"); // Pass "half"
     ishalf = true;
-    dropdown.innerHTML = "";
+    // dropdown.innerHTML = "";
+
+    popupDropdownActivity(lst);
+    circuitstatus = 1;
   });
 });
 
+function popupDropdownActivity(lst) {
+  // Keep only the first option
+  while (dropdown.options.length > 1) {
+    dropdown.remove(1);
+  }
+  dropdown.selectedIndex = 0;
+
+  //  const options = ["Activity demo"];
+  lst.forEach((item) => {
+    const option = document.createElement("option");
+    option.value = item; // value attribute
+    option.text = item; // text shown to user
+    dropdown.appendChild(option);
+  });
+}
+
 async function LoadHumanHipForm(mode = "full") {
   try {
-    document.getElementById("activitySelect").selectedIndex = 0;
-    document.getElementById("HumanactivitySelect").selectedIndex = 0;
-    document.getElementById("HumanactivitySelect").disabled = false;
-
     btnLoadConnection.disabled = true;
-    document.getElementById("activitySelect").disabled = true;
 
     resetSpikeState();
     resetPlaybackConfig();
@@ -409,7 +410,7 @@ async function LoadHumanHipForm(mode = "full") {
     resetCamera();
     centerCameraToObject(particles);
 
-    document.getElementById("HumanactivitySelect").disabled = false;
+    startBtn.style.display = "block";
   } catch (error) {
     console.error("Error fetching data:", error);
     document.getElementById("page-loader").style.display = "none";
@@ -581,6 +582,7 @@ networkFileInput.addEventListener("change", async (event) => {
 
           dropdown.appendChild(option);
         });
+        circuitstatus = 3;
       } else {
         console.log("No activity data available.");
       }
@@ -1108,6 +1110,8 @@ hdfFileInput.addEventListener("change", async (event) => {
 
           //   const dropdown = document.getElementById("ddactivity_chunks");
           dropdown.innerHTML = "";
+          startButton.disabled = true;
+          stopButton.disable = true;
 
           const defaultOption = document.createElement("option");
           defaultOption.textContent = "Activity windows";
@@ -1124,6 +1128,7 @@ hdfFileInput.addEventListener("change", async (event) => {
 
             dropdown.appendChild(option);
           });
+          circuitstatus = 3;
         } else {
           console.log("No activity data available.");
         }
@@ -1173,15 +1178,32 @@ function buildOrUpdateHistChart(hist_data) {
   const ctx = document.getElementById("histChart").getContext("2d");
 
   // X=ms, Y=counts
-  histX = hist_data.bin_centers.map(Number);
-  histY = hist_data.counts.map(Number);
+  histX = (hist_data.bin_centers || []).map(Number);
+  histY = (hist_data.counts || []).map(Number);
   histSD = (hist_data.sd_poisson || []).map(Number);
+
+  const mfr = Number(hist_data.mfr ?? 0);
+  const tMin = Number.isFinite(hist_data.t_min) ? Number(hist_data.t_min) : Math.min(...histX);
+  const tMax = Number.isFinite(hist_data.t_max) ? Number(hist_data.t_max) : Math.max(...histX);
+
+  if (!histX.length || !histY.length) return;
+
+  // === Axis ranges from RAW counts ===
+  const yMinRaw = Math.min(...histY);
+  const yMaxRaw = Math.max(...histY);
+  const ySpan = Math.max(1, yMaxRaw - yMinRaw);
+  const yPad = Math.max(1, 0.08 * ySpan); // 8% padding
+  const yMin = Math.max(0, yMinRaw - yPad);
+  const yMax = yMaxRaw + yPad;
+
+  const xMin = Number.isFinite(hist_data.t_min) ? Number(hist_data.t_min) : Math.min(...histX);
+  const xMax = Number.isFinite(hist_data.t_max) ? Number(hist_data.t_max) : Math.max(...histX);
 
   // Optional smoothing
   const ySmooth = smoothSeries(histY, 7);
   const sdSmooth = smoothSeries(histSD, 7);
 
-  // Upper/lower band
+  // SD band
   const lower = ySmooth.map((v, i) => Math.max(0, v - (sdSmooth[i] || 0)));
   const upper = ySmooth.map((v, i) => v + (sdSmooth[i] || 0));
 
@@ -1190,7 +1212,7 @@ function buildOrUpdateHistChart(hist_data) {
   const ptsLower = histX.map((x, i) => ({ x, y: lower[i] }));
   const ptsUpper = histX.map((x, i) => ({ x, y: upper[i] }));
 
-  // --- Plugins: define BEFORE config ---
+  // Plugins
   const cursorPlugin = {
     id: "timeCursor",
     afterDraw(chart) {
@@ -1207,7 +1229,7 @@ function buildOrUpdateHistChart(hist_data) {
       ctx.moveTo(xPix, chartArea.top);
       ctx.lineTo(xPix, chartArea.bottom);
       ctx.lineWidth = 2;
-      ctx.strokeStyle = "rgba(0,0,0,0.85)";
+      ctx.strokeStyle = "rgba(255,255,255,0.85)";
       ctx.stroke();
       ctx.restore();
     },
@@ -1215,29 +1237,25 @@ function buildOrUpdateHistChart(hist_data) {
 
   const errorBarsPlugin = {
     id: "errorBars",
-    afterDatasetsDraw(chart, args, pluginOptions) {
-      const { stride = 8, capWidth = 8, color = "rgba(0,0,0,0.9)", lineWidth = 1 } = pluginOptions || {};
+    afterDatasetsDraw(chart, _args, opts) {
+      const { stride = 8, capWidth = 8, color = "rgba(0,0,0,0.9)", lineWidth = 1 } = opts || {};
       const {
         ctx,
         scales: { x, y },
       } = chart;
-      const meanMeta = chart.getDatasetMeta(2); // dataset 2 = mean curve
+      const meanMeta = chart.getDatasetMeta(2);
       if (!meanMeta?.data?.length) return;
-
       ctx.save();
       ctx.lineWidth = lineWidth;
       ctx.strokeStyle = color;
-
       for (let i = 0; i < meanMeta.data.length; i += stride) {
         const xMs = chart.config.data.datasets[2].data[i].x;
         const yMean = chart.config.data.datasets[2].data[i].y;
         const sd = chart.$histSD?.[i] ?? 0;
         if (sd <= 0) continue;
-
         const xPix = x.getPixelForValue(xMs);
         const yTop = y.getPixelForValue(yMean + sd);
         const yBot = y.getPixelForValue(Math.max(0, yMean - sd));
-
         ctx.beginPath();
         ctx.moveTo(xPix, yTop);
         ctx.lineTo(xPix, yBot);
@@ -1253,13 +1271,15 @@ function buildOrUpdateHistChart(hist_data) {
     },
   };
 
+  const fmtThousands = (v) => Number(v).toLocaleString();
+
   const config = {
     type: "line",
     data: {
       datasets: [
         { label: "Lower", data: ptsLower, borderWidth: 0, pointRadius: 0, fill: false, tooltip: { enabled: false } },
-        { label: "SD band", data: ptsUpper, borderWidth: 0, pointRadius: 0, fill: "-1", backgroundColor: "rgba(128,128,128,0.2)", borderColor: "rgba(128,128,128,0.2)", tooltip: { enabled: false } },
-        { label: "Spikes/bin (smoothed)", data: ptsMean, borderWidth: 2, pointRadius: 0, spanGaps: true, tension: 0.3, borderColor: "orange", backgroundColor: "orange" },
+        { label: "SD band", data: ptsUpper, borderWidth: 0, pointRadius: 0, fill: "-1", backgroundColor: "rgba(255,255,255,0.2)", borderColor: "rgba(128,128,128,0.2)", tooltip: { enabled: false } },
+        { label: "Spikes/bin (smoothed)", data: ptsMean, borderWidth: 2, pointRadius: 0, spanGaps: true, tension: 0.3, borderColor: "white", backgroundColor: "white" },
       ],
     },
     options: {
@@ -1268,31 +1288,41 @@ function buildOrUpdateHistChart(hist_data) {
       parsing: false,
       interaction: { mode: "nearest", axis: "x", intersect: false },
 
-      // === Axis text colors ===
+      // === lock axes to data ===
       scales: {
         x: {
           type: "linear",
+          min: xMin,
+          max: xMax,
           title: { display: true, text: "Time (ms)", color: "#FFFFFF", font: { weight: "bold" } },
-          ticks: { maxTicksLimit: 10, color: "#FFD54F" }, // tick label color
+          ticks: { color: "#FFFFFF", maxTicksLimit: 8 },
           grid: { color: "rgba(255,255,255,0.15)" },
         },
         y: {
-          title: { display: true, text: "Number of firing neurons", color: "#FFFFFF", font: { weight: "bold" } },
-          ticks: { color: "#FFD54F" },
+          beginAtZero: false,
+          min: yMin,
+          max: yMax,
+          title: { display: true, text: "Spikes", color: "#FFFFFF", font: { weight: "bold" } },
+          ticks: { color: "#FFFFFF", callback: fmtThousands },
           grid: { color: "rgba(255,255,255,0.15)" },
-          beginAtZero: true,
         },
       },
 
       plugins: {
         legend: { display: false },
-
-        // === Tooltip text colors ===
+        title: {
+          display: true,
+          text: `Chunk ${typeof selectedChunkNumber !== "undefined" ? selectedChunkNumber : ""} — MFR: ${mfr.toFixed(2)} Hz`,
+          color: "#FFFFFF",
+          font: { weight: "bold", size: 14 },
+          padding: { top: 4, bottom: 8 },
+          align: "center",
+        },
         tooltip: {
           filter: (ctx) => ctx.dataset.label === "Spikes/bin (smoothed)",
           backgroundColor: "rgba(0,0,0,0.90)",
-          titleColor: "#FFFFFF", // title text color
-          bodyColor: "#FFFFFF", // body text color
+          titleColor: "#FFFFFF",
+          bodyColor: "#FFFFFF",
           titleFont: { weight: "bold" },
           bodyFont: { size: 12 },
           callbacks: {
@@ -1300,41 +1330,328 @@ function buildOrUpdateHistChart(hist_data) {
               const idx = nearestIndex(histX, ctx.parsed.x);
               const c = histY[idx];
               const s = histSD[idx] ?? 0;
-              return `Count: ${c}  ±SD≈ ${s.toFixed(2)}`;
+              return `Count: ${fmtThousands(c)}  ±SD≈ ${s.toFixed(2)}`;
             },
           },
         },
-
-        // === Error bar plugin options must live here ===
-        errorBars: {
-          stride: 8,
-          capWidth: 8,
-          color: "rgba(0,0,0,0.9)",
-          lineWidth: 1,
-        },
+        errorBars: { stride: 10, capWidth: 10, color: "rgba(0,0,0,0.9)", lineWidth: 2 },
       },
 
-      // click to seek
-      onClick: (evt, elements, chart) => {
+      onClick: (evt, _els, chart) => {
         const x = chart.scales.x.getValueForPixel(evt.x);
         const idx = nearestIndex(histX, x);
         if (idx != null) seekToTime(histX[idx]);
       },
     },
-
-    // Register plugins here
     plugins: [Chart.registry.getPlugin("decimation") || { id: "noop" }, cursorPlugin, errorBarsPlugin],
   };
 
-  // Rebuild
+  const statsBadgePlugin = {
+    id: "statsBadge",
+    afterDraw(chart) {
+      const {
+        ctx,
+        chartArea: { top, right },
+      } = chart;
+      const maxC = Math.max(...histY);
+      const minC = Math.min(...histY);
+      const lines = [`Max spike/bin: ${maxC.toLocaleString()}`, `Min spike/bin: ${minC.toLocaleString()}`, `Range: ${tMin.toFixed(1)}–${tMax.toFixed(1)} ms`];
+      ctx.save();
+      ctx.font = "10px sans-serif";
+      const w = Math.max(...lines.map((s) => ctx.measureText(s).width)) + 14;
+      const h = 12 * lines.length + 10;
+      const x = right - w - 6;
+      const y = top + 8;
+
+      // box
+      ctx.fillStyle = "rgba(0,0,0,0.65)";
+      ctx.strokeStyle = "rgba(255,255,255,0.25)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      // text
+      ctx.fillStyle = "#FFFFFF";
+      lines.forEach((s, i) => ctx.fillText(s, x + 7, y + 9 + 12 * (i + 1) - 10));
+      ctx.restore();
+    },
+  };
+
   if (histChart) histChart.destroy();
   histChart = new Chart(ctx, config);
   histChart.$histSD = sdSmooth;
 
-  const ms0 = parseFloat(document.getElementById("timebar")?.value || hist_data.t_min || 0);
+  const ms0 = parseFloat(document.getElementById("timebar")?.value ?? hist_data.t_min ?? xMin);
   updateHistCursor(ms0);
   document.getElementById("histChartContainer").style.display = "block";
 }
+
+// function buildOrUpdateHistChart(hist_data) {
+//   const ctx = document.getElementById("histChart").getContext("2d");
+
+//   // ---- inputs ----
+//   const centers = (hist_data.bin_centers || []).map(Number);
+//   const counts = (hist_data.counts || []).map(Number);
+//   const sd_raw = (hist_data.sd_poisson || []).map(Number);
+//   if (!centers.length || !counts.length) return;
+
+//   histX = centers;
+//   histY = counts;
+//   histSD = sd_raw;
+
+//   // --- summary (match histogram) ---
+//   const mfr = Number(hist_data.mfr ?? 0);
+//   const tMin = Number.isFinite(hist_data.t_min) ? Number(hist_data.t_min) : Math.min(...centers);
+//   const tMax = Number.isFinite(hist_data.t_max) ? Number(hist_data.t_max) : Math.max(...centers);
+//   const maxSp = Math.max(...counts);
+//   const minSp = Math.min(...counts);
+
+//   // if backend sent totals, use them; else compute spikes = sum(counts); neurons unknown -> 0
+//   const totalSpikes = Number(hist_data.total_spikes ?? counts.reduce((a, b) => a + b, 0));
+//   const totalNeurons = Number(hist_data.total_neurons ?? hist_data.neurons ?? 0);
+
+//   // ---- bar width (prefer bin_edges, else estimate) ----
+//   const edges = (hist_data.bin_edges || []).map(Number);
+//   let barWidthMs;
+//   if (edges.length >= 2) barWidthMs = edges[1] - edges[0];
+//   else if (centers.length >= 2) barWidthMs = (centers[1] - centers[0]) * 0.98;
+//   else barWidthMs = 1;
+
+//   // ---- smoothing for curve ----
+//   const ySmooth = smoothSeries(counts, 7);
+//   const sdSmooth = smoothSeries(sd_raw, 7);
+//   const lower = ySmooth.map((v, i) => Math.max(0, v - (sdSmooth[i] || 0)));
+//   const upper = ySmooth.map((v, i) => v + (sdSmooth[i] || 0));
+
+//   // ---- axis from RAW counts with padding ----
+//   const yMinRaw = Math.min(...counts);
+//   const yMaxRaw = Math.max(...counts);
+//   const ySpan = Math.max(1, yMaxRaw - yMinRaw);
+//   const yPad = Math.max(1, 0.08 * ySpan);
+//   const yMin = Math.max(0, yMinRaw - yPad);
+//   const yMax = yMaxRaw + yPad;
+
+//   // ---- datasets ----
+//   const BAR_PX = 4;
+//   const barPoints = centers.map((x, i) => ({ x, y: counts[i] }));
+//   const linePoints = centers.map((x, i) => ({ x, y: ySmooth[i] }));
+
+//   // ---- plugins ----
+//   const cursorPlugin = {
+//     id: "timeCursor",
+//     afterDraw(chart) {
+//       if (currentCursorMs == null) return;
+//       const {
+//         ctx,
+//         chartArea,
+//         scales: { x },
+//       } = chart;
+//       if (currentCursorMs < x.min || currentCursorMs > x.max) return;
+//       const xp = x.getPixelForValue(currentCursorMs);
+//       ctx.save();
+//       ctx.beginPath();
+//       ctx.moveTo(xp, chartArea.top);
+//       ctx.lineTo(xp, chartArea.bottom);
+//       ctx.lineWidth = 2;
+//       ctx.strokeStyle = "rgba(255,255,255,0.85)";
+//       ctx.stroke();
+//       ctx.restore();
+//     },
+//   };
+
+//   const errorBarsPlugin = {
+//     id: "errorBars",
+//     afterDatasetsDraw(chart, _args, opts) {
+//       const { stride = 10, capWidth = 8, color = "rgba(0,0,0,0.9)", lineWidth = 1 } = opts || {};
+//       const {
+//         ctx,
+//         scales: { x, y },
+//       } = chart;
+//       // curve dataset index (below) = 2
+//       const lineMeta = chart.getDatasetMeta(2);
+//       if (!lineMeta?.data?.length) return;
+//       ctx.save();
+//       ctx.lineWidth = lineWidth;
+//       ctx.strokeStyle = color;
+//       for (let i = 0; i < lineMeta.data.length; i += stride) {
+//         const xMs = chart.config.data.datasets[2].data[i].x;
+//         const yMean = chart.config.data.datasets[2].data[i].y;
+//         const sd = chart.$histSD?.[i] ?? 0;
+//         if (sd <= 0) continue;
+//         const xp = x.getPixelForValue(xMs);
+//         const yT = y.getPixelForValue(yMean + sd);
+//         const yB = y.getPixelForValue(Math.max(0, yMean - sd));
+//         ctx.beginPath();
+//         ctx.moveTo(xp, yT);
+//         ctx.lineTo(xp, yB);
+//         ctx.stroke();
+//         ctx.beginPath();
+//         ctx.moveTo(xp - capWidth / 2, yT);
+//         ctx.lineTo(xp + capWidth / 2, yT);
+//         ctx.moveTo(xp - capWidth / 2, yB);
+//         ctx.lineTo(xp + capWidth / 2, yB);
+//         ctx.stroke();
+//       }
+//       ctx.restore();
+//     },
+//   };
+
+//   // Histogram-style stat block
+//   const statsBadgePlugin = {
+//     id: "statsBadge",
+//     afterDraw(chart) {
+//       const {
+//         ctx,
+//         chartArea: { top, right },
+//       } = chart;
+//       const lines = [`# Max Spike: ${maxSp.toLocaleString()}`, `# Min Spike: ${minSp.toLocaleString()}`, `# Spikes: ${totalSpikes.toLocaleString()}`, `# Neurons: ${totalNeurons.toLocaleString()}`, `# Min Time (ms): ${tMin.toFixed(1)}`, `# Max Time (ms): ${tMax.toFixed(1)}`];
+//       ctx.save();
+//       ctx.font = "10px sans-serif";
+//       const w = Math.max(...lines.map((s) => ctx.measureText(s).width)) + 14;
+//       const h = 12 * lines.length + 10;
+//       const x = right - w - 6;
+//       const y = top + 8;
+//       ctx.fillStyle = "rgba(0,0,0,0.65)";
+//       ctx.strokeStyle = "rgba(255,255,255,0.25)";
+//       ctx.lineWidth = 1;
+//       if (ctx.roundRect) {
+//         ctx.beginPath();
+//         ctx.roundRect(x, y, w, h, 6);
+//         ctx.fill();
+//         ctx.stroke();
+//       } else {
+//         ctx.fillRect(x, y, w, h);
+//         ctx.strokeRect(x, y, w, h);
+//       }
+//       ctx.fillStyle = "#FFFFFF";
+//       lines.forEach((s, i) => ctx.fillText(s, x + 7, y + 12 + 12 * i - 6));
+//       ctx.restore();
+//     },
+//   };
+
+//   const fmt = (v) => Number(v).toLocaleString();
+
+//   const config = {
+//     type: "bar",
+//     data: {
+//       datasets: [
+//         {
+//           type: "bar",
+//           label: "Spikes/bin",
+//           data: barPoints,
+//           parsing: false,
+//           borderWidth: 0.5,
+//           borderColor: "rgba(255,255,255,0.35)",
+//           backgroundColor: "rgba(255,255,255,0.70)",
+//           barThickness: BAR_PX,
+//           hoverBackgroundColor: "rgba(255,255,255,0.85)",
+//         },
+//         {
+//           type: "line",
+//           label: "SD band",
+//           data: centers.map((x, i) => ({ x, y: upper[i] })),
+//           parsing: false,
+//           borderWidth: 0,
+//           pointRadius: 0,
+//           fill: { target: { datasetIndex: 3 }, above: "rgba(128,128,128,0.15)" },
+//           tooltip: { enabled: false },
+//         },
+//         {
+//           type: "line",
+//           label: "Smoothed",
+//           data: linePoints,
+//           parsing: false,
+//           borderWidth: 2,
+//           pointRadius: 0,
+//           spanGaps: true,
+//           tension: 0.3,
+//           borderColor: "#ffcc00",
+//           backgroundColor: "#ffcc00",
+//         },
+//         {
+//           type: "line",
+//           label: "Lower",
+//           data: centers.map((x, i) => ({ x, y: lower[i] })),
+//           parsing: false,
+//           borderWidth: 0,
+//           pointRadius: 0,
+//           fill: false,
+//           tooltip: { enabled: false },
+//         },
+//       ],
+//     },
+//     options: {
+//       responsive: true,
+//       animation: false,
+//       parsing: false,
+//       interaction: { mode: "nearest", axis: "x", intersect: false },
+//       scales: {
+//         x: {
+//           type: "linear",
+//           min: tMin,
+//           max: tMax,
+//           title: { display: true, text: "Time (ms)", color: "#FFFFFF", font: { weight: "bold" } },
+//           ticks: { color: "#FFFFFF", maxTicksLimit: 10 },
+//           grid: { color: "rgba(255,255,255,0.15)" },
+//         },
+//         y: {
+//           beginAtZero: false,
+//           min: yMin,
+//           max: yMax,
+//           // **Match histogram label**
+//           title: { display: true, text: "Number of Firing Neurons", color: "#FFFFFF", font: { weight: "bold" } },
+//           ticks: { color: "#FFFFFF", callback: (v) => fmt(v) },
+//           grid: { color: "rgba(255,255,255,0.15)" },
+//         },
+//       },
+//       plugins: {
+//         legend: { display: false },
+//         // **Match histogram title style**
+//         title: {
+//           display: true,
+//           text: `Chunk ${typeof selectedChunkNumber !== "undefined" ? selectedChunkNumber : ""} - MFR: ${mfr.toFixed(2)} Hz`,
+//           color: "#FFFFFF",
+//           font: { weight: "bold", size: 14 },
+//           padding: { top: 4, bottom: 8 },
+//           align: "center",
+//         },
+//         tooltip: {
+//           backgroundColor: "rgba(0,0,0,0.90)",
+//           titleColor: "#FFFFFF",
+//           bodyColor: "#FFFFFF",
+//           titleFont: { weight: "bold" },
+//           bodyFont: { size: 12 },
+//           filter: (ctx) => ctx.datasetIndex === 0 || ctx.datasetIndex === 2,
+//           callbacks: {
+//             label: (ctx) => {
+//               const idx = nearestIndex(histX, ctx.parsed.x);
+//               const c = histY[idx];
+//               const s = histSD[idx] ?? 0;
+//               return `Count: ${fmt(c)}  ±SD≈ ${s.toFixed(2)}`;
+//             },
+//           },
+//         },
+//         errorBars: { stride: 12, capWidth: 8, color: "rgba(0,0,0,0.9)", lineWidth: 1 },
+//       },
+//       onClick: (evt, _els, chart) => {
+//         const x = chart.scales.x.getValueForPixel(evt.x);
+//         const idx = nearestIndex(histX, x);
+//         if (idx != null) seekToTime(histX[idx]);
+//       },
+//     },
+//     plugins: [Chart.registry.getPlugin("decimation") || { id: "noop" }, cursorPlugin, errorBarsPlugin, statsBadgePlugin],
+//   };
+
+//   if (histChart) histChart.destroy();
+//   histChart = new Chart(ctx, config);
+//   histChart.$histSD = sdSmooth;
+
+//   const ms0 = parseFloat(document.getElementById("timebar")?.value ?? hist_data.t_min ?? tMin);
+//   updateHistCursor(ms0);
+//   document.getElementById("histChartContainer").style.display = "block";
+// }
 
 function nearestIndex(xs, x) {
   if (!xs?.length) return null;
@@ -1374,91 +1691,99 @@ dropdown.addEventListener("change", async function () {
 
   if (!selectedChunkNumber || selectedChunkNumber === "Select Activity Chunk") return;
 
-  const progressBar = document.getElementById("progress-percentage");
-  const loader = document.getElementById("page-loader");
-  const msg = document.getElementById("msgprogress");
+  if (circuitstatus == 1) {
+    loadHumanActivity();
+  } else if (circuitstatus == 2) {
+    loadActivity();
+  } else if (circuitstatus == 3) {
+    const progressBar = document.getElementById("progress-percentage");
+    const loader = document.getElementById("page-loader");
+    const msg = document.getElementById("msgprogress");
 
-  let fetchProgress = 0;
+    let fetchProgress = 0;
 
-  try {
-    loader.style.display = "block";
-    msg.innerText = "Loading data..., please wait...";
-    progressBar.innerText = "0%";
+    try {
+      loader.style.display = "block";
+      msg.innerText = "Loading data..., please wait...";
+      progressBar.innerText = "0%";
 
-    // Simulated loading
-    const percentInterval = setInterval(() => {
-      if (fetchProgress < 99) {
-        fetchProgress += 1;
-        progressBar.innerText = `${fetchProgress}%`;
+      // Simulated loading
+      const percentInterval = setInterval(() => {
+        if (fetchProgress < 99) {
+          fetchProgress += 1;
+          progressBar.innerText = `${fetchProgress}%`;
+        }
+      }, 100); // ~10s simulated fetch duration
+
+      const response = await fetch(`${baseURL}/api/get_chunk_data/?dir=${uniqueDirectory}&chunk_number=${selectedChunkNumber}`);
+      const data = await response.json();
+
+      clearInterval(percentInterval);
+      progressBar.innerText = "100%";
+      msg.innerText = "Chunk data loaded successfully!";
+
+      if (!data.chunk_data || !data.gids_activity_indexes) {
+        throw new Error("Missing chunk_data or gids_activity_indexes in API response.");
       }
-    }, 100); // ~10s simulated fetch duration
 
-    const response = await fetch(`${baseURL}/api/get_chunk_data/?dir=${uniqueDirectory}&chunk_number=${selectedChunkNumber}`);
-    const data = await response.json();
+      if (data.histogram) {
+        document.getElementById("histogramImage").src = "data:image/png;base64," + data.histogram;
+        document.getElementById("histogramImage").style.display = "block";
+        document.getElementById("histChartContainer").style.display = "block";
+      }
 
-    clearInterval(percentInterval);
-    progressBar.innerText = "100%";
-    msg.innerText = "Chunk data loaded successfully!";
+      Activitys = data.chunk_data;
 
-    if (!data.chunk_data || !data.gids_activity_indexes) {
-      throw new Error("Missing chunk_data or gids_activity_indexes in API response.");
+      // ---- Build interactive histogram
+      if (data.hist_data && data.hist_data.bin_centers && data.hist_data.counts) {
+        buildOrUpdateHistChart(data.hist_data);
+      }
+
+      const sortedKeys = Object.keys(Activitys).sort((a, b) => parseFloat(a) - parseFloat(b));
+      if (sortedKeys.length > 0) {
+        lastKey = sortedKeys[sortedKeys.length - 1];
+        lasttime = parseInt(lastKey);
+        totalTimeDisplay.textContent = lasttime;
+        document.getElementById("timebar").max = lasttime;
+      }
+
+      if (selectedChunkNumber > 0 && sortedKeys.length > 0) {
+        firstKey = sortedKeys[0];
+        count = parseFloat(firstKey).toFixed(1);
+        currentTimeDisplay.textContent = count;
+      } else {
+        count = 0.0;
+        currentTimeDisplay.textContent = count.toFixed(1);
+      }
+
+      timeRanges = sortedKeys;
+      gids_activity_indexes = data.gids_activity_indexes;
+
+      document.getElementById("lblspikes").innerText = "# spikes :" + data.total_spikes;
+
+      if (counter_check > 1) {
+        clearInterval(interval);
+        interval = null;
+        isPaused = true;
+        resetParticles();
+      }
+
+      previousTimeDisplay = parseFloat(currentTimeDisplay.textContent).toFixed(1);
+      // document.getElementById("playbackcontainer").style.display = "block";
+
+      startButton.disabled = false;
+      stopButton.disable = true;
+
+      document.getElementById("Neurons_firing_attributes").style.visibility = "visible";
+      document.getElementById("networkspikes").style.visibility = "visible";
+    } catch (error) {
+      console.error("Error fetching chunk data:", error);
+      alert("Failed to fetch chunk data. Please try again.");
+      progressBar.innerText = "0%";
+      msg.innerText = "Error loading chunk.";
+    } finally {
+      loader.style.display = "none";
     }
-
-    if (data.histogram) {
-      document.getElementById("histogramImage").src = "data:image/png;base64," + data.histogram;
-      document.getElementById("histogramImage").style.display = "block";
-      document.getElementById("histChartContainer").style.display = "block";
-    }
-
-    Activitys = data.chunk_data;
-
-    // ---- Build interactive histogram
-    if (data.hist_data && data.hist_data.bin_centers && data.hist_data.counts) {
-      buildOrUpdateHistChart(data.hist_data);
-    }
-
-    const sortedKeys = Object.keys(Activitys).sort((a, b) => parseFloat(a) - parseFloat(b));
-    if (sortedKeys.length > 0) {
-      lastKey = sortedKeys[sortedKeys.length - 1];
-      lasttime = parseInt(lastKey);
-      totalTimeDisplay.textContent = lasttime;
-      document.getElementById("timebar").max = lasttime;
-    }
-
-    if (selectedChunkNumber > 0 && sortedKeys.length > 0) {
-      firstKey = sortedKeys[0];
-      count = parseFloat(firstKey).toFixed(1);
-      currentTimeDisplay.textContent = count;
-    } else {
-      count = 0.0;
-      currentTimeDisplay.textContent = count.toFixed(1);
-    }
-
-    timeRanges = sortedKeys;
-    gids_activity_indexes = data.gids_activity_indexes;
-
-    document.getElementById("lblspikes").innerText = "# spikes :" + data.total_spikes;
-
-    if (counter_check > 1) {
-      clearInterval(interval);
-      interval = null;
-      isPaused = true;
-      resetParticles();
-    }
-
-    previousTimeDisplay = parseFloat(currentTimeDisplay.textContent).toFixed(1);
-    // document.getElementById("playbackcontainer").style.display = "block";
-
-    startButton.disabled = false;
-    document.getElementById("Neurons_firing_attributes").style.visibility = "visible";
-    document.getElementById("networkspikes").style.visibility = "visible";
-  } catch (error) {
-    console.error("Error fetching chunk data:", error);
-    alert("Failed to fetch chunk data. Please try again.");
-    progressBar.innerText = "0%";
-    msg.innerText = "Error loading chunk.";
-  } finally {
-    loader.style.display = "none";
   }
 });
 
@@ -1779,13 +2104,18 @@ const hudCtx = hudCanvas.getContext("2d");
 
 const canvas = document.getElementById("neuronCanvas");
 function CreateScene() {
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 1, 100000);
+  camera.position.set(75, 20, 0);
+  camera.up.set(0, 0, 1);
+
   // Use your canvas explicitly
   renderer = new THREE.WebGLRenderer({
     canvas: canvas,
     powerPreference: "high-performance",
     alpha: true,
     antialias: true,
-    preserveDrawingBuffer: true, //  ADD THIS
+    preserveDrawingBuffer: false, //  ADD THIS
     logarithmicDepthBuffer: true,
   });
 
@@ -1794,16 +2124,13 @@ function CreateScene() {
   renderer.setClearColor(0x000000, 0); // Transparent background
   renderer.autoClear = false; // So we can render both scenes
 
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 1, 100000);
-  camera.position.z = 1000;
-
   // Add camera2 for the secondary view
   camera2 = new THREE.PerspectiveCamera(45, 1, 1, 100000); // Aspect ratio will be set in animate()
 
   controls = new TrackballControls(camera, canvas);
   controls.rotateSpeed = 20.0;
-  //   controls.zoomSpeed = 10;
+  controls.zoomSpeed = 1.2;
+  controls.panSpeed = 0.8;
 
   controls.minDistance = 0.1; // Allow very close zoom (default is 0)
   controls.maxDistance = 100000; // Increase if camera hits a limit
@@ -1907,8 +2234,8 @@ function addAnatomicalArrowsFromPCA(scene, origin, length, pcaAxes) {
     { label: "P", dir: pcaAxes[0], color: 0xffff00 },
     { label: "D", dir: pcaAxes[1], color: 0x00ff00 },
     { label: "V", dir: pcaAxes[1].clone().negate(), color: 0xffffff },
-    { label: "L", dir: pcaAxes[2], color: 0xff0000 },
-    { label: "M", dir: pcaAxes[2].clone().negate(), color: 0x0000ff },
+    { label: "M", dir: pcaAxes[2], color: 0xff0000 },
+    { label: "L", dir: pcaAxes[2].clone().negate(), color: 0x0000ff },
   ];
 
   labels.forEach(({ label, dir, color }) => {
@@ -1969,6 +2296,199 @@ function createArrowOverlayFromPCA(pcaAxes) {
 
   addAnatomicalArrowsFromPCA(arrowsScene, new THREE.Vector3(0, 0, 0), 1.0, pcaAxes);
 }
+
+//////////////////////////////////////////////
+
+// ---- persistence (position + target; manual, no autosave noise) ----
+const CAM_POSE_KEY = "ncv_cam_pose_v2";
+const CAM_HAS_KEY = "ncv_cam_pose_has_user_save_v2";
+
+function setHasSaved(v) {
+  localStorage.setItem(CAM_HAS_KEY, v ? "1" : "0");
+}
+function getHasSaved() {
+  return localStorage.getItem(CAM_HAS_KEY) === "1";
+}
+
+function savePoseNow() {
+  try {
+    localStorage.setItem(
+      CAM_POSE_KEY,
+      JSON.stringify({
+        px: camera.position.x,
+        py: camera.position.y,
+        pz: camera.position.z,
+        tx: controls?.target.x ?? 0,
+        ty: controls?.target.y ?? 0,
+        tz: controls?.target.z ?? 0,
+        up: [camera.up.x, camera.up.y, camera.up.z],
+        fov: camera.fov,
+      })
+    );
+    setHasSaved(true);
+  } catch (e) {
+    console.warn("savePoseNow failed:", e);
+  }
+}
+
+function restorePoseOnce() {
+  try {
+    if (!getHasSaved()) return false;
+    const raw = localStorage.getItem(CAM_POSE_KEY);
+    if (!raw) return false;
+    const { px, py, pz, tx, ty, tz, up, fov } = JSON.parse(raw);
+    if (![px, py, pz, tx, ty, tz].every(Number.isFinite)) return false;
+
+    if (Array.isArray(up) && up.length === 3) camera.up.set(up[0], up[1], up[2]);
+    if (Number.isFinite(fov)) camera.fov = fov;
+
+    // set pose once; heavy ops done a single time here
+    camera.position.set(px, py, pz);
+    controls?.target.set(tx, ty, tz);
+    camera.lookAt(controls ? controls.target : new THREE.Vector3(tx, ty, tz));
+    controls?.update();
+    return true;
+  } catch (e) {
+    console.warn("restorePoseOnce failed:", e);
+    return false;
+  }
+}
+
+function clearSavedPose() {
+  localStorage.removeItem(CAM_POSE_KEY);
+  localStorage.removeItem(CAM_HAS_KEY);
+}
+
+// guard to avoid multiple folders / listeners
+let _cameraFolderMade = false;
+
+function makeCameraFolder(gui) {
+  if (_cameraFolderMade) return; // prevent duplicates
+  _cameraFolderMade = true;
+
+  const folder = gui.addFolder("Camera");
+  const model = {
+    px: camera.position.x,
+    py: camera.position.y,
+    pz: camera.position.z,
+  };
+
+  let applyScheduled = false;
+  function applyOncePerFrame() {
+    if (applyScheduled) return;
+    applyScheduled = true;
+    requestAnimationFrame(() => {
+      applyScheduled = false;
+      // For position edits we don't need to call lookAt every time.
+      camera.position.set(model.px, model.py, model.pz);
+      // Keep orientation toward current target; Trackball will handle orbit math
+      controls?.update();
+    });
+  }
+
+  // modest ranges keep UI light; tune to your world units
+  const RANGE = 200000,
+    STEP = 1;
+
+  // IMPORTANT: use onFinishChange (fires when the user releases the slider)
+  const c_px = folder.add(model, "px", 0, RANGE, STEP).name("x").onFinishChange(applyOncePerFrame);
+  const c_py = folder.add(model, "py", 0, RANGE, STEP).name("y").onFinishChange(applyOncePerFrame);
+  const c_pz = folder.add(model, "pz", 0, RANGE, STEP).name("z").onFinishChange(applyOncePerFrame);
+
+  // Buttons (save/restore/clear)
+  const btnSave = folder.add({ Save: () => savePoseNow() }, "Save").name("Save");
+  const btnRestore = folder
+    .add(
+      {
+        Restore: () => {
+          if (restorePoseOnce()) {
+            // refresh sliders from actual pose
+            model.px = camera.position.x;
+            model.py = camera.position.y;
+            model.pz = camera.position.z;
+            c_px.updateDisplay();
+            c_py.updateDisplay();
+            c_pz.updateDisplay();
+          } else {
+            console.info("No saved pose to restore.");
+          }
+        },
+      },
+      "Restore"
+    )
+    .name("Restore");
+
+  const btnClear = folder.add({ Reset: () => resetToInitialPose() }, "Reset").name("Reset");
+
+  // put buttons on one line (optional)
+  const row = document.createElement("div");
+  row.className = "gui-inline-row";
+
+  row.style.display = "flex";
+
+  row.style.gap = "8px";
+  row.style.padding = "0px 8px";
+  row.style.backgroundColor = "#b8b8b7"; // ← set the color
+
+  row.style.color = "#222"; // optional: text/icon contrast
+  folder.domElement.appendChild(row);
+  row.appendChild(btnSave.domElement);
+  row.appendChild(btnRestore.domElement);
+  row.appendChild(btnClear.domElement);
+
+  // let the folder show content outside default line box
+  folder.domElement.style.overflow = "visible";
+
+  // normalize the 3 controller <li> blocks so buttons don't get cut
+  [btnSave, btnRestore, btnClear].forEach((ctl) => {
+    const el = ctl.domElement; // dat.GUI: <li class="cr"> / lil-gui: .controller
+    el.style.margin = "0";
+    el.style.height = "auto";
+    el.style.width = "auto";
+    el.style.overflow = "visible";
+    el.style.flex = "0 0 auto"; // don't stretch weirdly inside our flex row
+  });
+
+  // Throttled Trackball → GUI sync (no storage writes here)
+  let syncTimer = null;
+  controls?.addEventListener("change", () => {
+    if (syncTimer) return;
+    syncTimer = setTimeout(() => {
+      syncTimer = null;
+      model.px = camera.position.x;
+      model.py = camera.position.y;
+      model.pz = camera.position.z;
+      c_px.updateDisplay();
+      c_py.updateDisplay();
+      c_pz.updateDisplay();
+    }, 120); // ~8 updates/sec
+  });
+
+  folder.open();
+  return folder;
+}
+
+let uniforms;
+// keep DPR uniform up to date
+function updateDPR() {
+  uniforms.uPixelRatio.value = renderer.getPixelRatio();
+}
+window.addEventListener("resize", () => {
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+  updateDPR();
+});
+let _initialPose = null;
+function resetToInitialPose() {
+  if (!_initialPose) return;
+  camera.up.copy(_initialPose.up);
+  camera.fov = _initialPose.fov;
+  camera.position.copy(_initialPose.pos);
+  controls.target.copy(_initialPose.tgt);
+  controls.update();
+}
+
+/////////////////////////////////////////
 
 function VisualizateNeurons() {
   // Clear previous particles if any
@@ -2120,7 +2640,20 @@ function VisualizateNeurons() {
   geometry.setAttribute("mtype", new THREE.Float32BufferAttribute(neuron_class, 1));
   geometry.setAttribute("originalColor", new THREE.Float32BufferAttribute(vertexColors, 3));
 
-  const uniforms = { pointTexture: { value: null } };
+  const gl = renderer.getContext();
+  const range = gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE); // [min,max]
+
+  // uniforms
+  uniforms = {
+    uPixelRatio: { value: renderer.getPixelRatio() }, // DPR aware
+    uBaseSize: { value: 30.0 }, // your logical size
+    uMaxSize: { value: range ? range[1] : 2048.0 }, // clamp by GPU
+    uBrightness: { value: 1.0 },
+    pointTexture: { value: null },
+  };
+
+  updateDPR();
+  //   const uniforms = { pointTexture: { value: null } };
   material = new THREE.ShaderMaterial({
     uniforms,
     vertexShader: document.getElementById("vertexshader").textContent,
@@ -2134,6 +2667,11 @@ function VisualizateNeurons() {
 
   particles = new THREE.Points(geometry, material);
   scene.add(particles);
+
+  // Try restore; if user never saved, just center (no save)
+  if (!restorePoseOnce()) {
+    centerCameraToObject(particles); // sets camera + controls; DO NOT save here
+  }
 
   // Initialize raycaster with precise settings
   initRaycaster();
@@ -2198,17 +2736,11 @@ function VisualizateNeurons() {
         });
         bgcolor.close();
 
-        const cameraFolder = gui.addFolder("Camera");
-        cameraFolder.add(camera.position, "x", 0, 100000).listen();
-        cameraFolder.add(camera.position, "y", 0, 100000).listen();
-        cameraFolder.add(camera.position, "z", 0, 100000).listen();
+        makeCameraFolder(gui);
 
-        cameraFolder.close();
-
-        // ----------------- GUI: Camera Navigation (updated) -----------------
         const cameraNav = gui.addFolder("Camera Navigation");
 
-        // Zoom slider (unchanged from last fix)
+        // // Zoom slider (unchanged from last fix)
         const zoomParams = { zoomAmount: 0 };
         let lastZoom = 0;
         cameraNav
@@ -2222,17 +2754,38 @@ function VisualizateNeurons() {
             dollyScale(scale);
           });
 
-        // Zoom buttons (correct directions)
-        cameraNav.add({ zoomIn: () => dollyScale(Math.exp(+0.1)) }, "zoomIn").name("Zoom In  +");
-        cameraNav.add({ zoomOut: () => dollyScale(Math.exp(-0.1)) }, "zoomOut").name("Zoom Out -");
+        // actions
+        const navActions = {
+          zoomIn: () => dollyScale(Math.exp(+0.1)),
+          zoomOut: () => dollyScale(Math.exp(-0.1)),
+          up: () => panCamera(0, -camSpeed()),
+          down: () => panCamera(0, +camSpeed()),
+          left: () => panCamera(+camSpeed(), 0),
+          right: () => panCamera(-camSpeed(), 0),
+        };
 
-        // ---- PAN buttons: labels match on-screen motion of the object ----
-        // (object moves up => camera+target move in -up direction)
-        cameraNav.add({ moveUp: () => panCamera(0, -camSpeed()) }, "moveUp").name("Move Up ↑");
-        cameraNav.add({ moveDown: () => panCamera(0, +camSpeed()) }, "moveDown").name("Move Down ↓");
-        cameraNav.add({ moveLeft: () => panCamera(+camSpeed(), 0) }, "moveLeft").name("Move Left ←");
-        cameraNav.add({ moveRight: () => panCamera(-camSpeed(), 0) }, "moveRight").name("Move Right →");
+        // make a grid and inject buttons
+        const grid = document.createElement("div");
+        grid.className = "cam-grid";
+        grid.innerHTML = `
+  <button type="button" data-a="zoomIn">Zoom In  +</button>
+  <button type="button" data-a="zoomOut">Zoom Out -</button>
+  <button type="button" data-a="up">Move Up ↑</button>
+  <button type="button" data-a="down">Move Down ↓</button>
+  <button type="button" data-a="left">Move Left ←</button>
+  <button type="button" data-a="right">Move Right →</button>
+`;
+        cameraNav.domElement.appendChild(grid);
 
+        // one click handler for all
+        grid.addEventListener("click", (e) => {
+          const btn = e.target.closest("button[data-a]");
+          if (!btn) return;
+          const fn = navActions[btn.dataset.a];
+          if (fn) fn();
+        });
+
+        cameraNav.domElement.style.overflow = "visible";
         cameraNav.open();
 
         // ----------------- Scroll & Trackpad gestures -----------------
@@ -2996,7 +3549,10 @@ window.addEventListener("load", function () {
     LoadHipForm();
     enableAllElements();
     loadmouseflag = true;
-    dropdown.innerHTML = "";
+    // dropdown.innerHTML = "";
+    const lst = ["CA3 Activity", ["MEC Activity"]];
+    popupDropdownActivity(lst);
+    circuitstatus = 2;
   });
 });
 
@@ -3399,7 +3955,7 @@ function SelectAllByRegion() {
     resetSpikeState();
     resetPlaybackConfig();
     resetTimeUI();
-    activitySelect.selectedIndex = 0;
+    dropdown.selectedIndex = 0;
 
     // ✅ Enable all region checkboxes
     AllDGRegSwitchCheck.disabled = false;
@@ -3896,36 +4452,67 @@ window.addEventListener("resize", () => {
   renderer.setSize(width, height, false);
 });
 
+// function centerCameraToObject(object) {
+//   const box = new THREE.Box3().setFromObject(object);
+
+//   if (box.isEmpty()) {
+//     console.warn("Bounding box is empty. Cannot center camera.");
+//     return;
+//   }
+
+//   const center = new THREE.Vector3();
+//   box.getCenter(center);
+
+//   const size = box.getSize(new THREE.Vector3());
+//   const maxDim = Math.max(size.x, size.y, size.z);
+
+//   const fov = camera.fov * (Math.PI / 270);
+//   const distance = maxDim / (2 * Math.tan(fov / 2));
+
+//   // Use current view direction from camera to controls target
+//   const viewDir = new THREE.Vector3();
+//   viewDir.subVectors(camera.position, controls.target).normalize();
+
+//   const newPosition = center.clone().add(viewDir.multiplyScalar(distance * 1.2));
+//   camera.position.copy(newPosition);
+//   camera.lookAt(center);
+//   camera.updateProjectionMatrix();
+
+//   if (controls) {
+//     controls.target.copy(center);
+//     controls.update();
+//   }
+// }
+
 function centerCameraToObject(object) {
   const box = new THREE.Box3().setFromObject(object);
+  if (box.isEmpty()) return;
 
-  if (box.isEmpty()) {
-    console.warn("Bounding box is empty. Cannot center camera.");
-    return;
-  }
-
-  const center = new THREE.Vector3();
-  box.getCenter(center);
-
+  const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z);
 
-  const fov = camera.fov * (Math.PI / 270);
-  const distance = maxDim / (2 * Math.tan(fov / 2));
+  // ✅ correct conversion
+  const fovRad = (camera.fov * Math.PI) / 270;
+  const dist = maxDim / 2 / Math.tan(fovRad / 2);
 
-  // Use current view direction from camera to controls target
-  const viewDir = new THREE.Vector3();
-  viewDir.subVectors(camera.position, controls.target).normalize();
+  // keep current view direction
+  const viewDir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
+  const newPos = center.clone().add(viewDir.multiplyScalar(dist * 1.2));
 
-  const newPosition = center.clone().add(viewDir.multiplyScalar(distance * 1.2));
-  camera.position.copy(newPosition);
+  camera.position.copy(newPos);
   camera.lookAt(center);
   camera.updateProjectionMatrix();
+  controls.target.copy(center);
+  controls.update();
 
-  if (controls) {
-    controls.target.copy(center);
-    controls.update();
-  }
+  // snapshot the pose that we consider "initial after loading data"
+  _initialPose = {
+    pos: camera.position.clone(),
+    tgt: controls.target.clone(),
+    up: camera.up.clone(),
+    fov: camera.fov,
+  };
 }
 
 function resetAndDisableAllCheckboxes() {
@@ -4077,6 +4664,10 @@ function resetTimeUI() {
   // Reset start/end time inputs
   document.getElementById("start-time").value = "";
   document.getElementById("end-time").value = "";
+
+  startButton.disabled = true;
+  stopButton.disabled = true;
+  restart.disabled = true;
 }
 
 function hexToNormalizedRGB(hex) {
@@ -4683,4 +5274,43 @@ document.addEventListener("keydown", (event) => {
       camera.position.x += moveStep;
       break;
   }
+});
+
+document.getElementById("dlHistBtn").addEventListener("click", () => {
+  if (!histChart) {
+    alert("No chart to download yet.");
+    return;
+  }
+
+  // Get the canvas and draw onto an offscreen canvas with a solid bg
+  const src = histChart.canvas;
+  const w = src.width,
+    h = src.height;
+  const bg = getComputedStyle(src).backgroundColor || "#2b2f39";
+
+  const off = document.createElement("canvas");
+  off.width = w;
+  off.height = h;
+  const ctx = off.getContext("2d");
+
+  // fill background (so PNG isn’t transparent on dark UIs)
+  ctx.fillStyle = bg === "rgba(0, 0, 0, 0)" ? "#2b2f39" : bg;
+  ctx.fillRect(0, 0, w, h);
+
+  // draw the chart
+  ctx.drawImage(src, 0, 0);
+
+  // build file name with chunk + time
+  const chunk = typeof selectedChunkNumber !== "undefined" ? selectedChunkNumber : "NA";
+  const now = new Date();
+  const stamp = now.toISOString().replace(/[:.]/g, "-");
+  const filename = `NCV_hist_chunk-${chunk}_${stamp}.png`;
+
+  // trigger download
+  const link = document.createElement("a");
+  link.href = off.toDataURL("image/png");
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
 });
