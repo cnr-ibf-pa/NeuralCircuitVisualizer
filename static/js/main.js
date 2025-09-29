@@ -2670,6 +2670,7 @@ function VisualizateNeurons() {
 
   // Try restore; if user never saved, just center (no save)
   if (!restorePoseOnce()) {
+    console.log("camera pose");
     centerCameraToObject(particles); // sets camera + controls; DO NOT save here
   }
 
@@ -2681,9 +2682,9 @@ function VisualizateNeurons() {
   document.addEventListener("pointermove", onPointerMove, { passive: false });
 
   if (loadmouseflag) {
+    console.log("mouse camera");
     resetCamera();
     centerCameraToObject(particles);
-    loadmouseflag = false;
   }
   scene.background = new THREE.Color(params.Backgound);
 
@@ -4493,12 +4494,12 @@ function centerCameraToObject(object) {
   const maxDim = Math.max(size.x, size.y, size.z);
 
   // ✅ correct conversion
-  const fovRad = (camera.fov * Math.PI) / 270;
+  const fovRad = (camera.fov * Math.PI) / 180;
   const dist = maxDim / 2 / Math.tan(fovRad / 2);
 
   // keep current view direction
   const viewDir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
-  const newPos = center.clone().add(viewDir.multiplyScalar(dist * 1.2));
+  const newPos = center.clone().add(viewDir.multiplyScalar(dist * 1.9));
 
   camera.position.copy(newPos);
   camera.lookAt(center);
