@@ -1728,7 +1728,7 @@ dropdown.addEventListener("change", async function () {
 
       if (data.histogram) {
         document.getElementById("histogramImage").src = "data:image/png;base64," + data.histogram;
-        document.getElementById("histogramImage").style.display = "block";
+        // document.getElementById("histogramImage").style.display = "block";
         document.getElementById("histChartContainer").style.display = "block";
       }
 
