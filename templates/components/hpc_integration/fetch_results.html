@@ -115,6 +115,12 @@
         return response.blob();
       })
       .then((blob) => {
+        const loader = document.getElementById("page-loader");
+        const msg = document.getElementById("msgprogress");
+
+        loader.style.display = "block";
+        msg.innerText = "please wait...";
+
         const file = new File([blob], "activity_network.hdf5", { type: "application/octet-stream" });
         const dataTransfer = new DataTransfer();
         const hdfFileInput = document.getElementById("activityFileInput");
@@ -124,6 +130,7 @@
 
         dataTransfer.items.add(file);
         hdfFileInput.files = dataTransfer.files;
+
         hdfFileInput.dispatchEvent(new Event("change"));
       })
       .catch((error) => {
