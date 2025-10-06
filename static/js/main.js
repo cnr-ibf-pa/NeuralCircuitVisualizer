@@ -3159,7 +3159,7 @@ function animate() {
   // Inset size and position
   const insetSize = Math.min(width, height) * 0.23; // 25% of screen size
   const insetX = 10; // left margin
-  const insetY = 290; // top margin
+  const insetY = 150; // top margin
   const border = 1; // 1px border
 
   // ----- BORDER PASS -----
@@ -3205,20 +3205,20 @@ function animate() {
   renderer.setScissorTest(true);
   renderer.render(scene, camera2);
 
-  // --------- MINI ARROWS (Optional) ---------
-  if (arrowsScene && arrowsCamera) {
-    renderer.clearDepth(); // allow rendering over inset
-    arrowsScene.quaternion.copy(camera.quaternion);
+  // --------- MINI ARROWS ---------
+  //   if (arrowsScene && arrowsCamera) {
+  //     renderer.clearDepth(); // allow rendering over inset
+  //     arrowsScene.quaternion.copy(camera.quaternion);
 
-    const size = 180;
-    const x = 10;
-    const y = 130;
+  //     const size = 180;
+  //     const x = 10;
+  //     const y = 130;
 
-    renderer.setViewport(x, y, size, size);
-    renderer.setScissor(x, y, size, size);
-    renderer.setScissorTest(true);
-    renderer.render(arrowsScene, arrowsCamera);
-  }
+  //     renderer.setViewport(x, y, size, size);
+  //     renderer.setScissor(x, y, size, size);
+  //     renderer.setScissorTest(true);
+  //     renderer.render(arrowsScene, arrowsCamera);
+  //   }
 }
 
 let isFinished = false;
