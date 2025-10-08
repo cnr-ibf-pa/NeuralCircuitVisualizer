@@ -4,7 +4,7 @@ from django import forms
 
 HPC_LIST = [
     ('CINECA - G100', 'CINECA - G100'),
-    # ('JUSUF - ServiceAccount', 'JUSUF - JSC (behind the CLS-ServiceAccount)' )
+    ('JUSUF - ServiceAccount', 'JUSUF - JSC (behind the CLS-ServiceAccount)' )
 ]
 
 CIRCUIT_LIST = [
