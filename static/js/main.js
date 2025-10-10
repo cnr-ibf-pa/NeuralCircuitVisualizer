@@ -3423,7 +3423,7 @@ function animateTimeRange_Without_Connection(currentTime, targetSize) {
 
   for (let t = startTime; t < endTime; t += 0.1) {
     const key = t.toFixed(1); // Format to match keys in Activitys, e.g. "8.3"
-    const particleIds = Activitys[key];
+    const particleIds = Activitys[parseFloat(key)];
 
     if (particleIds !== undefined) {
       // NEW: record exactly what you displayed at this time-bin
