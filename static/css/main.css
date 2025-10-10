@@ -1203,12 +1203,20 @@ label {
   background-color: #d91313 !important;
 }
 
-.region-labels div {
-  font-size: 11px;
-  font-weight: 500;
+.region-labels {
+  font-size: 0.5rem; /* or try 0.5rem for extra small */
+
   color: #555;
 }
-
+.color-circle {
+  width: 25px;
+  height: 25px;
+  border-radius: 100%;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  overflow: hidden;
+}
 .color-select-mini {
   font-size: 11px;
   padding: 2px 4px;
