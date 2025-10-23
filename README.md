@@ -71,7 +71,7 @@ There are multiple methods to launch the application:
   python manage.py runsslserver
   ```
 
-- Using `gunicorn` for a production-like environment:
+- Using `gunicorn` for a production-like environment: 
   First, ensure `gunicorn` is installed with `pip install gunicorn`.
 
   To launch in a test environment with `gunicorn`, run:
