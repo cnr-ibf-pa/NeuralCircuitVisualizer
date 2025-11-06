@@ -72,6 +72,19 @@
         border-radius: 5px;
         margin: 1rem 0;
       }
+
+      .screenshot video {
+        max-width: 100%;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .screenshot video:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
       a {
         color: #00796b;
       }
@@ -106,6 +119,10 @@
         align-items: center;
         margin-bottom: 0.5rem;
         font-size: 1rem;
+      }
+      .legend-figure {
+        text-align: center;
+        font-style: italic;
       }
       .legend-dot {
         width: 14px;
@@ -161,12 +178,12 @@
           </a>
 
           <!-- Info: Current page -->
-          <a href="index.html" class="header-icon-link">
+          <a href="/docs" class="header-icon-link">
             <img src="{% static 'img/docs/file-info.svg' %}" alt="Info" class="header-icon" />
           </a>
 
           <!-- Video section on current page -->
-          <a href="#video" class="header-icon-link">
+          <a href="#demovideos" class="header-icon-link">
             <img src="{% static 'img/docs/brand-youtube.svg' %}" alt="Video" class="header-icon" />
           </a>
         </div>
@@ -179,28 +196,382 @@
       <p><em>Version 1.0, July 2025</em></p>
 
       <!-- Sections -->
-      <div class="section" id="overview">
-        <h2>Overview</h2>
+
+      <section id="ncv-overview" aria-labelledby="ncv-heading">
+        <h2 id="ncv-heading">Overview</h2>
         <p>
-          The
-          <strong>Neural Circuit Visualizer (NCV)</strong>
-          is a web-based application that enables users to interactively upload, visualize, configure and analyze full-scale point-neuron circuits. The platform supports a streamlined workflow from network and activity file upload to dynamic 3D circuit visualization and spike playback.
+          <strong>NCV (Neural Circuit Visualizer)</strong>
+          is a
+          <strong>web-based platform</strong>
+          designed for the
+          <strong>flexible simulation and visualization of full-scale point-neuron circuits</strong>
+          . It provides researchers and educators with an intuitive interface to build, configure, and explore large-scale neural networks in a virtual environment
         </p>
+
         <ol>
           <li>
-            <strong>Data Upload</strong>
-            : Upload neural network and spike activity data in supported formats (CSV or HDF5).
+            <strong>Simulate network activity</strong>
+            using efficient, scalable back-end computation
           </li>
           <li>
-            <strong>3D Visualization</strong>
-            : Explore neuron distributions and network structure with anatomical orientation.
+            <strong>Visualize connectivity and dynamics</strong>
+            interactively through rich graphical tools
           </li>
+
           <li>
-            <strong>Playback and Analysis</strong>
-            : Animate spike activity over time and examine firing statistics across simulation chunks.
+            <strong>Record and Download</strong>
+            videos of the simulated activity
           </li>
         </ol>
-        <div class="screenshot"><img src="{% static 'img/docs/home.png' %}" alt="NCV Homepage Screenshot" /></div>
+
+        <div class="screenshot"><img src="{% static 'img/docs/Overview.png' %}" alt="NCV Homepage Screenshot" /></div>
+        <p class="legend-figure">Fig. 1 The NCV graphical user interface.</p>
+        <p>NCV’s goal is to make computational neuroscience more accessible by integrating simulation, visualization, and data exploration into a single, web-based ecosystem.</p>
+      </section>
+
+      <section id="run-simulation" aria-labelledby="run-simulation-heading">
+        <h2 id="ncv-heading">Simulation</h2>
+        <h4 id="run-simulation-heading" style="font-size: 1.5rem; margin-bottom: 0.75rem">Run Simulation</h4>
+        <p style="color: #374151">
+          The
+          <strong>Run Simulation</strong>
+          panel allows users to configure and launch neural circuit simulations directly through the NCV interface. It provides flexible control over model parameters and access to supported high-performance computing (HPC) platforms. Simulations are based on a mouse CA1 hippocampal network from
+          <a href="https://www.nature.com/articles/s41598-022-18024-y" target="_blank">Gandolfi et al., 2022</a>
+        </p>
+
+        <div class="screenshot"><img src="{% static 'img/docs/RunSim.png' %}" alt="NCV Homepage Screenshot" /></div>
+        <p class="legend-figure">Fig. 2 Run Simulation.</p>
+        The model simulation workflow includes the following steps:
+        <ol style="color: #374151; margin-left: 1.25rem">
+          <li>
+            <strong>Select Circuit</strong>
+            – Choose a predefined circuit model (e.g.,
+            <em>Mouse</em>
+            ) to simulate.
+          </li>
+          <li>
+            <strong>Select HPC Platform</strong>
+            – Choose the computational backend where the simulation will run
+            <ul style="margin-top: 0.25rem; margin-bottom: 0.25rem">
+              <li>
+                <strong>JUSUF – JSC</strong>
+                : Available to all users via a shared service account.
+              </li>
+              <li>
+                <strong>CINECA – G100</strong>
+                : Available to CINECA users.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Set Model Parameters</strong>
+            <ul style="margin-top: 0.25rem; margin-bottom: 0.25rem">
+              <li>
+                <strong>PYR2PYR / INH2PYR / PYR2INH / INH2INH:</strong>
+                Define connection weights between neuron populations.
+              </li>
+              <li>
+                <strong>Background Frequency (Hz):</strong>
+                Controls external input rate to neurons.
+              </li>
+              <li>
+                <strong>Background Weight:</strong>
+                Adjusts the input strength of background activity.
+              </li>
+              <li>
+                <strong>Simulation Duration (ms):</strong>
+                Sets the total time of the simulation.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Submit</strong>
+            – Once all parameters are defined, click
+            <em>Submit</em>
+            to start the simulation on the selected HPC platform.
+          </li>
+        </ol>
+
+        <h3 style="font-size: 1.25rem; margin-top: 1.5rem">Fetching Simulation Results</h3>
+
+        <div class="screenshot"><img src="{% static 'img/docs/FetchSimRes.png' %}" alt="NCV Homepage Screenshot" /></div>
+        <p class="legend-figure">Fig. 3 Fetch Simulation Results.</p>
+        <p style="color: #374151">After a simulation has been submitted, users can retrieve and visualize completed job results through the following steps:</p>
+        <ol style="color: #374151; margin-left: 1.25rem">
+          <li>
+            <strong>Select HPC Platform</strong>
+            – Choose the same platform used to run the job.
+          </li>
+          <li>
+            <strong>Fetch Jobs</strong>
+            – Click this button to list all available jobs associated with your account.
+          </li>
+          <li>
+            <strong>Fetched Jobs List</strong>
+
+            – Successful (green), Running (yellow) and Failed (red) jobs are displayed with unique IDs.
+            <ul style="margin-top: 0.25rem; margin-bottom: 0.25rem">
+              <li>Click on a job ID to load the simulation results and display the 3D circuit in the NCV canvas</li>
+              <li>Download the simulation raw output files (if available), via the download button</li>
+            </ul>
+          </li>
+        </ol>
+      </section>
+
+      <div class="section" id="controls">
+        <h2>Simulation Rendering Controls</h2>
+        <p>In order to manage large files at the frontend level and provide a flawless visualization experience to the users, the raw data files are divided into chunks of 200 MB.</p>
+        <br />
+        Below, we show the toolbar that allows users to control the simulation playback over time and navigate through the recorded neural activity.
+        <br />
+        <div class="screenshot"><img src="{% static 'img/docs/Interactive_Time_Slider_1.png' %}" alt="Interactive Time Slider" /></div>
+        <p class="legend-figure">Fig. 4 Simulation Rendering Controls.</p>
+        It comprises the following:
+        <ul style="color: #374151; margin-left: 1.25rem">
+          <li>
+            <strong>Chunk Selector</strong>
+            : dropdown menu to select the activity time window to be displayed
+          </li>
+          <li>
+            <strong>Start</strong>
+            ,
+            <strong>Pause</strong>
+            ,
+            <strong>Restart</strong>
+            buttons: control real-time visualization of activity data
+          </li>
+
+          <li>
+            <strong>Simulation Time Display:</strong>
+            shows the current simulation time
+            <code>t</code>
+            and total duration (in milliseconds)
+          </li>
+          <li>
+            <strong>Start / End Time Inputs:</strong>
+            define a custom simulation time window to be played back
+          </li>
+          <li>
+            <strong>Slider Handle:</strong>
+            Allows to move along the simulation timeline
+          </li>
+
+          <li>
+            <strong>New Workflow Button:</strong>
+
+            allows users to generate a unique
+            <code>Workflow ID</code>
+            that will be used for job submission on the HPC systems
+          </li>
+        </ul>
+      </div>
+
+      <div class="section" id="statistics">
+        <h2>Record Activity Movie</h2>
+        <p style="color: #374151">
+          The
+          <strong>Recording</strong>
+          button allows users to capture a live recording of the 3D neural activity visualization within NCV.
+          <br />
+          The rear camera view, the simulation time and all the actions performed by the users during the visualization (e.g., zooming, rotating, translating) will also be recorded.
+          <br />
+          This feature is designed to generate video output for analysis, sharing, and presentation of simulation results.
+          <br />
+          To start and stop the recording, the central button at the bottom of the main panel must be pressed (see Fig. 1). Once the recording is stopped, a .webm file is automatically downloaded.
+          <br />
+          Saved movies can be replayed using any standard media player to review the simulation dynamics frame by frame.
+        </p>
+      </div>
+      <div class="section" id="features">
+        <h2>Visualization and Playback Controls</h2>
+
+        <h3>Visualization Panel</h3>
+        <p style="color: #374151">
+          The
+          <strong>Visualization Controls Panel</strong>
+          provides interactive controls to adjust visual and spatial aspects of the neural circuit display in the NCV environment. It allows users to fine-tune how neurons and the 3D scene are rendered for analysis and presentation.
+        </p>
+        <div class="screenshot"><img src="{% static 'img/docs/VisualizationPanel.png' %}" alt="Visualization Panel" /></div>
+        <p class="legend-figure">Fig. 5 Visualization Panel.</p>
+        It includes:
+        <ul style="color: #374151; margin-left: 1.25rem">
+          <li>
+            <strong>Background Color:</strong>
+            Customize the background of the 3D scene using a color picker. You can input a HEX code or use the interactive selector to improve contrast and visibility.
+          </li>
+          <li>
+            <strong>Camera Controls:</strong>
+            Adjust the camera’s position in 3D space using
+            <code>x</code>
+            ,
+            <code>y</code>
+            , and
+            <code>z</code>
+            sliders. Each axis includes a numeric field for precise manual adjustments.
+          </li>
+          <li>
+            <strong>Neuron Size:</strong>
+            Control the default size of all neurons using a range slider or a dedicated input field, ensuring consistent visibility across the network.
+          </li>
+          <li>
+            <strong>Firing Neuron Size:</strong>
+            Set the firing neurons size to allow clear visual emphasis on active firing events.
+          </li>
+
+          <li>
+            <strong>Camera Navigation</strong>
+
+            buttons provide quick directional and zoom controls for interactive exploration of the 3D circuit
+
+            <ul style="color: #374151; margin-left: 1.25rem">
+              <li>
+                <strong>Zoom In / Zoom Out:</strong>
+                Adjust the zoom level to focus on specific neuron clusters or zoom out for an overall network view.
+              </li>
+              <li>
+                <strong>Move Up / Down / Left / Right:</strong>
+                Move the camera smoothly in the selected direction.
+              </li>
+              <li>
+                <strong>Save / Restore / Reset:</strong>
+                Save the current camera position, restore a previously saved view, or reset to the default camera position.
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <h3>Playback Controls Panel</h3>
+        <ul>
+          <li>
+            <strong>Playback Timestep</strong>
+            : Set the timestep for the rendering (the simulation timestep is 0.1 ms)
+          </li>
+
+          <li>
+            <strong>Step Duration</strong>
+            : Define the rendering time delay (in milliseconds) between animation frames. Lower values result in faster playback, while higher values create slower animations.
+          </li>
+        </ul>
+
+        <div class="screenshot"><img src="{% static 'img/docs/PlaybackControl.png' %}" alt="Playback control" /></div>
+        <p class="legend-figure">Fig. 6 Playback Controls Panel.</p>
+      </div>
+
+      <div class="section" id="demo-circuits">
+        <h2>Visualizing Demo Circuits</h2>
+
+        <p>
+          If you do not have your own network and activity files yet, you can explore the platform by loading one of the provided
+          <strong>Demo Circuits</strong>
+        </p>
+
+        <h3>Human Circuit Demo</h3>
+
+        <ul>
+          <li>
+            Click the
+            <strong>Load Full or Half Circuit</strong>
+            button to visualize the CA1 human hippocampal network.
+          </li>
+          <li>
+            Use the
+            <strong>Select Activity</strong>
+            dropdown to load predefined activity windows for playback.
+          </li>
+          <li>Interactively explore the circuit and activity via the simulation controls.</li>
+        </ul>
+        <div class="screenshot">
+          <img src="{% static 'img/docs/humancircuit.png' %}" alt="Demo Human Circuit Screenshot" />
+        </div>
+        <p class="legend-figure">Fig. 7 Full Human CA1 Circuit.</p>
+
+        <h3>Mouse Circuit Demo</h3>
+
+        <p>
+          The
+          <strong>Mouse Circuit</strong>
+          provides an advanced demo mode, allowing users to selectively visualize specific hippocampal regions, layers, and neuron types. The neuron type definitions and census data are curated based on the mouse hippocampal neuron classifications available from
+          <a href="https://www.hippocampome.org/php/counts.php" target="_blank">Hippocampome.org</a>
+          . This ensures that the anatomical structure and cell-type representation in the demo circuits reflect up-to-date experimental knowledge from peer-reviewed literature.
+        </p>
+
+        <p>
+          The distribution of
+          <strong>glutamatergic</strong>
+          (excitatory) and
+          <strong>GABAergic</strong>
+          (inhibitory) neurons of distinct types across each subregion and layer of the hippocampal formation is incorporated, based on Hippocampome.org data. This organization allows users to accurately explore the spatial arrangement of excitatory and inhibitory populations within different
+          anatomical areas such as the Dentate Gyrus (DG), CA3, CA2, CA1, Subiculum, and Entorhinal Cortex (EC).
+        </p>
+
+        <p>The workflow includes the following steps:</p>
+        <ol>
+          <li>
+            Expand the
+            <strong>Mouse Circuit</strong>
+            tab.
+          </li>
+          <li>
+            Click
+            <strong>Load Circuit</strong>
+            before making selections to visualize only the selected neurons.
+          </li>
+          <li>(Optional) Build specific connections (e.g., CA3-PC to CA1-PC) before visualization if needed.</li>
+
+          <li>Select the desired neural ensembles:</li>
+          <ul>
+            <li>Toggle specific anatomical regions (e.g., DG, CA3, CA2, CA1, Subiculum, EC).</li>
+            <li>Further refine your selection by choosing specific hippocampal layers (e.g., SLM, SR, SP, SO).</li>
+            <li>
+              Enable/disable specific
+              <strong>Neuron Types</strong>
+              within each region (e.g., Granule cells, Basket cells, Mossy fibers).
+            </li>
+          </ul>
+
+          <li>
+            Select a corresponding
+            <strong>Activity</strong>
+            dataset (if available) to animate firing patterns.
+            <br />
+            <em>
+              Example: Activity visualization in CA3 based on simulations from Kopsick et al.,
+              <a href="https://link.springer.com/article/10.1007/s12559-021-09954-2" target="_blank">Cognitive computation, 2024</a>
+              .
+            </em>
+          </li>
+        </ol>
+
+        <div class="screenshot">
+          <img src="{% static 'img/docs/miceregions.png' %}" alt="Demo mouse Circuit Region Selection Screenshot" />
+        </div>
+        <p class="legend-figure">Fig. 8 Mouse Circuit (CA3 to CA1 Projection).</p>
+      </div>
+
+      <div class="section" id="demovideos">
+        <h2>DEMO Videos</h2>
+
+        <p>
+          <strong>Video 1:</strong>
+          How to explore the mouse demo circuit via the NCV
+        </p>
+        <div class="screenshot">
+          <video controls>
+            <source src="/static/videos/NCV_DEMO.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+
+        <p>
+          <strong>Video 2:</strong>
+          How to submit a job on the HPC, fetch and visualize the results
+        </p>
+        <div class="screenshot">
+          <video controls>
+            <source src="/static/videos/NCV_Job_Submission.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
       </div>
 
       <div class="section" id="uploading">
@@ -228,6 +599,7 @@
           </ul>
         </div>
         <div class="screenshot"><img src="{% static 'img/docs/uploadData.png' %}" alt="Upload Data Screenshot" /></div>
+        <p class="legend-figure">Fig. 9 Supported files Format.</p>
         <h4>Example Files</h4>
         <ul>
           <li>
@@ -260,313 +632,25 @@
           <div class="screenshot">
             <img src="{% static 'img/docs/UploadProcess1.png' %}" alt="Upload Data" />
           </div>
+          <p class="legend-figure">Fig. 10 Uploading files.</p>
           <div class="screenshot">
             <img src="{% static 'img/docs/UploadProcess2.png' %}" alt="Upload Data Process" />
           </div>
-        </div>
-      </div>
-
-      <div class="section" id="visualization">
-        <h2>Visualizing the Circuit</h2>
-        <p>
-          A
-          <strong>3D scatter plot</strong>
-          of neurons is generated, color-coded by type:
-        </p>
-
-        <ul class="legend-list">
-          <li class="legend-item">
-            <span class="legend-dot dot-blue"></span>
-            Excitatory Neurons (Blue)
-          </li>
-          <li class="legend-item">
-            <span class="legend-dot dot-red"></span>
-            Inhibitory Neurons (Red)
-          </li>
-          <li class="legend-item">
-            <span class="legend-dot dot-yellow"></span>
-            Firing Excitatory Neurons (Yellow)
-          </li>
-          <li class="legend-item">
-            <span class="legend-dot dot-white"></span>
-            Firing Inhibitory Neurons (White)
-          </li>
-        </ul>
-
-        <p>Axes:</p>
-        <ul>
-          <li>A (Anterior) - P (Posterior)</li>
-          <li>D (Dorsal) - V (Ventral)</li>
-          <li>M (Medial) - L (Lateral)</li>
-        </ul>
-
-        <div class="highlight">
-          🧭 Axes orientation is computed automatically via
-          <strong>Principal Component Analysis (PCA)</strong>
-          .
-        </div>
-
-        <div class="screenshot-row">
-          <div class="screenshot">
-            <img src="{% static 'img/docs/visualization.png' %}" alt="Visualization Screenshot" />
-          </div>
-        </div>
-
-        <h3>Neuron Count Summary Panel</h3>
-        <p>This panel presents a real-time summary of the neuron population currently loaded into the 3D circuit visualizer. The values are automatically computed upon network file upload and include the following:</p>
-        <ul>
-          <li>
-            <strong>Total Neurons</strong>
-            : The complete number of neurons parsed from the network file. This includes both excitatory and inhibitory types, regardless of whether they fire during simulation.
-          </li>
-          <li>
-            <strong>Excitatory Neurons</strong>
-            : Neurons that depolarize post-synaptic targets upon firing. In hippocampal circuits, these are typically glutamatergic principal cells such as pyramidal neurons or granule cells.
-          </li>
-          <li>
-            <strong>Inhibitory Neurons</strong>
-            : Neurons that hyperpolarize post-synaptic targets to suppress excitation. These are typically GABAergic interneurons.
-          </li>
-        </ul>
-        <p>These counts help users quickly assess the balance between excitation and inhibition in the visualized network — a key factor in analyzing neural dynamics, signal propagation, and circuit stability.</p>
-      </div>
-
-      <div class="section" id="controls">
-        <h2>Simulation Controls</h2>
-        <p>Use the toolbar at the top:</p>
-        <ul>
-          <li>
-            <strong>Chunk Selector</strong>
-            : Choose time windows
-          </li>
-          <li>
-            <strong>Start</strong>
-            ,
-            <strong>Pause</strong>
-            ,
-            <strong>Restart</strong>
-            buttons to control playback
-          </li>
-        </ul>
-        <div class="screenshot"><img src="{% static 'img/docs/simulationcontrols.png' %}" alt="Simulation Controls Screenshot" /></div>
-      </div>
-
-      <div class="section" id="statistics">
-        <h2>Firing Activity</h2>
-        <p>After upload:</p>
-        <ul>
-          <li>Chunk-based spike analysis is performed.</li>
-          <li>Histogram of spike counts over time is displayed.</li>
-          <li>Mean Firing Rate (MFR) is computed per chunk.</li>
-        </ul>
-        <ul class="legend-list">
-          <li class="legend-item">
-            <span class="legend-dot dot-yellow"></span>
-            Firing Excitatory Neurons (Yellow)
-          </li>
-          <li class="legend-item">
-            <span class="legend-dot dot-white"></span>
-            Firing Inhibitory Neurons (White)
-          </li>
-        </ul>
-        <div class="screenshot"><img src="{% static 'img/docs/firingactivity.png' %}" alt="Firing Activity Screenshot" /></div>
-      </div>
-
-      <div class="section" id="features">
-        <h2>Additional Features</h2>
-
-        <h3>Interactive Time Slider</h3>
-        <p>
-          The
-          <strong>Interactive Time Slider</strong>
-          allows users to control simulation playback over time:
-        </p>
-        <ul>
-          <li>
-            <strong>Current Time Display</strong>
-            : Shows the current simulation time
-            <code>t</code>
-            and total duration (in milliseconds).
-          </li>
-          <li>
-            <strong>Start / End Time Inputs</strong>
-            : Users can define a custom simulation window using the “Start” and “End” fields to restrict playback to a specific range.
-          </li>
-          <li>
-            <strong>Slider Handle</strong>
-            : Drag the blue circle along the timeline to scrub through the simulation manually.
-          </li>
-        </ul>
-        <p>This panel enables precise control over which portion of the spike activity timeline is visualized.</p>
-
-        <h3>Visualization Panel</h3>
-        <ul>
-          <li>
-            <strong>Background Color</strong>
-            : Customize the background of the 3D scene using a color picker. You can input a hex code or use the interactive selector to improve contrast.
-          </li>
-          <li>
-            <strong>Camera Controls</strong>
-            : Adjust the camera position in 3D space using
-            <code>x</code>
-            ,
-            <code>y</code>
-            , and
-            <code>z</code>
-            sliders. Each slider is accompanied by a numeric input for precision control.
-          </li>
-          <li>
-            <strong>Neuron Size</strong>
-            : Control the default size of all neurons using a range slider and manual input field.
-          </li>
-          <li>
-            <strong>Firing Neuron Size</strong>
-            : Set the enlarged size of neurons during spike animation separately for better visual emphasis.
-          </li>
-        </ul>
-
-        <h3>Playback Configuration</h3>
-        <ul>
-          <li>
-            <strong>Playback Speed</strong>
-            : Modify how fast spikes are animated by adjusting the time scale.
-          </li>
-          <!-- <li>
-            <strong>Simulation Window</strong>
-            : Choose the start and end time to control which part of the spike activity is visualized.
-          </li> -->
-          <li>
-            <strong>Step Duration</strong>
-            : Define the real-time delay (in milliseconds) between animation frames. Lower values result in faster playback, while higher values create slower, more controlled animations.
-          </li>
-        </ul>
-
-        <div class="screenshot"><img src="{% static 'img/docs/additionalfeatures.png' %}" alt="Additional Features Screenshot" /></div>
-      </div>
-
-      <div class="section" id="demo-circuits">
-        <h2>Visualizing Demo Circuits</h2>
-
-        <p>
-          If you do not have your own network and activity files yet, you can explore the platform by loading one of the provided
-          <strong>Demo Circuits</strong>
-          . This allows immediate 3D visualization without uploading your own data.
-        </p>
-
-        <h3>Human Circuit Demo</h3>
-        <p>
-          Under the
-          <strong>\"Human Circuit\"</strong>
-          tab, you can:
-        </p>
-        <ul>
-          <li>
-            Click the
-            <strong>Load Circuit</strong>
-            button to visualize the CA1 hippocampal network.
-          </li>
-          <li>
-            Use the
-            <strong>Select Activity</strong>
-            dropdown to load predefined spiking data for playback.
-          </li>
-          <li>Animate spikes and explore network dynamics through the simulation controls.</li>
-        </ul>
-        <div class="screenshot">
-          <img src="{% static 'img/docs/humancircuit.png' %}" alt="Demo Human Circuit Screenshot" />
-        </div>
-
-        <h3>Mouse Circuit Demo</h3>
-
-        <p>
-          The
-          <strong>Mice Circuit</strong>
-          provides an advanced demo mode, allowing users to selectively visualize specific hippocampal regions, layers, and neuron types before loading the network. The neuron type definitions and census data are curated based on the mice hippocampal neuron classifications available from
-          <a href="https://www.hippocampome.org/php/counts.php" target="_blank">Hippocampome.org</a>
-          . This ensures that the anatomical structure and cell-type representation in the demo circuits reflect up-to-date experimental knowledge from peer-reviewed literature.
-        </p>
-
-        <p>
-          The distribution of
-          <strong>glutamatergic</strong>
-          (excitatory, marked with an
-          <strong>X</strong>
-          ) and
-          <strong>GABAergic</strong>
-          (inhibitory) neurons of distinct types across each subregion and layer of the hippocampal formation is incorporated, based on Hippocampome.org data. This organization allows users to accurately explore the spatial arrangement of excitatory and inhibitory populations within different
-          anatomical subdivisions such as the Dentate Gyrus (DG), CA3, CA2, CA1, Subiculum, and Entorhinal Cortex (EC).
-        </p>
-
-        <p>The workflow is:</p>
-        <ol>
-          <li>
-            Expand the
-            <strong>Mice Circuit</strong>
-            tab.
-          </li>
-          <li>
-            Click
-            <strong>Load Circuit</strong>
-            before making selections to visualize only the selected neurons.
-          </li>
-          <li>(Optional) Build specific connections (e.g., CA3-PC to CA1-PC) before visualization if needed.</li>
-
-          <li>
-            Select the desired network part under
-            <strong>Hippocampal Formation</strong>
-            :
-          </li>
-          <ul>
-            <li>Toggle specific anatomical regions (e.g., DG, CA3, CA2, CA1, Subiculum, EC).</li>
-            <li>Further refine your selection by choosing specific hippocampal layers (e.g., SLM, SR, SP, SO).</li>
-            <li>
-              Enable/disable specific
-              <strong>Neuron Types</strong>
-              within each region (e.g., Granule cells, Basket cells, Mossy fibers).
-            </li>
-          </ul>
-
-          <li>
-            Select a corresponding
-            <strong>Activity</strong>
-            dataset if available to animate firing patterns.
-            <br />
-            <em>
-              Example: Activity visualization in CA3 based on simulations from Kopsick et al.,
-              <a href="https://www.biorxiv.org/content/10.1101/2024.03.27.586909v1.full.pdf" target="_blank">bioRxiv, 2024</a>
-              .
-            </em>
-          </li>
-        </ol>
-
-        <div class="screenshot">
-          <img src="{% static 'img/docs/miceregions.png' %}" alt="Demo mouse Circuit Region Selection Screenshot" />
-        </div>
-
-        <div class="screenshot">
-          <img src="{% static 'img/docs/ca3ca1spikes.png' %}" alt="Demo mouse Circuit Neuron Type Selection Screenshot" />
+          <p class="legend-figure">Fig. 11 Loading data for visualizing circuit.</p>
         </div>
       </div>
 
       <div class="section" id="support">
         <h2>Support</h2>
         <p>
-          For any issues, please refresh and retry.
-          <br />
-          Contact support:
-          <a href="mailto:ncv-support@ebrains-italy.eu">ncv-support@ebrains-italy.eu</a>
+          For any issues, please do not hesitate to contact us at:
+          <strong>ali.maqsood AT ibf.cnr.it</strong>
         </p>
       </div>
 
-      <div class="section" id="url">
-        <h2>Platform URL</h2>
-        <p><a href="https://ncv.ebrains-italy.eu/" target="_blank">https://ncv.ebrains-italy.eu/</a></p>
-      </div>
+      <!-- Back to Top Button -->
+      <button onclick="scrollToTop()" id="backToTopBtn" title="Back to top">↑</button>
     </div>
-
-    <!-- Back to Top Button -->
-    <button onclick="scrollToTop()" id="backToTopBtn" title="Back to top">↑</button>
-
     <script>
       // Fade in animation
       const sections = document.querySelectorAll(".section");
