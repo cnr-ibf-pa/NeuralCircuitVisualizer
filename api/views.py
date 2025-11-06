@@ -1,10 +1,8 @@
-
 import base64
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import numpy as np
 import json, csv
-# from io import BytesIO
 from django.http import JsonResponse
 from django.conf import settings
 import ujson
@@ -79,7 +77,6 @@ def benchmark_accuracy(request):
     """ 
 
 PART_RE = re.compile(r"\.part(\d+)$")
-
 def _existing_indices(base_dir, fname):
     # return {indices_found}, e.g. {0,1,2}
     have = set()
@@ -193,8 +190,6 @@ def upload_and_save_Network_file(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-
-
 def detect_file_type(file_path):
     """ Detects if the file is an activity (2 columns) or network (4 columns) file. """
     with open(file_path, 'r') as csv_file:
@@ -244,7 +239,6 @@ def process_network_csv(file_path):
     except OSError as e:
         print(f"Error deleting file {file_path}: {e}")
 
-
 def process_hdf5_file(file_path):
     json_directory = os.path.dirname(file_path)
     network_json_path = os.path.join(json_directory, "network.json")
@@ -287,7 +281,6 @@ def process_hdf5_file(file_path):
                 print(f"Dataset '{dataset_name}' does not have 2 columns as expected.")
         else:
             print("Neither 'spikes' nor 'activity' dataset found in HDF5 file.")
-
 
 @csrf_exempt
 def fetch_user_network_data(request):
@@ -420,7 +413,6 @@ def fetch_user_network_data(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-
 def get_chunk_data(request):
 
     chunk_number = request.GET.get("chunk_number")  # Get chunk number from request
@@ -481,7 +473,6 @@ def get_chunk_data(request):
     except Exception as e:
         return JsonResponse({"error": f"Error generating histogram: {str(e)}"}, status=500)
 
-
 def generate_raster_plot(chunk_data):
     try:
         if not chunk_data:
@@ -519,92 +510,6 @@ def generate_raster_plot(chunk_data):
 
     except Exception as e:
         return f"Error generating raster plot: {str(e)}"
-
-
-
-# def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="white"):
-#     try:
-#         if not chunk_data or not isinstance(chunk_data, dict):
-#             return "Error: No data available for plotting."
-
-#         # Convert spike times and collect active neurons
-#         all_spike_times = []
-#         active_neurons = set()
-#         for t_str, gids in chunk_data.items():
-#             t = float(t_str)
-#             all_spike_times.extend([t] * len(gids))
-#             active_neurons.update(gids)
-
-#         if not all_spike_times:
-#             return "Error: No spike times in chunk data."
-
-#         # Sort times to get actual range
-#         min_time = min(all_spike_times)
-#         max_time = max(all_spike_times)
-
-#         # Set time range based on chunk number
-#         if str(chunk_number) == "0":
-#             t_min = 0  # Start Chunk 0 from 0 ms
-#         else:
-#             t_min = min_time  # Start other chunks from first spike time
-
-#         t_max = max_time  # End all chunks at last spike time
-
-#         # Compute histogram
-#         bin_edges = np.linspace(t_min, t_max, bins + 1)
-#         spike_counts, _ = np.histogram(all_spike_times, bins=bin_edges)
-
-#         # Compute Mean Firing Rate (MFR)
-#         total_spikes = len(all_spike_times)
-#         total_neurons = len(active_neurons)
-#         total_time_sec = (t_max - t_min) / 1000.0  # ms → seconds
-#         mfr = (total_spikes / total_neurons) / total_time_sec if total_neurons > 0 and total_time_sec > 0 else 0
-
-#         # Plot histogram
-#         fig, ax = plt.subplots(figsize=(12, 6), dpi=300)
-#         fig.patch.set_facecolor("#33373d")
-#         ax.set_facecolor("#33373d")
-
-#         bars = ax.bar(bin_edges[:-1], spike_counts, width=np.diff(bin_edges), color=color, alpha=0.7, edgecolor="black")
-
-#         # Annotate legend
-#         legend_labels = {
-#             "# Max Spike": max(spike_counts),
-#             "# Min Spike": min(spike_counts),
-#             "# Spikes": total_spikes,
-#             "# Neurons": total_neurons,
-#             "# Min Time (ms)": round(t_min, 1),
-#             "# Max Time (ms)": round(t_max, 1),
-#         }
-#         legend_text = "\n".join([f"{key}: {value}" for key, value in legend_labels.items()])
-#         plt.gcf().text(0.80, 0.79, legend_text, fontsize=8, bbox=dict(facecolor='white', alpha=0.5), color='black')
-
-#         ax.set_xlim(t_min, t_max)
-#         ax.set_xlabel("Time (ms)", fontsize=16, fontweight="bold", color="white")
-#         ax.set_ylabel("Number of Firing Neurons", fontsize=16, fontweight="bold", color="white")
-#         ax.set_title(f"Chunk {chunk_number} - MFR: {mfr:.2f} Hz", fontsize=18, fontweight="bold", color="white")
-
-#         ax.tick_params(axis='x', colors='white')
-#         ax.tick_params(axis='y', colors='white')
-#         ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
-#         ax.grid(True, linestyle="--", alpha=0.4)
-
-#         for label in ax.get_xticklabels() + ax.get_yticklabels():
-#             label.set_color("white")
-
-#         # Convert to base64 image
-#         img_buffer = io.BytesIO()
-#         plt.savefig(img_buffer, format="png", bbox_inches="tight", dpi=300, facecolor=fig.get_facecolor())
-#         img_buffer.seek(0)
-#         img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
-#         plt.close()
-
-#         return img_base64
-
-#     except Exception as e:
-#         return f"Error generating spike histogram: {str(e)}"
-
-
 
 def compute_hist_data(chunk_data, chunk_number, bins=100, total_neurons=None):
     # flatten (t,gids)
@@ -662,9 +567,7 @@ def compute_hist_data(chunk_data, chunk_number, bins=100, total_neurons=None):
         "t_max": float(t_max),
         "mfr": float(mfr),
     }
-    
-    
-    
+     
 def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="white"):
     try:
         if not chunk_data or not isinstance(chunk_data, dict):
@@ -765,7 +668,6 @@ def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="white"):
     except Exception as e:
         return f"Error generating spike histogram: {str(e)}"
 
-
 def generate_network_graph(network_data):
     try:
         if not network_data:
@@ -795,7 +697,6 @@ def generate_network_graph(network_data):
         return img_base64
     except Exception as e:
         return str(e)
-
 
 @csrf_exempt
 def get_activity_data_by_file_name(request):
@@ -829,14 +730,11 @@ def get_activity_data_by_file_name(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-
-
 # Cache the JSON data in memory
 @lru_cache(maxsize=1)
 def load_gids_activity_indexes(cache_file_path):
     with open(cache_file_path, 'r') as f:
         return ujson.load(f)
-
 
 def extract_ids_from_json(json_file_path):
     """Extract IDs from the JSON file."""
@@ -859,7 +757,6 @@ def extract_ids_from_json(json_file_path):
         print(f"An error occurred: {e}")
 
     return array.array('i', Gids_array)
-
 
 @csrf_exempt
 def LoadActivityData(request):
@@ -914,7 +811,6 @@ def LoadActivityData(request):
     except Exception as e:
         print("Error in LoadActivityData:", e)
         return JsonResponse({'error': str(e)}, status=500)
-
 
 def parse_activity_csv(filepath):
     activity_data = defaultdict(list)
@@ -983,80 +879,10 @@ def count_csv_lines(file_path):
     with open(file_path, 'r') as f:
         return sum(1 for line in f)
 
-""" @lru_cache(maxsize=1)  # Cache with single entry to avoid recomputation
-def compute_connections():
-    # Perform all setup computations
-    json_directory = os.path.join(settings.MEDIA_ROOT, "hip_form")
-    json_path = os.path.join(json_directory, "connections.json")
-    # print(json_directory)
-
-    ca3_file_paths = [
-        os.path.join(json_directory, 'CA3-sl.json'),
-        os.path.join(json_directory, 'CA3-slm.json'),
-        os.path.join(json_directory, 'CA3-so.json'),
-        os.path.join(json_directory, 'CA3-sp.json'),
-        os.path.join(json_directory, 'CA3-sr.json')
-    ]
-    ca1_file_paths = [
-        os.path.join(json_directory, 'CA1-slm.json'),
-        os.path.join(json_directory, 'CA1-so.json'),
-        os.path.join(json_directory, 'CA1-sp.json'),
-        os.path.join(json_directory, 'CA1-sr.json')
-    ]
-
-    ca3_neurons = pd.DataFrame(load_neurons_from_files(ca3_file_paths))
-    ca1_neurons = pd.DataFrame(load_neurons_from_files(ca1_file_paths))
-
-    ca3_pyramidal = ca3_neurons[ca3_neurons['ntype'] == 19].copy()
-    ca1_pyramidal = ca1_neurons[ca1_neurons['ntype'] == 49].copy()
-
-    MOUSE_VOLUME_SR = 2.83
-    RAT_VOLUME_SR = 10.95
-    MOUSE_VOLUME_SO = 1.5
-    RAT_VOLUME_SO = 6.47
-
-    SF_SR = calculate_scaling_factor(RAT_VOLUME_SR, MOUSE_VOLUME_SR)
-    SF_SO = calculate_scaling_factor(RAT_VOLUME_SO, MOUSE_VOLUME_SO)
-
-    L_SR_mouse = 4465.3 / SF_SR
-    L_SO_mouse = 3795.59 / SF_SO
-    L_SO_adjusted = L_SO_mouse / 2
-    L_total_mouse = L_SR_mouse + L_SO_adjusted
-    Inter_spine_distance = 1.09
-    total_spines = L_total_mouse / Inter_spine_distance
-    CA3_to_CA1_Per_Contacts = 1.62
-    total_synapses = total_spines / CA3_to_CA1_Per_Contacts
-    CA1PC_census = 159341
-    CA3PC_census = 75376
-    average_CA1_contacted_by_CA3 = total_synapses / (CA1PC_census / CA3PC_census)
-
-    z_median_ca3 = ca3_neurons['z'].median()
-    z_median_ca1 = ca1_neurons['z'].median()
-    reference_point = np.array([ca3_neurons['x'].mean(), ca3_neurons['y'].mean()])
-
-    ca3_pyramidal['dorsal_ventral'] = np.where(ca3_pyramidal['z'] > z_median_ca3, 'dorsal', 'ventral')
-    ca3_pyramidal['prox_dist'] = np.where(np.linalg.norm(ca3_pyramidal[['x', 'y']].values - reference_point, axis=1) <
-                                          np.median(np.linalg.norm(ca3_pyramidal[['x', 'y']].values - reference_point, axis=1)),
-                                          'proximal', 'distal')
-
-    ca1_pyramidal['dorsal_ventral'] = np.where(ca1_pyramidal['z'] > z_median_ca1, 'dorsal', 'ventral')
-    ca1_pyramidal['prox_dist'] = np.where(np.linalg.norm(ca1_pyramidal[['x', 'y']].values - reference_point, axis=1) <
-                                          np.median(np.linalg.norm(ca1_pyramidal[['x', 'y']].values - reference_point, axis=1)),
-                                          'proximal', 'distal')
-
-    # Connect CA3 and CA1 pyramidal cells
-    connections = connect_all_pyramidal(ca3_pyramidal, ca1_pyramidal, average_CA1_contacted_by_CA3)
-    # Save to JSON
-    with open(json_path, 'w') as f:
-        json.dump(connections, f)
-        
-    return json_path
- """
-
-
 @lru_cache(maxsize=1)
 def compute_connections():
     json_directory = os.path.join(settings.MEDIA_ROOT, "hip_form")
+    os.makedirs(json_directory, exist_ok=True)
     json_path = os.path.join(json_directory, "connections.json")
 
     ca3_file_paths = [
@@ -1069,10 +895,28 @@ def compute_connections():
     ca3_neurons = pd.DataFrame(load_neurons_from_files(ca3_file_paths))
     ca1_neurons = pd.DataFrame(load_neurons_from_files(ca1_file_paths))
 
-    # Select pyramidal cells
+    # Select pyramidal cells (robust in case ntype codes differ or missing)
     ca3_pyramidal = ca3_neurons[ca3_neurons['ntype'] == 19].copy()
     ca1_pyramidal = ca1_neurons[ca1_neurons['ntype'] == 49].copy()
 
+    # Fallback if filtering empties the set
+    if ca3_pyramidal.empty:
+        print("No CA3 PCs after ntype==19 filter; using all CA3 neurons.")
+        ca3_pyramidal = ca3_neurons.copy()
+    if ca1_pyramidal.empty:
+        print("No CA1 PCs after ntype==49 filter; using all CA1 neurons.")
+        ca1_pyramidal = ca1_neurons.copy()
+    
+    # Ensure coordinates are numeric and drop NaNs
+    for df_name, df in [("CA3", ca3_pyramidal), ("CA1", ca1_pyramidal)]:
+        before = len(df)
+        df[['x','y','z']] = df[['x','y','z']].apply(pd.to_numeric, errors='coerce')
+        df.dropna(subset=['x','y','z'], inplace=True)
+        after = len(df)
+        if after < before:
+            print(f"[WARN] Dropped {before-after} {df_name} rows with non-numeric coords.")
+
+    print(f"CA3 PCs: {len(ca3_pyramidal)}, CA1 PCs: {len(ca1_pyramidal)}")
 
 
     # 1. Scale lengths from rat to mouse
@@ -1112,65 +956,47 @@ def compute_connections():
     print(f"Avg. CA3 Partners per CA1 PC: {unique_ca3_partners_per_ca1:.0f}")
     print(f"Avg. CA1 Targets per CA3 PC: {avg_ca1_targets_per_ca3:.0f}")
 
-    # Region classification
-    z_median_ca3 = ca3_neurons['z'].median()
-    z_median_ca1 = ca1_neurons['z'].median()
-    xy_ref = np.array([ca3_neurons['x'].mean(), ca3_neurons['y'].mean()])
+    
+    # --- Fixed 05% fan-out (≈54) and in-degree cap (510) ---
+    OUTDEG_TARGETS_PER_CA3 = max(1, int(round(avg_ca1_targets_per_ca3 * 0.05)))  # ~54 from 1077
+    print(f"CA3 out-degree = {OUTDEG_TARGETS_PER_CA3} (05% of {avg_ca1_targets_per_ca3:.0f})")
 
-    ca3_pyramidal['dorsal_ventral'] = np.where(ca3_pyramidal['z'] > z_median_ca3, 'dorsal', 'ventral')
-    ca1_pyramidal['dorsal_ventral'] = np.where(ca1_pyramidal['z'] > z_median_ca1, 'dorsal', 'ventral')
-
-    ca3_pyramidal['prox_dist'] = np.where(
-        np.linalg.norm(ca3_pyramidal[['x', 'y']].values - xy_ref, axis=1) <
-        np.median(np.linalg.norm(ca3_pyramidal[['x', 'y']].values - xy_ref, axis=1)),
-        'proximal', 'distal'
+    connections = connect_gaussian_all(
+    ca3_df=ca3_pyramidal,
+    ca1_df=ca1_pyramidal,            # or ca1_eligible if you keep the subset trick
+    avg_targets_per_ca3=OUTDEG_TARGETS_PER_CA3,  # or your scaled fanout
+    d_max_um=None,                   # or a value if you want locality
+    sigma_factor=0.30,                # your chosen σ scaling
+    ca1_in_degree_cap=unique_ca3_partners_per_ca1            # << hard cap per CA1
     )
-    ca1_pyramidal['prox_dist'] = np.where(
-        np.linalg.norm(ca1_pyramidal[['x', 'y']].values - xy_ref, axis=1) <
-        np.median(np.linalg.norm(ca1_pyramidal[['x', 'y']].values - xy_ref, axis=1)),
-        'proximal', 'distal'
-    )
-
-    # Build region-constrained connections using Gaussian sampling
-    connections = connect_all_pyramidal(ca3_pyramidal, ca1_pyramidal, avg_ca1_targets_per_ca3)
 
     with open(json_path, 'w') as f:
         json.dump(connections, f)
+        
+    num_ca3 = len(connections)
+    nonempty = sum(1 for v in connections.values() if v)
+    avg_out = (sum(len(v) for v in connections.values()) / max(1, num_ca3))
+    print(f"CA3 with ≥1 target: {nonempty}/{num_ca3}  |  mean out-degree: {avg_out:.1f}")
+
+    # Check that all CA1 targets exist in the CA1 set
+    ca1_ids_set = set(ca1_pyramidal['gid'].astype(str))
+    missing = 0
+    for ca3_id, targets in connections.items():
+        for t in targets:
+            if str(t) not in ca1_ids_set:
+                missing += 1
+    if missing:
+        print(f"{missing} targets not found in CA1 pool (ID mismatch).")
 
     return json_path
-
-
-
-
-# @csrf_exempt
-# def fetchConnections(request):
-#     try:
-#         connections = compute_connections()  # Retrieve precomputed connections
-
-
-
-#         chunk_size = int(request.GET.get("chunk_size", 1000))
-#         page = int(request.GET.get("page", 1))
-
-#         keys = list(connections.keys())
-#         start = (page - 1) * chunk_size
-#         end = start + chunk_size
-#         chunk = {k: connections[k] for k in keys[start:end]}
-
-#         response_data = {'connections_chunk': chunk, 'page': page, 'has_more': end < len(keys)}
-#         return JsonResponse(response_data)
-
-#     except Exception as e:
-#         return JsonResponse({'error': str(e), 'connections': {}}, status=500)
 
 @csrf_exempt
 def fetchConnections(request):
     try:
-        # Ensure file is generated
-        # json_path = compute_connections()
+        
+        #json_path = compute_connections()
         json_path = os.path.join(settings.MEDIA_ROOT, "hip_form","connections", "connections.json")
-        # print("connections built...........")
-
+        
         # Load full data from file
         with open(json_path, 'r') as f:
             connections = json.load(f)
@@ -1196,7 +1022,6 @@ def fetchConnections(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e), 'connections': {}}, status=500)
-
 
 def load_neurons_from_files(file_paths):
     for file_path in file_paths:
@@ -1254,31 +1079,13 @@ def connect_all_pyramidal(ca3_neurons, ca1_neurons, average_CA1_contacted_by_CA3
 
     return connections
 
-# # Helper function to connect neurons within the same region
-# def connect_regions_regionally(ca3_subset, ca1_subset, average_CA1_contacted_by_CA3):
-#     try:
-#         connections = {}
-#         # Each CA3 PC contacts approximately average_CA1_contacted_by_CA3 CA1 PCs
-#         for _, ca3_neuron in ca3_subset.iterrows():
-#             num_contacts = int(average_CA1_contacted_by_CA3)
-#             ca1_selected = ca1_subset.sample(n=num_contacts, replace=False)
-#             connections[ca3_neuron['gid']] = ca1_selected['gid'].tolist()
-#         return connections
-#     except Exception as e:
-#         print(f"Error in connect_regions_regionally: {e}")
-#         return {}
-
-
-
 def compute_sigma(ca1_subset, factor=0.3):
     bbox_size = np.max(ca1_subset[['x', 'y', 'z']].values, axis=0) - np.min(ca1_subset[['x', 'y', 'z']].values, axis=0)
     avg_extent = np.mean(bbox_size)
     return factor * avg_extent  # Adaptive σ
 
 def connect_regions_regionally(ca3_subset, ca1_subset, average_CA1_contacted_by_CA3):
-    """
-    Connects neurons within the same anatomical region using Gaussian-weighted sampling.
-    """
+    # Connects neurons within the same anatomical region using Gaussian-weighted sampling.
     try:
         connections = {}
         sigma = compute_sigma(ca1_subset)  # Dynamic sigma
@@ -1296,41 +1103,9 @@ def connect_regions_regionally(ca3_subset, ca1_subset, average_CA1_contacted_by_
         print(f"Error in connect_regions_regionally: {e}")
         return {}
 
-
-
-# def connect_regions_regionally(ca3_subset, ca1_subset, average_CA1_contacted_by_CA3):
-#     try:
-#         connections = {}
-#         for _, ca3_neuron in ca3_subset.iterrows():
-#             connected_ids = gaussian_weighted_connection(ca3_neuron, ca1_subset, num_targets=int(average_CA1_contacted_by_CA3), sigma=150)
-#             connections[ca3_neuron['gid']] = connected_ids
-#         return connections
-#     except Exception as e:
-#         print(f"Error in connect_regions_regionally: {e}")
-#         return {}
-
-# def gaussian_weighted_connection(ca3_neuron, ca1_subset, num_targets=10, sigma=200):
-#     """
-#     Selects CA1 neurons weighted by Gaussian probability based on distance from a CA3 neuron.
-#     """
-#     ca3_xyz = ca3_neuron[['x', 'y', 'z']].values.astype(float)
-#     ca1_xyz = ca1_subset[['x', 'y', 'z']].values.astype(float)
-
-#     distances = np.linalg.norm(ca1_xyz - ca3_xyz, axis=1)
-#     weights = np.exp(- (distances ** 2) / (2 * sigma ** 2))
-
-#     # Normalize to get probabilities
-#     probs = weights / np.sum(weights)
-
-#     # Randomly sample without replacement using the probabilities
-#     selected_indices = np.random.choice(ca1_subset.index, size=min(num_targets, len(ca1_subset)), replace=False, p=probs)
-#     return ca1_subset.loc[selected_indices, 'gid'].tolist()
-
-
 def safe_gaussian_connection(ca3_neuron, ca1_subset, num_targets=10, sigma=150, d_max=None):
-    """
-    Attempts probabilistic sampling; falls back to nearest-neighbors if necessary.
-    """
+    # Attempts probabilistic sampling; falls back to nearest-neighbors if necessary.
+    
     ca3_xyz = ca3_neuron[['x', 'y', 'z']].values.astype(float)
     ca1_xyz = ca1_subset[['x', 'y', 'z']].values.astype(float)
     
@@ -1365,13 +1140,121 @@ def safe_gaussian_connection(ca3_neuron, ca1_subset, num_targets=10, sigma=150, 
         nearest = ca1_subset.nsmallest(num_targets, 'distance')
         return nearest['gid'].tolist()
 
+def adaptive_sigma_global(ca1_df: pd.DataFrame, factor: float = 0.15) -> float:
+    """
+    Compute a single Gaussian σ (µm) from the spatial extent of the whole CA1 pool.
+    Smaller factor -> tighter locality; larger -> broader spread.
+    """
+    if ca1_df.empty:
+        return 100.0
+    bbox = ca1_df[['x', 'y', 'z']].agg(['min', 'max'])
+    span = (bbox.loc['max'] - bbox.loc['min']).to_numpy()
+    return float(factor * np.mean(span))
 
+def connect_gaussian_all(ca3_df: pd.DataFrame,
+                         ca1_df: pd.DataFrame,
+                         avg_targets_per_ca3: float,
+                         d_max_um: int = 300,
+                         sigma_factor: float = 0.15,
+                         ca1_in_degree_cap: int = 510,
+                         rng_seed: int = 42) -> dict:
+    """
+    Domain-free CA3→CA1 connectivity with *per-CA1 in-degree cap*.
+      - For each CA3 PC, we sample ~avg_targets_per_ca3 CA1 PCs
+        using Gaussian distance weights.
+      - A CA1 PC will never receive inputs from > ca1_in_degree_cap CA3 PCs.
+    """
+    connections = {}
+    if ca1_df.empty or ca3_df.empty:
+        return connections
 
+    rng = np.random.default_rng(rng_seed)
 
+    # Ensure string gids
+    ca3_df = ca3_df.copy()
+    ca3_df['gid'] = ca3_df['gid'].astype(str)
+    ca1_df = ca1_df.copy()
+    ca1_df['gid'] = ca1_df['gid'].astype(str)
 
+    # Precompute one global σ from CA1 spatial extent
+    sigma_um = adaptive_sigma_global(ca1_df, factor=sigma_factor)
 
+    # In-degree tracker for CA1 targets
+    ca1_gids = ca1_df['gid'].to_numpy()
+    indeg = pd.Series(0, index=ca1_gids, dtype=int)
 
+    # For fairness, randomize CA3 order slightly
+    ca3_order = rng.permutation(ca3_df.index.values)
 
+    k = int(max(1, round(avg_targets_per_ca3)))
+
+    # Preload CA1 coords for speed
+    ca1_xyz_all = ca1_df[['x', 'y', 'z']].to_numpy(dtype=float)
+
+    for idx in ca3_order:
+        row = ca3_df.loc[idx]
+        q = row[['x','y','z']].to_numpy(dtype=float)
+
+        # Eligible CA1 = under cap (and optionally within d_max_um)
+        under_cap_mask = (indeg[ca1_gids].to_numpy() < ca1_in_degree_cap)
+
+        if not np.any(under_cap_mask):
+            # everyone hit the cap; this CA3 gets no targets
+            connections[row['gid']] = []
+            continue
+
+        ca1_xyz = ca1_xyz_all[under_cap_mask]
+        ca1_gids_elig = ca1_gids[under_cap_mask]
+
+        # Distances
+        dists = np.linalg.norm(ca1_xyz - q, axis=1)
+
+        # Optional hard radius
+        if d_max_um is not None:
+            rad_mask = (dists <= d_max_um)
+            if not np.any(rad_mask):
+                connections[row['gid']] = []
+                continue
+            dists = dists[rad_mask]
+            ca1_gids_elig = ca1_gids_elig[rad_mask]
+
+        # Gaussian weights
+        w = np.exp(-(dists ** 2) / (2 * sigma_um ** 2))
+        wsum = w.sum()
+        if wsum <= 0:
+            # fallback: uniform among eligible
+            probs = np.ones_like(w) / len(w)
+        else:
+            probs = w / wsum
+
+        k_eff = int(min(k, len(ca1_gids_elig)))
+        if k_eff <= 0:
+            connections[row['gid']] = []
+            continue
+
+        sel_idx = rng.choice(len(ca1_gids_elig), size=k_eff, replace=False, p=probs)
+        chosen = ca1_gids_elig[sel_idx].tolist()
+
+        # Update in-degree counts immediately
+        indeg.loc[chosen] += 1
+
+        # Save connections (use bare ints where possible)
+        connections[row['gid']] = [_to_numeric_id(t) for t in chosen]
+
+    # QA: check cap compliance
+    max_in = int(indeg.max()) if len(indeg) else 0
+    print(f"[QA] Max CA1 in-degree observed = {max_in} (cap={ca1_in_degree_cap})")
+    if max_in > ca1_in_degree_cap:
+        print("[WARN] In-degree cap violated; check logic.")
+
+    return connections
+
+def _to_numeric_id(v):
+    try:
+        s = str(v)
+        return int(s) if s.isdigit() else s
+    except Exception:
+        return str(v)
 
 def process_uploaded_file(file_path):
     # Determine paths and filenames
@@ -1466,7 +1349,6 @@ def get_activity_indexes(data_dict, Gids):
 
     return activity_index_map
 
-
 @csrf_exempt
 def LoadHumanHipForm(request):
     try:
@@ -1548,9 +1430,6 @@ def LoadHumanActivityData(request):
     except Exception as e:
         print("Error in LoadActivityData:", e)  # Debugging
         return JsonResponse({'error': str(e)}, status=500)
-
-
-
 
 def list_connection_types(request):
     file_path = os.path.join(settings.MEDIA_ROOT,"connections_inh.hdf5")

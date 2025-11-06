@@ -48,6 +48,8 @@ let total_inhibitory;
 let totalX = 0,
   totalY = 0,
   totalZ = 0;
+// --- helpers ---
+let wasEverStarted = false; // track first start
 const params = { Backgound: "#000000" };
 const parameters = {
   Neuron_Size: 30,
@@ -66,17 +68,42 @@ let connectionLines = null;
 let allConnections = [];
 let activeConnections = [];
 let connectionsHidden = false;
+let raycaster = new THREE.Raycaster();
+let hoveredIndex = -1;
+let pointer = new THREE.Vector2();
+let hoverColor = new THREE.Color(0, 1, 1); // Bright Cyan for hover
+let originalColors = [];
+let originalSizes = [];
 
-// Global playback config
-const playbackConfig = {
-  simTimestep: parseFloat(document.getElementById("simTimestepValue").value),
-  stepDuration: parseInt(document.getElementById("stepDurationValue").value),
-};
+// Add these variables at the top of your file
+let popupVisible = false;
+let popupHideTimer = null;
+const POPUP_HIDE_DELAY = 900; // milliseconds
+let timeSprite;
 let mediaRecorder = null;
 let recordingIntervalId = null;
 let combinedCanvas = null;
 let combinedCtx = null;
 let recordedChunks = [];
+let circuitstatus = 0;
+let histChart = null;
+let histMeta = null; // t_min, t_max, bin_edges
+let currentCursor = null;
+
+let histX = []; // ms
+let histY = []; // counts
+let histSD = []; // per-point SD
+let currentCursorMs = null;
+const baseSize = 30;
+const fadeDuration = 2.0;
+const spikeTransitions = new Map(); // gid → { startTime }
+// guard to avoid multiple folders / listeners
+let _cameraFolderMade = false;
+
+// ---- persistence (position + target; manual, no autosave noise) ----
+const CAM_POSE_KEY = "ncv_cam_pose_v2";
+const CAM_HAS_KEY = "ncv_cam_pose_has_user_save_v2";
+
 const startBtn = document.getElementById("startRecordingBtn");
 const stopBtn = document.getElementById("stopRecordingBtn");
 
@@ -109,6 +136,16 @@ const txttimeto = document.getElementById("txttimeto");
 const networkFileInput = document.getElementById("networkFileInput");
 const hdfFileInput = document.getElementById("activityFileInput");
 
+const hudCanvas = document.getElementById("hudCanvas");
+const hudCtx = hudCanvas.getContext("2d");
+
+const canvas = document.getElementById("neuronCanvas");
+
+// Global playback config
+const playbackConfig = {
+  simTimestep: parseFloat(document.getElementById("simTimestepValue").value),
+  stepDuration: parseInt(document.getElementById("stepDurationValue").value),
+};
 var modal = document.getElementById("myModal");
 // Get the image and insert it inside the modal - use its "alt" text as a caption
 var img = document.getElementById("histogramImage");
@@ -202,8 +239,6 @@ async function LoadActivityData(file_id) {
       // Print the last key after sorting
       if (sortedKeys.length > 0) {
         lastKey = sortedKeys[sortedKeys.length - 1]; // Get the last key in the sorted array
-        //   document.getElementById("lblLasttime").innerHTML =
-        //     " / " + lastKey + " (ms)";
         lasttime = parseInt(lastKey);
         totalTimeDisplay.textContent = lasttime;
         document.getElementById("timebar").max = lasttime;
@@ -260,19 +295,12 @@ async function LoadHumanActivityData(file_id) {
 
       document.getElementById("lblspikes").innerText = "# spikes: " + number_of_spikes;
 
-      //   lasttime = parseFloat(timeRanges[timeRanges.length - 1]).toFixed(1);
-
-      //   totalTimeDisplay.textContent = lasttime;
-      //   document.getElementById("timebar").max = lasttime;
-
       // Extract and sort keys
       const sortedKeys = Object.keys(Activitys).sort((a, b) => parseFloat(a) - parseFloat(b));
 
       // Print the last key after sorting
       if (sortedKeys.length > 0) {
         lastKey = sortedKeys[sortedKeys.length - 1]; // Get the last key in the sorted array
-        //   document.getElementById("lblLasttime").innerHTML =
-        //     " / " + lastKey + " (ms)";
         lasttime = parseInt(lastKey);
         totalTimeDisplay.textContent = lasttime;
         document.getElementById("timebar").max = lasttime;
@@ -322,9 +350,6 @@ async function LoadHipForm() {
       const fileData = file.fileData;
       NetworkArray.push(fileData);
       total_neurons += file.total_neurons;
-
-      //ca3toca1connections = data.connections;
-      //console.log(ca3toca1connections);
     };
 
     // Process each file sequentially
@@ -340,7 +365,7 @@ async function LoadHipForm() {
     document.getElementById("page-loader").style.display = "none";
   }
 }
-let circuitstatus = 0;
+
 window.addEventListener("load", function () {
   const lst = ["Activity demo"];
   const btnLoadHumanNetwork_full = document.getElementById("btnLoadHumanNetwork_full");
@@ -1144,14 +1169,6 @@ hdfFileInput.addEventListener("change", async (event) => {
     }
   }
 });
-let histChart = null;
-let histMeta = null; // t_min, t_max, bin_edges
-let currentCursor = null;
-
-let histX = []; // ms
-let histY = []; // counts
-let histSD = []; // per-point SD
-let currentCursorMs = null;
 
 function smoothSeries(y, w = 7) {
   // symmetric box smoother; w must be odd
@@ -1388,271 +1405,6 @@ function buildOrUpdateHistChart(hist_data) {
   document.getElementById("histChartContainer").style.display = "block";
 }
 
-// function buildOrUpdateHistChart(hist_data) {
-//   const ctx = document.getElementById("histChart").getContext("2d");
-
-//   // ---- inputs ----
-//   const centers = (hist_data.bin_centers || []).map(Number);
-//   const counts = (hist_data.counts || []).map(Number);
-//   const sd_raw = (hist_data.sd_poisson || []).map(Number);
-//   if (!centers.length || !counts.length) return;
-
-//   histX = centers;
-//   histY = counts;
-//   histSD = sd_raw;
-
-//   // --- summary (match histogram) ---
-//   const mfr = Number(hist_data.mfr ?? 0);
-//   const tMin = Number.isFinite(hist_data.t_min) ? Number(hist_data.t_min) : Math.min(...centers);
-//   const tMax = Number.isFinite(hist_data.t_max) ? Number(hist_data.t_max) : Math.max(...centers);
-//   const maxSp = Math.max(...counts);
-//   const minSp = Math.min(...counts);
-
-//   // if backend sent totals, use them; else compute spikes = sum(counts); neurons unknown -> 0
-//   const totalSpikes = Number(hist_data.total_spikes ?? counts.reduce((a, b) => a + b, 0));
-//   const totalNeurons = Number(hist_data.total_neurons ?? hist_data.neurons ?? 0);
-
-//   // ---- bar width (prefer bin_edges, else estimate) ----
-//   const edges = (hist_data.bin_edges || []).map(Number);
-//   let barWidthMs;
-//   if (edges.length >= 2) barWidthMs = edges[1] - edges[0];
-//   else if (centers.length >= 2) barWidthMs = (centers[1] - centers[0]) * 0.98;
-//   else barWidthMs = 1;
-
-//   // ---- smoothing for curve ----
-//   const ySmooth = smoothSeries(counts, 7);
-//   const sdSmooth = smoothSeries(sd_raw, 7);
-//   const lower = ySmooth.map((v, i) => Math.max(0, v - (sdSmooth[i] || 0)));
-//   const upper = ySmooth.map((v, i) => v + (sdSmooth[i] || 0));
-
-//   // ---- axis from RAW counts with padding ----
-//   const yMinRaw = Math.min(...counts);
-//   const yMaxRaw = Math.max(...counts);
-//   const ySpan = Math.max(1, yMaxRaw - yMinRaw);
-//   const yPad = Math.max(1, 0.08 * ySpan);
-//   const yMin = Math.max(0, yMinRaw - yPad);
-//   const yMax = yMaxRaw + yPad;
-
-//   // ---- datasets ----
-//   const BAR_PX = 4;
-//   const barPoints = centers.map((x, i) => ({ x, y: counts[i] }));
-//   const linePoints = centers.map((x, i) => ({ x, y: ySmooth[i] }));
-
-//   // ---- plugins ----
-//   const cursorPlugin = {
-//     id: "timeCursor",
-//     afterDraw(chart) {
-//       if (currentCursorMs == null) return;
-//       const {
-//         ctx,
-//         chartArea,
-//         scales: { x },
-//       } = chart;
-//       if (currentCursorMs < x.min || currentCursorMs > x.max) return;
-//       const xp = x.getPixelForValue(currentCursorMs);
-//       ctx.save();
-//       ctx.beginPath();
-//       ctx.moveTo(xp, chartArea.top);
-//       ctx.lineTo(xp, chartArea.bottom);
-//       ctx.lineWidth = 2;
-//       ctx.strokeStyle = "rgba(255,255,255,0.85)";
-//       ctx.stroke();
-//       ctx.restore();
-//     },
-//   };
-
-//   const errorBarsPlugin = {
-//     id: "errorBars",
-//     afterDatasetsDraw(chart, _args, opts) {
-//       const { stride = 10, capWidth = 8, color = "rgba(0,0,0,0.9)", lineWidth = 1 } = opts || {};
-//       const {
-//         ctx,
-//         scales: { x, y },
-//       } = chart;
-//       // curve dataset index (below) = 2
-//       const lineMeta = chart.getDatasetMeta(2);
-//       if (!lineMeta?.data?.length) return;
-//       ctx.save();
-//       ctx.lineWidth = lineWidth;
-//       ctx.strokeStyle = color;
-//       for (let i = 0; i < lineMeta.data.length; i += stride) {
-//         const xMs = chart.config.data.datasets[2].data[i].x;
-//         const yMean = chart.config.data.datasets[2].data[i].y;
-//         const sd = chart.$histSD?.[i] ?? 0;
-//         if (sd <= 0) continue;
-//         const xp = x.getPixelForValue(xMs);
-//         const yT = y.getPixelForValue(yMean + sd);
-//         const yB = y.getPixelForValue(Math.max(0, yMean - sd));
-//         ctx.beginPath();
-//         ctx.moveTo(xp, yT);
-//         ctx.lineTo(xp, yB);
-//         ctx.stroke();
-//         ctx.beginPath();
-//         ctx.moveTo(xp - capWidth / 2, yT);
-//         ctx.lineTo(xp + capWidth / 2, yT);
-//         ctx.moveTo(xp - capWidth / 2, yB);
-//         ctx.lineTo(xp + capWidth / 2, yB);
-//         ctx.stroke();
-//       }
-//       ctx.restore();
-//     },
-//   };
-
-//   // Histogram-style stat block
-//   const statsBadgePlugin = {
-//     id: "statsBadge",
-//     afterDraw(chart) {
-//       const {
-//         ctx,
-//         chartArea: { top, right },
-//       } = chart;
-//       const lines = [`# Max Spike: ${maxSp.toLocaleString()}`, `# Min Spike: ${minSp.toLocaleString()}`, `# Spikes: ${totalSpikes.toLocaleString()}`, `# Neurons: ${totalNeurons.toLocaleString()}`, `# Min Time (ms): ${tMin.toFixed(1)}`, `# Max Time (ms): ${tMax.toFixed(1)}`];
-//       ctx.save();
-//       ctx.font = "10px sans-serif";
-//       const w = Math.max(...lines.map((s) => ctx.measureText(s).width)) + 14;
-//       const h = 12 * lines.length + 10;
-//       const x = right - w - 6;
-//       const y = top + 8;
-//       ctx.fillStyle = "rgba(0,0,0,0.65)";
-//       ctx.strokeStyle = "rgba(255,255,255,0.25)";
-//       ctx.lineWidth = 1;
-//       if (ctx.roundRect) {
-//         ctx.beginPath();
-//         ctx.roundRect(x, y, w, h, 6);
-//         ctx.fill();
-//         ctx.stroke();
-//       } else {
-//         ctx.fillRect(x, y, w, h);
-//         ctx.strokeRect(x, y, w, h);
-//       }
-//       ctx.fillStyle = "#FFFFFF";
-//       lines.forEach((s, i) => ctx.fillText(s, x + 7, y + 12 + 12 * i - 6));
-//       ctx.restore();
-//     },
-//   };
-
-//   const fmt = (v) => Number(v).toLocaleString();
-
-//   const config = {
-//     type: "bar",
-//     data: {
-//       datasets: [
-//         {
-//           type: "bar",
-//           label: "Spikes/bin",
-//           data: barPoints,
-//           parsing: false,
-//           borderWidth: 0.5,
-//           borderColor: "rgba(255,255,255,0.35)",
-//           backgroundColor: "rgba(255,255,255,0.70)",
-//           barThickness: BAR_PX,
-//           hoverBackgroundColor: "rgba(255,255,255,0.85)",
-//         },
-//         {
-//           type: "line",
-//           label: "SD band",
-//           data: centers.map((x, i) => ({ x, y: upper[i] })),
-//           parsing: false,
-//           borderWidth: 0,
-//           pointRadius: 0,
-//           fill: { target: { datasetIndex: 3 }, above: "rgba(128,128,128,0.15)" },
-//           tooltip: { enabled: false },
-//         },
-//         {
-//           type: "line",
-//           label: "Smoothed",
-//           data: linePoints,
-//           parsing: false,
-//           borderWidth: 2,
-//           pointRadius: 0,
-//           spanGaps: true,
-//           tension: 0.3,
-//           borderColor: "#ffcc00",
-//           backgroundColor: "#ffcc00",
-//         },
-//         {
-//           type: "line",
-//           label: "Lower",
-//           data: centers.map((x, i) => ({ x, y: lower[i] })),
-//           parsing: false,
-//           borderWidth: 0,
-//           pointRadius: 0,
-//           fill: false,
-//           tooltip: { enabled: false },
-//         },
-//       ],
-//     },
-//     options: {
-//       responsive: true,
-//       animation: false,
-//       parsing: false,
-//       interaction: { mode: "nearest", axis: "x", intersect: false },
-//       scales: {
-//         x: {
-//           type: "linear",
-//           min: tMin,
-//           max: tMax,
-//           title: { display: true, text: "Time (ms)", color: "#FFFFFF", font: { weight: "bold" } },
-//           ticks: { color: "#FFFFFF", maxTicksLimit: 10 },
-//           grid: { color: "rgba(255,255,255,0.15)" },
-//         },
-//         y: {
-//           beginAtZero: false,
-//           min: yMin,
-//           max: yMax,
-//           // **Match histogram label**
-//           title: { display: true, text: "Number of Firing Neurons", color: "#FFFFFF", font: { weight: "bold" } },
-//           ticks: { color: "#FFFFFF", callback: (v) => fmt(v) },
-//           grid: { color: "rgba(255,255,255,0.15)" },
-//         },
-//       },
-//       plugins: {
-//         legend: { display: false },
-//         // **Match histogram title style**
-//         title: {
-//           display: true,
-//           text: `Chunk ${typeof selectedChunkNumber !== "undefined" ? selectedChunkNumber : ""} - MFR: ${mfr.toFixed(2)} Hz`,
-//           color: "#FFFFFF",
-//           font: { weight: "bold", size: 14 },
-//           padding: { top: 4, bottom: 8 },
-//           align: "center",
-//         },
-//         tooltip: {
-//           backgroundColor: "rgba(0,0,0,0.90)",
-//           titleColor: "#FFFFFF",
-//           bodyColor: "#FFFFFF",
-//           titleFont: { weight: "bold" },
-//           bodyFont: { size: 12 },
-//           filter: (ctx) => ctx.datasetIndex === 0 || ctx.datasetIndex === 2,
-//           callbacks: {
-//             label: (ctx) => {
-//               const idx = nearestIndex(histX, ctx.parsed.x);
-//               const c = histY[idx];
-//               const s = histSD[idx] ?? 0;
-//               return `Count: ${fmt(c)}  ±SD≈ ${s.toFixed(2)}`;
-//             },
-//           },
-//         },
-//         errorBars: { stride: 12, capWidth: 8, color: "rgba(0,0,0,0.9)", lineWidth: 1 },
-//       },
-//       onClick: (evt, _els, chart) => {
-//         const x = chart.scales.x.getValueForPixel(evt.x);
-//         const idx = nearestIndex(histX, x);
-//         if (idx != null) seekToTime(histX[idx]);
-//       },
-//     },
-//     plugins: [Chart.registry.getPlugin("decimation") || { id: "noop" }, cursorPlugin, errorBarsPlugin, statsBadgePlugin],
-//   };
-
-//   if (histChart) histChart.destroy();
-//   histChart = new Chart(ctx, config);
-//   histChart.$histSD = sdSmooth;
-
-//   const ms0 = parseFloat(document.getElementById("timebar")?.value ?? hist_data.t_min ?? tMin);
-//   updateHistCursor(ms0);
-//   document.getElementById("histChartContainer").style.display = "block";
-// }
-
 function nearestIndex(xs, x) {
   if (!xs?.length) return null;
   // binary search
@@ -1798,9 +1550,6 @@ startTimeInput.addEventListener("change", () => {
     alert("Start time cannot be less than start simulation time");
     startTimeInput.value = ""; // Clear the input field
   } else if (newStart === 0.0) {
-    // Handle case when the start time is 0
-    // newStart = Math.max(0, newStart); // Ensure start time is at least 0
-    // startTimeInput.value = newStart.toFixed(1); // Update the input with the valid value
     startTimeInput.value = "";
 
     // Set count to the first key or default to 0
@@ -1883,39 +1632,11 @@ timebar.addEventListener("input", (event) => {
   }
 });
 
-// --- helpers ---
-let wasEverStarted = false; // track first start
-
 // make sure count is always a number
 const toNum1 = (v) => Number.parseFloat(Number(v).toFixed(1));
 
 const startButton = document.getElementById("startbtn");
-// startButton.addEventListener("click", () => {
-//   let startVal = Math.max(0, parseFloat(startTimeInput.value)) || 0.0;
-//   let endVal = Math.max(0, parseFloat(endTimeInput.value)) || parseFloat(lasttime);
 
-//   if (selectedChunkNumber > 0 && isFinished) {
-//     isFinished = false;
-
-//     isPaused = false;
-//     startVal = parseFloat(firstKey);
-//     count = parseFloat(startVal).toFixed(1);
-//     timebar.value = count;
-//   } else if (!interval || isPaused) {
-//     isPaused = false;
-//     count = Math.max(count, startVal); // Ensure within bounds
-//     timebar.value = count;
-//   }
-//   currentTimeDisplay.textContent = parseFloat(count).toFixed(1);
-//   startButton.disabled = true;
-//   stopButton.disabled = false;
-//   restart.disabled = false;
-//   timebar.min = count;
-//   timebar.max = endVal;
-//   startAnimation(startVal, endVal);
-// });
-
-// --- START button ---
 startButton.addEventListener("click", () => {
   const startVal = Math.max(0, parseFloat(startTimeInput.value)) || 0.0;
   const endVal = Math.max(0, parseFloat(endTimeInput.value)) || parseFloat(lasttime);
@@ -1985,14 +1706,6 @@ startButton.addEventListener("click", () => {
   }
 });
 const stopButton = document.getElementById("pause");
-// stopButton.addEventListener("click", () => {
-//   clearInterval(interval);
-//   interval = null;
-//   isPaused = true;
-//   startButton.disabled = false;
-//   stopButton.disabled = true;
-// });
-
 // --- PAUSE button (unchanged except ensuring state) ---
 stopButton.addEventListener("click", () => {
   clearInterval(interval);
@@ -2003,47 +1716,6 @@ stopButton.addEventListener("click", () => {
   stopButton.disabled = true;
 });
 const restart = document.getElementById("restart");
-// restart.addEventListener("click", () => {
-//   let startVal, endVal;
-
-//   if (selectedChunkNumber > 0) {
-//     spikeTimes.clear();
-//     spikeTransitions.clear();
-//     startVal = parseFloat(firstKey).toFixed(1);
-
-//     endVal = parseFloat(lasttime).toFixed(1);
-//     count = startVal;
-
-//     currentTimeDisplay.textContent = parseFloat(count).toFixed(1);
-//   } else {
-//     startVal = parseFloat(startTimeInput.value) || 0.0;
-//     endVal = parseFloat(endTimeInput.value) || parseFloat(lasttime);
-//     count = startVal;
-//     currentTimeDisplay.textContent = parseFloat(count).toFixed(1);
-//     //totalTimeDisplay.textContent = count;
-//   }
-
-//   //   const startVal = parseFloat(startTimeInput.value) || 0.0;
-//   //   const endVal = parseFloat(endTimeInput.value) || parseFloat(lasttime);
-
-//   clearInterval(interval);
-//   interval = null;
-//   resetParticles();
-
-//   //   count = startVal;
-//   timebar.min = startVal;
-//   timebar.max = endVal;
-//   timebar.value = count;
-//   //   currentTimeDisplay.textContent = count.toFixed(1);
-
-//   isPaused = false;
-//   startButton.disabled = true;
-//   stopButton.disabled = false;
-
-//   startAnimation(startVal, endVal);
-// });
-
-// --- RESTART button (tiny safe tweak: keep numbers) ---
 restart.addEventListener("click", () => {
   let startVal, endVal;
 
@@ -2098,11 +1770,6 @@ function onWindowResize() {
   render();
 }
 
-let timeSprite;
-const hudCanvas = document.getElementById("hudCanvas");
-const hudCtx = hudCanvas.getContext("2d");
-
-const canvas = document.getElementById("neuronCanvas");
 function CreateScene() {
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 1, 100000);
@@ -2134,7 +1801,6 @@ function CreateScene() {
 
   controls.minDistance = 0.1; // Allow very close zoom (default is 0)
   controls.maxDistance = 100000; // Increase if camera hits a limit
-  //   controls.dynamicDampingFactor = 0.25;
 
   stopButton.disabled = true;
   startButton.disabled = true;
@@ -2297,12 +1963,6 @@ function createArrowOverlayFromPCA(pcaAxes) {
   addAnatomicalArrowsFromPCA(arrowsScene, new THREE.Vector3(0, 0, 0), 1.0, pcaAxes);
 }
 
-//////////////////////////////////////////////
-
-// ---- persistence (position + target; manual, no autosave noise) ----
-const CAM_POSE_KEY = "ncv_cam_pose_v2";
-const CAM_HAS_KEY = "ncv_cam_pose_has_user_save_v2";
-
 function setHasSaved(v) {
   localStorage.setItem(CAM_HAS_KEY, v ? "1" : "0");
 }
@@ -2358,9 +2018,6 @@ function clearSavedPose() {
   localStorage.removeItem(CAM_POSE_KEY);
   localStorage.removeItem(CAM_HAS_KEY);
 }
-
-// guard to avoid multiple folders / listeners
-let _cameraFolderMade = false;
 
 function makeCameraFolder(gui) {
   if (_cameraFolderMade) return; // prevent duplicates
@@ -2487,8 +2144,6 @@ function resetToInitialPose() {
   controls.target.copy(_initialPose.tgt);
   controls.update();
 }
-
-/////////////////////////////////////////
 
 function VisualizateNeurons() {
   // Clear previous particles if any
@@ -2769,13 +2424,13 @@ function VisualizateNeurons() {
         const grid = document.createElement("div");
         grid.className = "cam-grid";
         grid.innerHTML = `
-  <button type="button" data-a="zoomIn">Zoom In  +</button>
-  <button type="button" data-a="zoomOut">Zoom Out -</button>
-  <button type="button" data-a="up">Move Up ↑</button>
-  <button type="button" data-a="down">Move Down ↓</button>
-  <button type="button" data-a="left">Move Left ←</button>
-  <button type="button" data-a="right">Move Right →</button>
-`;
+        <button type="button" data-a="zoomIn">Zoom In  +</button>
+        <button type="button" data-a="zoomOut">Zoom Out -</button>
+        <button type="button" data-a="up">Move Up ↑</button>
+        <button type="button" data-a="down">Move Down ↓</button>
+        <button type="button" data-a="left">Move Left ←</button>
+        <button type="button" data-a="right">Move Right →</button>
+        `;
         cameraNav.domElement.appendChild(grid);
 
         // one click handler for all
@@ -3186,9 +2841,6 @@ function animate() {
   camera2.up.copy(camera.up);
 
   if (camera.isPerspectiveCamera) {
-    // For more zoom in camera2
-    // const zoomFactor = 2.0; // 0.5 = 2x zoom, 0.25 = 4x zoom, etc.
-    // camera2.fov = camera.fov * zoomFactor;
     camera2.fov = camera.fov;
     camera2.updateProjectionMatrix();
   } else if (camera.isOrthographicCamera) {
@@ -3204,21 +2856,6 @@ function animate() {
   renderer.setScissor(insetX, insetY, insetSize, insetSize);
   renderer.setScissorTest(true);
   renderer.render(scene, camera2);
-
-  // --------- MINI ARROWS ---------
-  //   if (arrowsScene && arrowsCamera) {
-  //     renderer.clearDepth(); // allow rendering over inset
-  //     arrowsScene.quaternion.copy(camera.quaternion);
-
-  //     const size = 180;
-  //     const x = 10;
-  //     const y = 130;
-
-  //     renderer.setViewport(x, y, size, size);
-  //     renderer.setScissor(x, y, size, size);
-  //     renderer.setScissorTest(true);
-  //     renderer.render(arrowsScene, arrowsCamera);
-  //   }
 }
 
 let isFinished = false;
@@ -3247,16 +2884,6 @@ function startAnimation(startVal, endVal) {
         interval = null;
         resetParticles();
 
-        // ⬅️ key: DON'T reset timeline or restart when benchmarking
-        // if (!isBenchmarkRun) {
-        //   count = 0.0;
-        //   count = startVal; // your previous behavior
-        //   if (selectedChunkNumber > 0) {
-        //     count = parseFloat(firstKey).toFixed(1);
-        //     currentTimeDisplay.textContent = count;
-        //   }
-        // }
-
         count = 0.0;
         if (mediaRecorder && mediaRecorder.state === "recording") {
           stopRecording(); //  Automatically stop and download
@@ -3281,7 +2908,6 @@ function startAnimation(startVal, endVal) {
 
         return;
       }
-      //   console.log("count:", count, "simTimestep:", simTimestep);
 
       count = parseFloat((parseFloat(count) + parseFloat(simTimestep)).toFixed(1));
 
@@ -3426,16 +3052,10 @@ function animateTimeRange_Without_Connection(currentTime, targetSize) {
     const particleIds = Activitys[parseFloat(key)];
 
     if (particleIds !== undefined) {
-      // NEW: record exactly what you displayed at this time-bin
-      /* recordShownSpikes(key, particleIds); */
       animateParticles_Without_Connection(particleIds, targetSize);
     }
   }
 }
-
-const baseSize = 30;
-const fadeDuration = 2.0;
-const spikeTransitions = new Map(); // gid → { startTime }
 
 function animateParticles_Without_Connection(particleIds, targetSize) {
   const sizes = geometry.attributes.size.array;
@@ -4453,38 +4073,6 @@ window.addEventListener("resize", () => {
   renderer.setSize(width, height, false);
 });
 
-// function centerCameraToObject(object) {
-//   const box = new THREE.Box3().setFromObject(object);
-
-//   if (box.isEmpty()) {
-//     console.warn("Bounding box is empty. Cannot center camera.");
-//     return;
-//   }
-
-//   const center = new THREE.Vector3();
-//   box.getCenter(center);
-
-//   const size = box.getSize(new THREE.Vector3());
-//   const maxDim = Math.max(size.x, size.y, size.z);
-
-//   const fov = camera.fov * (Math.PI / 270);
-//   const distance = maxDim / (2 * Math.tan(fov / 2));
-
-//   // Use current view direction from camera to controls target
-//   const viewDir = new THREE.Vector3();
-//   viewDir.subVectors(camera.position, controls.target).normalize();
-
-//   const newPosition = center.clone().add(viewDir.multiplyScalar(distance * 1.2));
-//   camera.position.copy(newPosition);
-//   camera.lookAt(center);
-//   camera.updateProjectionMatrix();
-
-//   if (controls) {
-//     controls.target.copy(center);
-//     controls.update();
-//   }
-// }
-
 function centerCameraToObject(object) {
   const box = new THREE.Box3().setFromObject(object);
   if (box.isEmpty()) return;
@@ -5061,21 +4649,12 @@ function showNeuronInfo(intersection, event) {
 
     if (mtype >= 1 && mtype <= 18) {
       document.getElementById("neuron-region").textContent = "DG";
-      //   if (mtype == 14 || mtype == 17 || mtype == 18) document.getElementById("neuron-layer").textContent = "SMo";
-      //   if (mtype == 3 || mtype == 9 || mtype == 13 || mtype == 14 || mtype == 17) document.getElementById("neuron-layer").textContent = "SMi";
-      //   if (mtype == 1 || mtype == 2 || mtype == 7 || mtype == 8 || mtype == 10 || mtype == 11 || mtype == 14 || mtype == 15 || mtype == 16) document.getElementById("neuron-layer").textContent = "SG";
-      //   if (mtype == 4 || mtype == 5 || mtype == 6 || mtype == 10 || mtype == 11 || mtype == 12) document.getElementById("neuron-layer").textContent = "H";
 
       if (mtype >= 1 && mtype <= 5) document.getElementById("neuron-morph_class").textContent = "PYR";
       else document.getElementById("neuron-morph_class").textContent = "INT";
     }
     if (mtype >= 19 && mtype <= 43) {
       document.getElementById("neuron-region").textContent = "CA3";
-
-      //   if (mtype == 29) document.getElementById("neuron-layer").textContent = "SLM";
-      //   if (mtype == 21 || mtype == 22 || mtype == 34 || mtype == 38 || mtype == 39 || mtype == 40 || mtype == 41) document.getElementById("neuron-layer").textContent = "SR";
-      //   if (mtype == 22 || mtype == 28 || mtype == 30 || mtype == 31 || mtype == 32 || mtype == 33 || mtype == 34 || mtype == 35 || mtype == 38 || mtype == 39) document.getElementById("neuron-layer").textContent = "SG";
-      //   if (mtype == 4 || mtype == 5 || mtype == 6 || mtype == 10 || mtype == 11 || mtype == 12) document.getElementById("neuron-layer").textContent = "H";
 
       if (mtype >= 19 && mtype <= 22) document.getElementById("neuron-morph_class").textContent = "PYR";
       else document.getElementById("neuron-morph_class").textContent = "INT";
@@ -5221,23 +4800,6 @@ document.getElementById("neuron-popup").addEventListener("mouseleave", () => {
   }
 });
 
-CreateScene();
-initPopupSystem();
-disableAllElements();
-//createArrowOverlay();
-
-let raycaster = new THREE.Raycaster();
-let hoveredIndex = -1;
-let pointer = new THREE.Vector2();
-let hoverColor = new THREE.Color(0, 1, 1); // Bright Cyan for hover
-let originalColors = [];
-let originalSizes = [];
-
-// Add these variables at the top of your file
-let popupVisible = false;
-let popupHideTimer = null;
-const POPUP_HIDE_DELAY = 900; // milliseconds
-
 document.addEventListener("keydown", (event) => {
   const moveStep = 100;
   const zoomStep = 100;
@@ -5315,3 +4877,7 @@ document.getElementById("dlHistBtn").addEventListener("click", () => {
   link.click();
   link.remove();
 });
+
+CreateScene();
+initPopupSystem();
+disableAllElements();
