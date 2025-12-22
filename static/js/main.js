@@ -6,7 +6,10 @@ let isDownloadTriggered = false;
 let isHippocamome = false;
 let firstLastKeys;
 var chkpanle = false;
-var total_neurons = 0;
+let total_neurons = 0;
+let total_excitatory = 0;
+let total_inhibitory = 0;
+var cell_type = 0;
 let NetworkArray = [];
 let ca3toca1connections = [];
 let formStepsNum = 0;
@@ -43,8 +46,7 @@ var sizes = [];
 var neuron_class = [];
 let totalParticles = 0; // Initialize counter
 let xcord, ycord, zcord;
-let total_excitatory;
-let total_inhibitory;
+
 let totalX = 0,
   totalY = 0,
   totalZ = 0;
@@ -581,6 +583,11 @@ networkFileInput.addEventListener("change", async (event) => {
       data.files.forEach((file) => {
         NetworkArray.push(file.fileData);
         total_neurons += file.total_neurons;
+
+        total_excitatory = file.total_excitatory;
+
+        total_inhibitory = file.total_inhibitory;
+        cell_type = file.cell_type;
       });
 
       if (parseInt(data.flag_check) === 1) {
@@ -614,7 +621,7 @@ networkFileInput.addEventListener("change", async (event) => {
 
       flag = true;
 
-      if (total_neurons > 5200000) ishuman = true;
+      //   if (total_neurons > 5200000) ishuman = true;
       VisualizateNeurons();
       resetCamera();
       centerCameraToObject(particles);
@@ -1106,9 +1113,13 @@ hdfFileInput.addEventListener("change", async (event) => {
         data.files.forEach((file) => {
           NetworkArray.push(file.fileData);
           total_neurons += file.total_neuros;
+          total_excitatory = file.total_excitatory;
+
+          total_inhibitory = file.total_inhibitory;
+          cell_type = file.cell_type;
         });
 
-        if (total_neurons > 5000000) ishuman = true;
+        // if (total_neurons > 5000000) ishuman = true;
 
         flag = true;
         VisualizateNeurons();
@@ -2166,11 +2177,13 @@ function VisualizateNeurons() {
     document.getElementById("Neurons_firing_attributes").style.visibility = "hidden";
     document.getElementById("networkspikes").style.visibility = "hidden";
     removeTable();
+    total_excitatory = 0;
+    total_inhibitory = 0;
   }
 
   geometry = new THREE.BufferGeometry();
-  total_excitatory = 0;
-  total_inhibitory = 0;
+  //   total_excitatory = 0;
+  //   total_inhibitory = 0;
   totalParticles = 0;
   totalX = 0;
   totalY = 0;
@@ -2230,18 +2243,34 @@ function VisualizateNeurons() {
     } else {
       NetworkArray.forEach((net) => {
         net.forEach((p) => {
-          const x = p.x;
-          const y = p.y;
-          const z = p.z;
-          positions.push(x, y, z);
-          sizes.push(30);
-          gIDs.push(p.id);
+          if (cell_type > 0) {
+            const x = p.x;
+            const y = p.y;
+            const z = p.z;
+            positions.push(x, y, z);
+            sizes.push(30);
+            gIDs.push(p.id);
 
-          p.id < 261845 ? (vertexColors.push(0, 0, 1), total_excitatory++) : (vertexColors.push(1, 0, 0), total_inhibitory++);
+            if (p.cell_type == 0) vertexColors.push(0, 0, 1);
+            else if (p.cell_type == 1) vertexColors.push(1, 0, 0);
 
-          totalX += x;
-          totalY += y;
-          totalZ += z;
+            totalX += x;
+            totalY += y;
+            totalZ += z;
+          } else {
+            const x = p.x;
+            const y = p.y;
+            const z = p.z;
+            positions.push(x, y, z);
+            sizes.push(30);
+            gIDs.push(p.id);
+
+            p.id < total_excitatory ? vertexColors.push(0, 0, 1) : vertexColors.push(1, 0, 0);
+
+            totalX += x;
+            totalY += y;
+            totalZ += z;
+          }
         });
         totalParticles += net.length;
       });
@@ -2765,13 +2794,14 @@ function generateTable(total_neuros, total_excitatory, total_inhibitory) {
   // Excitatory Neurons
   const col2 = document.createElement("div");
   col2.className = "col-12 d-flex justify-content-between small py-1 border-bottom";
-  col2.innerHTML = `<span><strong>Excitatory Neurons</strong></span><span>${total_excitatory}</span>`;
+  //   col2.innerHTML = `<span><strong>Excitatory Neurons</strong></span> <span>${((total_excitatory / total_neurons) * 100).toFixed(3)}%</span> <span>${total_excitatory}</span>`;
+  col2.innerHTML = `<span><strong>Excitatory Neurons</strong></span> <span>${total_excitatory}</span>`;
   row.appendChild(col2);
 
   // Inhibitory Neurons
   const col3 = document.createElement("div");
   col3.className = "col-12 d-flex justify-content-between small py-1";
-  col3.innerHTML = `<span><strong>Inhibitory Neurons</strong></span><span>${total_inhibitory}</span>`;
+  col3.innerHTML = `<span><strong>Inhibitory Neurons</strong></span> <span>${total_inhibitory}</span>`;
   row.appendChild(col3);
 
   containerDiv.appendChild(row);

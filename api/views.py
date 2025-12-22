@@ -197,13 +197,15 @@ def detect_file_type(file_path):
         for row in reader:
             if len(row) == 2:
                 return 'activity'
-            elif len(row) == 4:
+            elif len(row) == 4 or len(row) == 5:
                 return 'network'
     return 'unknown'
 
-def process_network_csv(file_path):
-    json_directory = os.path.dirname(file_path)
 
+
+def process_network_csv(file_path):
+    print("process network file here...")
+    json_directory = os.path.dirname(file_path)
 
     json_path = os.path.join(json_directory, f"network.json")
 
@@ -212,18 +214,41 @@ def process_network_csv(file_path):
         json_data = []
         csv_reader = csv.reader(csv_file)  # Use csv.reader to avoid treating the first row as a header
 
+        first_row = True
+
         for row in csv_reader:
             try:
+                # ---- NEW: skip header if first row is non-numeric ----
+                if first_row:
+                    first_row = False
+                    try:
+                        int(row[0])
+                        float(row[1])
+                        float(row[2])
+                        float(row[3])
+                    except ValueError:
+                        print("Header detected → skipping first row")
+                        continue
+                # -----------------------------------------------------
+
                 # Ensure the row has at least 4 values
-                if len(row) >= 4:
+                if len(row) == 5:
                     json_data.append({
                         'id': int(row[0]),
                         'x': float(row[1]),
                         'y': float(row[2]),
                         'z': float(row[3]),
                         # Uncomment if the `type` column is present in the data
-                        # 'type': int(row[4]) if len(row) > 4 else None
+                        'cell_type': int(row[4]),
                     })
+                elif len(row) == 4:
+                    json_data.append({
+                        'id': int(row[0]),
+                        'x': float(row[1]),
+                        'y': float(row[2]),
+                        'z': float(row[3]),
+                    })
+                
 
             except (ValueError, IndexError) as e:
                 print(f"Error processing row: {row} - {e}")
@@ -239,6 +264,7 @@ def process_network_csv(file_path):
     except OSError as e:
         print(f"Error deleting file {file_path}: {e}")
 
+
 def process_hdf5_file(file_path):
     json_directory = os.path.dirname(file_path)
     network_json_path = os.path.join(json_directory, "network.json")
@@ -248,8 +274,24 @@ def process_hdf5_file(file_path):
         # Process the 'network' dataset
         if 'network' in hdf_file:
             network_data = hdf_file['network'][:]
-            if network_data.shape[1] == 4:
-                network_json = []
+
+            network_json = []
+
+            # ---- SAME FUNCTIONALITY AS process_network_csv: handle 4 or 5 columns ----
+            if network_data.ndim == 2 and network_data.shape[1] == 5:
+                for record in network_data:
+                    try:
+                        network_json.append({
+                            'id': int(record[0]),
+                            'x': float(record[1]),
+                            'y': float(record[2]),
+                            'z': float(record[3]),
+                            'cell_type': int(record[4]),
+                        })
+                    except (ValueError, IndexError) as e:
+                        print(f"Error processing network record: {record} - {e}")
+
+            elif network_data.ndim == 2 and network_data.shape[1] == 4:
                 for record in network_data:
                     try:
                         network_json.append({
@@ -259,9 +301,13 @@ def process_hdf5_file(file_path):
                             'z': float(record[3])
                         })
                     except (ValueError, IndexError) as e:
-                        print(f"Error processing network record: {e}")
+                        print(f"Error processing network record: {record} - {e}")
 
-                # Save network JSON
+            else:
+                print(f"Dataset 'network' does not have 4 or 5 columns as expected. Found shape: {network_data.shape}")
+
+            # Save network JSON (only if we parsed something)
+            if len(network_json) > 0:
                 with open(network_json_path, 'w') as json_file:
                     json.dump(network_json, json_file)
         else:
@@ -282,6 +328,7 @@ def process_hdf5_file(file_path):
         else:
             print("Neither 'spikes' nor 'activity' dataset found in HDF5 file.")
 
+
 @csrf_exempt
 def fetch_user_network_data(request):
     try:
@@ -298,27 +345,86 @@ def fetch_user_network_data(request):
         total_size = 0
         flag_check = 0
 
+        # network_file_path = os.path.join(json_directory, "network.json")
+        # if os.path.exists(network_file_path):
+        #     with open(network_file_path, 'r') as f:
+        #         file_data = ujson.load(f)
+        #         total_excitatory = sum(1 for neuro in file_data if neuro.get('cell_type') == 0)
+        #         print("excit: ",total_excitatory)
+        #         total_inhibitory = sum(1 for neuro in file_data if neuro.get('cell_type') == 1)
+        #         print("inh: ",total_inhibitory)
+        #         total_neurons = len(file_data)
+
+        #         data_list.append({
+        #             'filename': "network.json",
+        #             'fileData': file_data,
+        #             'total_neurons': total_neurons,
+        #             'total_excitatory': total_excitatory,
+        #             'total_inhibitory': total_inhibitory,
+        #             'json_directory': json_directory,
+        #         })
+        #         total_size += (os.path.getsize(network_file_path) / (1024 * 1024))
         network_file_path = os.path.join(json_directory, "network.json")
+
         if os.path.exists(network_file_path):
             with open(network_file_path, 'r') as f:
                 file_data = ujson.load(f)
-                total_excitatory = sum(1 for neuro in file_data if neuro.get('type') == 1)
-                total_inhibitory = sum(1 for neuro in file_data if neuro.get('type') != 1)
-                total_neurons = len(file_data)
 
-                data_list.append({
-                    'filename': "network.json",
-                    'fileData': file_data,
-                    'total_neurons': total_neurons,
-                    'total_excitatory': total_excitatory,
-                    'total_inhibitory': total_inhibitory,
-                    'json_directory': json_directory,
-                })
-                total_size += (os.path.getsize(network_file_path) / (1024 * 1024))
+            total_excitatory = 0
+            total_inhibitory = 0
+            total_invalid = 0
+
+            total_neurons = len(file_data)
+
+            # ---- NEW: default ratio when cell_type missing ----
+            excit_ratio = 90.909533 / 100.0
+            target_excitatory = int(round(total_neurons * excit_ratio))
+            # ---------------------------------------------------
+
+            for i, neuro in enumerate(file_data):
+                cell_type = neuro.get('cell_type', None)
+
+                # ---- VALIDATION / DEFAULT ----
+                if cell_type is None:
+                    
+                    if total_excitatory < target_excitatory:
+                        total_excitatory += 1
+                    else:
+                        total_inhibitory += 1
+                    continue
+                # ------------------------------
+
+                if cell_type == 0:
+                    total_excitatory += 1
+                elif cell_type == 1:
+                    total_inhibitory += 1
+                else:
+                    print(f"Warning: neuron {i} unknown cell_type={cell_type}")
+                    total_invalid += 1
+
+            print("excit:", total_excitatory)
+            print("inh:", total_inhibitory)
+            print("cell_type:", cell_type)
+            
+            
+            data_list.append({
+                'filename': "network.json",
+                'fileData': file_data,
+                'total_neurons': total_neurons,
+                'total_excitatory': total_excitatory,
+                'total_inhibitory': total_inhibitory,
+                # 'total_invalid': total_invalid,
+                'json_directory': json_directory,
+                'cell_type':cell_type,
+            })
+
+            total_size += (os.path.getsize(network_file_path) / (1024 * 1024))
+
 
         activity_file_path = os.path.join(json_directory, "activity.csv")
         if os.path.exists(activity_file_path):
             flag_check = 1
+            
 
             try:
                 CHUNK_SIZE = 100 * 1024 * 1024
