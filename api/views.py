@@ -204,7 +204,6 @@ def detect_file_type(file_path):
 
 
 def process_network_csv(file_path):
-    print("process network file here...")
     json_directory = os.path.dirname(file_path)
 
     json_path = os.path.join(json_directory, f"network.json")
@@ -345,25 +344,7 @@ def fetch_user_network_data(request):
         total_size = 0
         flag_check = 0
 
-        # network_file_path = os.path.join(json_directory, "network.json")
-        # if os.path.exists(network_file_path):
-        #     with open(network_file_path, 'r') as f:
-        #         file_data = ujson.load(f)
-        #         total_excitatory = sum(1 for neuro in file_data if neuro.get('cell_type') == 0)
-        #         print("excit: ",total_excitatory)
-        #         total_inhibitory = sum(1 for neuro in file_data if neuro.get('cell_type') == 1)
-        #         print("inh: ",total_inhibitory)
-        #         total_neurons = len(file_data)
-
-        #         data_list.append({
-        #             'filename': "network.json",
-        #             'fileData': file_data,
-        #             'total_neurons': total_neurons,
-        #             'total_excitatory': total_excitatory,
-        #             'total_inhibitory': total_inhibitory,
-        #             'json_directory': json_directory,
-        #         })
-        #         total_size += (os.path.getsize(network_file_path) / (1024 * 1024))
+        
         network_file_path = os.path.join(json_directory, "network.json")
 
         if os.path.exists(network_file_path):
@@ -402,9 +383,9 @@ def fetch_user_network_data(request):
                     print(f"Warning: neuron {i} unknown cell_type={cell_type}")
                     total_invalid += 1
 
-            print("excit:", total_excitatory)
-            print("inh:", total_inhibitory)
-            print("cell_type:", cell_type)
+            # print("excit:", total_excitatory)
+            # print("inh:", total_inhibitory)
+            # print("cell_type:", cell_type)
             
             
             data_list.append({
