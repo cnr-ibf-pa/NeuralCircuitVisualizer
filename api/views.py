@@ -24,9 +24,7 @@ import networkx as nx
 from collections import defaultdict
 import shutil, re
 
-import platform
-import psutil
-import subprocess
+
 
 
 PART_RE = re.compile(r"\.part(\d+)$")
