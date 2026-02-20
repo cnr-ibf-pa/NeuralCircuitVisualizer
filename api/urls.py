@@ -16,7 +16,6 @@ urlpatterns = [
     path('connection-types/', list_connection_types),
     path('connections/', get_connection_data),
     # path("benchmark_accuracy/", views.benchmark_accuracy, name="benchmark_accuracy"),
-    path("system_info/", views.system_info, name="system_info"),
     path("upload_and_save_sonata_anynames/", views.upload_and_save_sonata_anynames),
     path("fetch_user_sonata_data/", views.fetch_user_sonata_data),
 
