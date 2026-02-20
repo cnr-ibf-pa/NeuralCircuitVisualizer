@@ -319,13 +319,13 @@
       </section>
 
       <div class="section" id="controls">
-        <h2>Simulation Rendering Controls</h2>
+        <h2>Simulation, Playback and Rendering Controls</h2>
         <p>In order to manage large files at the frontend level and provide a flawless visualization experience to the users, the raw data files are divided into chunks of 200 MB.</p>
         <br />
         Below, we show the toolbar that allows users to control the simulation playback over time and navigate through the recorded neural activity.
         <br />
         <div class="screenshot"><img src="{% static 'img/docs/Interactive_Time_Slider_1.png' %}" alt="Interactive Time Slider" /></div>
-        <p class="legend-figure">Fig. 4 Simulation Rendering Controls.</p>
+        <p class="legend-figure">Fig. 4 Simulation, Playback and Rendering Controls.</p>
         It comprises the following:
         <ul style="color: #374151; margin-left: 1.25rem">
           <li>
@@ -366,22 +366,6 @@
         </ul>
       </div>
 
-      <div class="section" id="statistics">
-        <h2>Record Activity Movie</h2>
-        <p style="color: #374151">
-          The
-          <strong>Recording</strong>
-          button allows users to capture a live recording of the 3D neural activity visualization within NCV.
-          <br />
-          The rear camera view, the simulation time and all the actions performed by the users during the visualization (e.g., zooming, rotating, translating) will also be recorded.
-          <br />
-          This feature is designed to generate video output for analysis, sharing, and presentation of simulation results.
-          <br />
-          To start and stop the recording, the central button at the bottom of the main panel must be pressed (see Fig. 1). Once the recording is stopped, a .webm file is automatically downloaded.
-          <br />
-          Saved movies can be replayed using any standard media player to review the simulation dynamics frame by frame.
-        </p>
-      </div>
       <div class="section" id="features">
         <h2>Visualization and Playback Controls</h2>
 
@@ -457,15 +441,31 @@
         <p class="legend-figure">Fig. 6 Playback Controls Panel.</p>
       </div>
 
+      <div class="section" id="statistics">
+        <h2>Record Activity Movie</h2>
+        <p style="color: #374151">
+          The
+          <strong>Recording</strong>
+          button allows users to capture a live recording of the 3D neural activity visualization within NCV.
+          <br />
+          The rear camera view, the simulation time and all the actions performed by the users during the visualization (e.g., zooming, rotating, translating) will also be recorded.
+          <br />
+          This feature is designed to generate video output for analysis, sharing, and presentation of simulation results.
+          <br />
+          To start and stop the recording, the central button at the bottom of the main panel must be pressed (see Fig. 1). Once the recording is stopped, a .webm file is automatically downloaded.
+          <br />
+          Saved movies can be replayed using any standard media player to review the simulation dynamics frame by frame.
+        </p>
+      </div>
       <div class="section" id="demo-circuits">
-        <h2>Visualizing Demo Circuits</h2>
+        <h2>Demo Circuits</h2>
 
         <p>
           If you do not have your own network and activity files yet, you can explore the platform by loading one of the provided
           <strong>Demo Circuits</strong>
         </p>
 
-        <h3>Human Circuit Demo</h3>
+        <h3>Human Circuit</h3>
 
         <ul>
           <li>
@@ -485,7 +485,7 @@
         </div>
         <p class="legend-figure">Fig. 7 Full Human CA1 Circuit.</p>
 
-        <h3>Mouse Circuit Demo</h3>
+        <h3>Mouse Circuit</h3>
 
         <p>
           The
@@ -549,7 +549,7 @@
       </div>
 
       <div class="section" id="demovideos">
-        <h2>DEMO Videos</h2>
+        <h2>Demo Videos</h2>
 
         <p>
           <strong>Video 1:</strong>
@@ -575,41 +575,185 @@
       </div>
 
       <div class="section" id="uploading">
-        <h2>Uploading Data</h2>
+        <h2>Data Upload</h2>
         <h4>Supported Formats</h4>
+
         <ul>
           <li>
             <strong>CSV files</strong>
-            : Separate
+            : Two different
             <code>.csv</code>
-            for Network and Activity.
+            files for network and activity, respectively.
           </li>
           <li>
             <strong>HDF5 files</strong>
             : Single
             <code>.hdf5</code>
-            containing both datasets.
+            file containing both network and activity.
+          </li>
+          <li>
+            <strong>SONATA files</strong>
+            : Two separate
+            <code>.h5</code>
+            files for network and activity along with a corresponding
+            <code>.csv</code>
+            file for neuron type definitions.
           </li>
         </ul>
-        <div class="highlight">
-          📝 Format:
+        {% comment %} <div class="highlight">
+          📝 .CSV (2 Files) and .HDF5 Format (1 File):
+
+          <br />
+          Examples From:
+          <br />
+          <code>CSV</code>
+          <br />
+          Network file: Gid, X, Y, Z
+          <br />
+          Activity file: Gid, Time
+          <br />
+          📝 SONATA Format:
+          <br />
+          Example files can be found at this
+          <a target="_blank" href=" https://github.com/AllenInstitute/sonata/tree/master/examples/300_cells">link</a>
           <ul>
-            <li>Network file: Gid, X, Y, Z</li>
-            <li>Activity file: Gid, Time</li>
+            <li>
+              <code>Network file (node.h5):</code>
+              <br />
+
+              /nodes/&lt;population&gt;/node_id
+              <br />
+              /nodes/&lt;population&gt;/&lt;group&gt;/x
+              <br />
+              /nodes/&lt;population&gt;/&lt;group&gt;/y
+              <br />
+              /nodes/&lt;population&gt;/&lt;group&gt;/z
+              <br />
+              /nodes/&lt;population&gt;/node_type_id
+            </li>
+
+            <li>
+              <code>Activity file (spikes.h5):</code>
+              <br />
+
+              /spikes/&lt;population&gt;/node_ids
+              <br />
+              /spikes/&lt;population&gt;/timestamps
+            </li>
+
+            <li>
+              <code>Node Types File (CSV):</code>
+              <br />
+              node_type_id, ei
+            </li>
           </ul>
         </div>
+        <p> {% endcomment %}
+
+            
+            <div class="highlight">
+
+                <h5> 📝  Supported File Formats</h5>
+
+
+                 <code>CSV Format (2 Files Required)</code>
+
+                <p><strong>Network file (.csv)</strong>
+                <br/>
+                 Gid, X, Y, Z
+                </p>
+                
+
+                <p><strong>Activity file (.csv)</strong>
+                    <br/>Gid, Time
+                </p>
+                
+
+                <code>HDF5 Format </code>
+                <br/>
+
+                <p>Single HDF5 file containing both datasets <br/>
+                /network → (Gid, X, Y, Z)<br />
+                /activity → (Gid, Time)
+                </p>
+             
+
+
+                
+
+                <code>SONATA Format</code>
+
+               
+                <ul>
+                    <li>
+                    <strong>Network file (nodes.h5)</strong><br>
+                    /nodes/&lt;population&gt;/node_id<br>
+                    /nodes/&lt;population&gt;/&lt;group&gt;/x<br>
+                    /nodes/&lt;population&gt;/&lt;group&gt;/y<br>
+                    /nodes/&lt;population&gt;/&lt;group&gt;/z<br>
+                    /nodes/&lt;population&gt;/node_type_id
+                    </li>
+
+                    <li>
+                    <strong>Activity file (spikes.h5)</strong><br>
+                    /spikes/&lt;population&gt;/node_ids<br>
+                    /spikes/&lt;population&gt;/timestamps
+                    </li>
+
+                    <li>
+                    <strong>Optional: Node Types file (.csv)</strong><br>
+                    node_type_id, ei<br>
+                    <em>(ei = "e" for excitatory, "i" for inhibitory)</em>
+                    </li>
+                </ul>
+
+            </div>
+
+          If you need support to convert your data files into one of the accepted formats, please send us and email to
+          <strong>ali.maqsood AT ibf.cnr.it</strong>
+        </p>
+
         <div class="screenshot"><img src="{% static 'img/docs/uploadData.png' %}" alt="Upload Data Screenshot" /></div>
-        <p class="legend-figure">Fig. 9 Supported files Format.</p>
+        <p class="legend-figure">Fig. 9 Network and Activity Data Structure.</p>
         <h4>Example Files</h4>
         <ul>
           <li>
-            <a href="{% static 'examples/example_network.csv' %}" download>Download Example .CSV</a>
+            <a href="{% static 'example_files/network_activity_example.zip' %}" download>Download Example .CSV</a>
           </li>
 
           <li>
-            <a href="{% static 'examples/example_data.hdf5' %}" download>Download Example HDF5</a>
+            <a href="{% static 'example_files/activity_network.hdf5' %}" download>Download Example HDF5</a>
+          </li>
+
+          <li>
+                    Example files:
+                    <a target="_blank"
+                    href="https://github.com/AllenInstitute/sonata/tree/master/examples/300_cells">
+                    SONATA Example Dataset
+                    </a>
+           
+            </li>
+
+        </ul>
+
+          <h4>2D Large Scale Example</h4>
+          <p>The following files allow a 2D visualization of 1M neurons</p>
+        <ul>
+          <li>
+            <a href="{% static 'example_files/network_1000000.csv' %}" download>network.csv</a>
+          </li>
+          <li>
+            <a href="{% static 'example_files/activity_8hz_1000000.csv' %}" download>activity.csv</a>
           </li>
         </ul>
+
+
+
+
+
+
+
+
 
         <h3>Upload Process</h3>
         <ol>
@@ -619,11 +763,13 @@
             on the sidebar.
           </li>
           <li>
-            Select either
+            Select a
             <code>.csv</code>
-            or
+            ,
             <code>.hdf5</code>
-            upload button.
+            or
+            <code>SONATA files</code>
+            to upload
           </li>
           <li>Wait for upload and chunking to complete (progress bar displayed).</li>
           <li>After processing, your 3D circuit visualization appears.</li>

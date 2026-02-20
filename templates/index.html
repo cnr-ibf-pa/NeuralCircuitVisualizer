@@ -95,11 +95,6 @@
 
           <!-- Header Icons -->
           <div class="col-12 col-md-3 d-flex align-items-center justify-content-end text-center text-md-end mb-2 mb-md-0 pe-4">
-            {% comment %} benchmark accuracy code {% endcomment %} {% comment %}
-            <button id="runBenchmarksBtn">Run Benchmarks</button>
-            <pre id="benchLog" style="max-height: 220px; overflow: auto"></pre>
-            {% endcomment %}
-
             <div class="connection-panel" id="connectionPanel">
               <label for="connTypeDropdown">Connections</label>
               <select id="connTypeDropdown">
@@ -107,8 +102,37 @@
               </select>
             </div>
 
-            <div id="rec-indicator" style="position: fixed; top: 11.3rem; left: 55%; font-weight: bold; color: red; display: none">🔴 REC</div>
-            <div id="recordControls" style="position: absolute; bottom: 20px; left: 55%; transform: translateX(-50%); z-index: 1000; display: flex; gap: 16px">
+            <div id="spikeTableWidget" style="position: fixed; top: 11.3rem; left: 55%" hidden>
+              <table id="spikeTable" class="table table-dark table-sm table-bordered mb-0 text-center align-middle">
+                <thead>
+                  <tr>
+                    <th>#System Time</th>
+                    <th>#Simulation Time</th>
+                    <th>#Spike</th>
+                    {% comment %}
+                    <th>#Neuron (5057700)</th>
+                    <th>#Neuron (5060000)</th>
+                    {% endcomment %}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td id="sysTime">0</td>
+                    <td id="simTime">0</td>
+                    <td id="spikeCount">0</td>
+                    {% comment %}
+                    <td id="neuron1">-</td>
+                    <td id="neuron2">-</td>
+                    {% endcomment %}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <button id="downloadLogBtn" hidden>Simulation Log</button>
+
+            <div id="rec-indicator" style="position: fixed; top: 11.3rem; left: 61%; font-weight: bold; color: red; display: none">🔴 REC</div>
+
+            <div id="recordControls" style="position: absolute; bottom: 20px; left: 61%; transform: translateX(-50%); z-index: 1000; display: flex; gap: 16px">
               <button id="startRecordingBtn" title="Start Recording" style="width: 60px; height: 60px; border-radius: 50%; border: 4px solid #4caf50; background-color: white; cursor: pointer; display: none">
                 <div style="width: 20px; height: 20px; background-color: #4caf50; border-radius: 50%; margin: auto"></div>
               </button>
@@ -1609,14 +1633,22 @@
                 <h2 class="accordion-header heading" id="flush-headingOne"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="true" aria-controls="flush-collapseOne">UPLOAD DATA</button></h2>
                 <div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample">
                   <div class="accordion-body">
-                    <div class="d-grid gap-2 col-9 mx-auto">
+                    <div class="d-grid gap-1 col-12 mx-auto">
                       <input type="file" id="activityFileInput" accept=".h5, .hdf4, .hdf, .h4, .he5, .he2, .hdf5" style="display: none" multiple />
                       <button type="button" id="btnactivityFileInput" class="btnstyle" onclick="document.getElementById('activityFileInput').click()">.hdf5</button>
                       <input type="file" id="networkFileInput" accept=".csv" style="display: none" multiple />
                       <button type="button" id="btnnetworkFileInput" class="btnstyle" onclick="document.getElementById('networkFileInput').click()">.csv</button>
+
+                      {% comment %}
+                      <input type="file" id="sonataFileInput" style="display: none" multiple accept=".h5,.hdf5" />
+                      <button type="button" id="btnUploadSonataFiles" class="btnstyle">Upload SONATA (nodes+spikes)</button>
+                      {% endcomment %}
+
+                      <input id="sonataFileInput" type="file" multiple accept=".h5,.hdf5, .csv" style="display: none" />
+                      <button id="btnUploadSonata" class="btnstyle">SONATA files</button>
                     </div>
 
-                    <p style="font-size: 12px; padding: 10px">
+                    <p style="font-size: 12px; padding: 5px">
                       📂
                       <strong>HDF5 files:</strong>
                       Upload a single HDF5 file containing two datasets: Activity and Network.
@@ -1624,6 +1656,10 @@
                       📂
                       <strong>CSV files:</strong>
                       Upload both Activity and Network files together.
+                      <br />
+                      📂
+                      <strong>SONATA files:</strong>
+                      Upload internal nodes, internal node types, and spikes files together.
                     </p>
 
                     <!-- Info icon aligned to bottom right -->

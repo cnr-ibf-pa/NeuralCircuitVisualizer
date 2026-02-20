@@ -986,11 +986,11 @@ input[type="range"] {
 #networkspikes {
   position: fixed;
   bottom: 1.5rem;
-  /* Distance from bottom */
+
   right: 1rem;
-  /* Distance from right */
+
   z-index: 999;
-  /* Keep it above canvas or overlays */
+
   gap: 0.5rem;
   display: flex;
   flex-direction: row;
@@ -1011,6 +1011,29 @@ input[type="range"] {
     font-size: 0.9rem;
     padding: 0.5rem 1rem;
   }
+}
+
+#spikeTableWidget {
+  position: fixed; /* REQUIRED */
+  transform: translateY(50%); /* center horizontally */
+  top: 8rem; /* distance from bottom */
+
+  z-index: 999;
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  visibility: visible;
+}
+
+#spikeTable {
+  font-size: 0.8rem; /* smaller text */
+}
+
+#spikeTable th,
+#spikeTable td {
+  padding: 2px 4px; /* reduce cell padding */
 }
 
 /* Hidden by default */

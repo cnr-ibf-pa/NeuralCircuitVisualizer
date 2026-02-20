@@ -24,57 +24,117 @@ import networkx as nx
 from collections import defaultdict
 import shutil, re
 
-# benchmark accuracy code
-""" @csrf_exempt
-def benchmark_accuracy(request):
+import platform
+import psutil
+import subprocess
+
+
+def get_cpu_model():
+    """
+    Returns exact CPU model depending on OS.
+    """
     try:
-        if request.method != 'POST':
-            return JsonResponse({'error': 'POST required'}, status=400)
+        system = platform.system()
 
-        payload = json.loads(request.body.decode('utf-8'))
-        unique_directory = payload.get('dir')
-        from_ms = float(payload.get('from_ms', 0))
-        to_ms = float(payload.get('to_ms', 0))
-        shown = payload.get('shown', {})  # {"8.3":[gid,...], "8.4":[...], ...}
+        if system == "Windows":
+            return platform.processor()
 
-        if not unique_directory or to_ms <= from_ms:
-            return JsonResponse({'error': 'Missing/invalid parameters'}, status=400)
+        elif system == "Darwin":  # macOS
+            cmd = ["sysctl", "-n", "machdep.cpu.brand_string"]
+            return subprocess.check_output(cmd).decode().strip()
 
-        base_dir = os.path.join(settings.MEDIA_ROOT, 'csv', unique_directory)
-        activity_path = os.path.join(base_dir, "activity.csv")
-        if not os.path.exists(activity_path):
-            return JsonResponse({'error': 'activity.csv not found'}, status=404)
+        elif system == "Linux":
+            with open("/proc/cpuinfo") as f:
+                for line in f:
+                    if "model name" in line:
+                        return line.split(":")[1].strip()
 
-        df = pd.read_csv(activity_path, header=None, names=['id','t'], dtype={'id': int, 't': float})
-        df = df[(df['t'] >= from_ms) & (df['t'] <= to_ms)]
+        return "Unknown"
+    except Exception as e:
+        return f"Error: {str(e)}"
 
-        gt_map = {str(t): set(map(int, grp['id'].tolist())) for t, grp in df.groupby('t')}
-        sh_map = {str(float(t)): set(map(int, gids)) for t, gids in shown.items()}
-        times = set(gt_map.keys()) | set(sh_map.keys())
 
-        tp = fp = fn = exact_hits = 0
-        total_bins = 0
-        for t in times:
-            gt = gt_map.get(t, set())
-            sh = sh_map.get(t, set())
-            total_bins += 1
-            if gt == sh: exact_hits += 1
-            tp += len(gt & sh)
-            fp += len(sh - gt)
-            fn += len(gt - sh)
+@csrf_exempt
+def system_info(request):
+    try:
+        cpu_model = get_cpu_model()
+        total_ram_gb = round(psutil.virtual_memory().total / (1024**3), 2)
 
-        precision = tp / (tp + fp) if (tp + fp) else 1.0
-        recall    = tp / (tp + fn) if (tp + fn) else 1.0
-        exact     = exact_hits / total_bins if total_bins else 1.0
+        os_name = platform.system()
+        os_version = platform.version()
+        proc = psutil.Process(os.getpid())
+        server_rss_mb = round(proc.memory_info().rss / (1024**2), 1)
+
 
         return JsonResponse({
-            'from_ms': from_ms, 'to_ms': to_ms,
-            'precision': precision, 'recall': recall, 'exact_match': exact,
-            'tp': tp, 'fp': fp, 'fn': fn, 'bins': total_bins
+            "cpu_model": cpu_model,
+            "total_ram_gb": total_ram_gb,
+            "os_name": os_name,
+            "os_version": os_version,
+            "server_rss_mb": server_rss_mb
+
         })
+
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-    """ 
+        return JsonResponse({"error": str(e)}, status=500)
+    
+
+
+# benchmark accuracy code
+# @csrf_exempt
+# def benchmark_accuracy(request):
+#     try:
+#         if request.method != 'POST':
+#             return JsonResponse({'error': 'POST required'}, status=400)
+
+#         payload = json.loads(request.body.decode('utf-8'))
+#         unique_directory = payload.get('dir')
+#         from_ms = float(payload.get('from_ms', 0))
+#         to_ms = float(payload.get('to_ms', 0))
+#         shown = payload.get('shown', {})  # {"8.3":[gid,...], "8.4":[...], ...}
+
+#         if not unique_directory or to_ms <= from_ms:
+#             return JsonResponse({'error': 'Missing/invalid parameters'}, status=400)
+
+#         base_dir = os.path.join(settings.MEDIA_ROOT, 'csv', unique_directory)
+#         activity_path = os.path.join(base_dir, "activity.csv")
+#         if not os.path.exists(activity_path):
+#             return JsonResponse({'error': 'activity.csv not found'}, status=404)
+
+#         df = pd.read_csv(activity_path, header=None, names=['id','t'], dtype={'id': int, 't': float})
+#         df = df[(df['t'] >= from_ms) & (df['t'] <= to_ms)]
+
+#         gt_map = {str(t): set(map(int, grp['id'].tolist())) for t, grp in df.groupby('t')}
+#         sh_map = {str(float(t)): set(map(int, gids)) for t, gids in shown.items()}
+#         times = set(gt_map.keys()) | set(sh_map.keys())
+
+#         tp = fp = fn = exact_hits = 0
+#         total_bins = 0
+#         for t in times:
+#             gt = gt_map.get(t, set())
+#             sh = sh_map.get(t, set())
+#             total_bins += 1
+#             if gt == sh: exact_hits += 1
+#             tp += len(gt & sh)
+#             fp += len(sh - gt)
+#             fn += len(gt - sh)
+
+#         precision = tp / (tp + fp) if (tp + fp) else 1.0
+#         recall    = tp / (tp + fn) if (tp + fn) else 1.0
+#         exact     = exact_hits / total_bins if total_bins else 1.0
+
+#         return JsonResponse({
+#             'from_ms': from_ms, 'to_ms': to_ms,
+#             'precision': precision, 'recall': recall, 'exact_match': exact,
+#             'tp': tp, 'fp': fp, 'fn': fn, 'bins': total_bins
+#         })
+#     except Exception as e:
+#         return JsonResponse({'error': str(e)}, status=500)
+   
+
+
+
+ 
 
 PART_RE = re.compile(r"\.part(\d+)$")
 def _existing_indices(base_dir, fname):
@@ -327,7 +387,554 @@ def process_hdf5_file(file_path):
         else:
             print("Neither 'spikes' nor 'activity' dataset found in HDF5 file.")
 
+################### SONATA Implemenation #####################
 
+def _safe_name(name: str) -> str:
+    name = name.replace("\\", "/").split("/")[-1]
+    name = re.sub(r"[^a-zA-Z0-9._-]+", "_", name)
+    return name or "upload.bin"
+
+def _detect_h5_role(h5_path: str) -> str:
+    with h5py.File(h5_path, "r") as f:
+        keys = set(f.keys())
+    if "nodes" in keys:
+        return "nodes"
+    if "spikes" in keys:
+        return "spikes"
+    return "unknown"
+
+def _detect_node_types_csv(csv_path: str) -> bool:
+    # supports comma or whitespace separated
+    try:
+        df = pd.read_csv(csv_path)
+        if "node_type_id" in df.columns and "ei" in df.columns:
+            return True
+    except Exception:
+        pass
+    try:
+        df = pd.read_csv(csv_path, sep=r"\s+", engine="python")
+        return ("node_type_id" in df.columns and "ei" in df.columns)
+    except Exception:
+        return False
+
+@csrf_exempt
+def upload_and_save_sonata_anynames(request):
+    """
+    Upload any SONATA files (any names).
+    - H5 role detected by HDF5 keys: 'nodes' or 'spikes'
+    - node types CSV detected by columns: node_type_id + ei
+    """
+    try:
+        chunk = request.FILES.get("file")
+        unique_directory = request.POST.get("uniqueDirectory")
+        chunk_index = int(request.POST.get("chunkIndex", 0))
+        total_chunks = int(request.POST.get("totalChunks", 1))
+        original_name = request.POST.get("originalName") or (chunk.name if chunk else "")
+
+        if not chunk or not unique_directory:
+            return JsonResponse({"error": "Missing file or uniqueDirectory"}, status=400)
+
+        base_dir = os.path.join(settings.MEDIA_ROOT, "csv", unique_directory)
+        os.makedirs(base_dir, exist_ok=True)
+
+        safe = _safe_name(original_name)
+
+        # store as parts (order independent)
+        parts_dir = os.path.join(base_dir, f"parts_{safe}")
+        os.makedirs(parts_dir, exist_ok=True)
+
+        part_path = os.path.join(parts_dir, f"part_{chunk_index:08d}.bin")
+        with open(part_path, "wb") as f:
+            for piece in chunk.chunks():
+                f.write(piece)
+
+        expected = [os.path.join(parts_dir, f"part_{i:08d}.bin") for i in range(total_chunks)]
+        if not all(os.path.exists(p) for p in expected):
+            return JsonResponse({"ok": True, "assembled": False})
+
+        # assemble to temp file
+        tmp_path = os.path.join(base_dir, f"__tmp__{safe}")
+        with open(tmp_path, "wb") as out:
+            for p in expected:
+                with open(p, "rb") as inp:
+                    shutil.copyfileobj(inp, out, length=1024 * 1024)
+
+        # cleanup parts
+        for p in expected:
+            os.remove(p)
+        os.rmdir(parts_dir)
+
+        # classify by content and rename canonically
+        lower = safe.lower()
+        if lower.endswith((".h5", ".hdf5")):
+            role = _detect_h5_role(tmp_path)
+            if role == "nodes":
+                final = os.path.join(base_dir, "nodes.h5")
+            elif role == "spikes":
+                final = os.path.join(base_dir, "spikes.h5")
+            else:
+                os.remove(tmp_path)
+                return JsonResponse({"error": f"Uploaded H5 is neither nodes nor spikes: {safe}"}, status=400)
+
+            os.replace(tmp_path, final)
+            return JsonResponse({"ok": True, "assembled": True, "saved_as": os.path.basename(final)})
+
+        elif lower.endswith(".csv"):
+            # detect node_types.csv
+            if _detect_node_types_csv(tmp_path):
+                final = os.path.join(base_dir, "internal_node_types.csv")
+                os.replace(tmp_path, final)
+                return JsonResponse({"ok": True, "assembled": True, "saved_as": os.path.basename(final)})
+            else:
+                # keep it but don't block
+                final = os.path.join(base_dir, safe)
+                os.replace(tmp_path, final)
+                return JsonResponse({"ok": True, "assembled": True, "saved_as": os.path.basename(final)})
+
+        else:
+            # save other files (not needed for NCV)
+            final = os.path.join(base_dir, safe)
+            os.replace(tmp_path, final)
+            return JsonResponse({"ok": True, "assembled": True, "saved_as": os.path.basename(final)})
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+    
+def pick_population(names):
+    if not names:
+        return None
+    lower = {n.lower(): n for n in names}
+    return lower.get("ca1", names[0])
+
+def _read_node_types_csv_any_delim(csv_path: str) -> pd.DataFrame:
+    """
+    Reads SONATA node_types CSV that may be comma-separated OR whitespace-separated.
+    Must contain columns: node_type_id, ei
+    """
+    # Try comma separated
+    try:
+        df = pd.read_csv(csv_path)
+        if "node_type_id" in df.columns and "ei" in df.columns:
+            return df
+    except Exception:
+        pass
+
+    # Fallback: whitespace-separated
+    df = pd.read_csv(csv_path, sep=r"\s+", engine="python")
+    return df
+
+
+def sonata_nodes_to_network_json(nodes_h5_path, out_dir, preferred_pop=None):
+    """
+    SONATA nodes.h5 -> NCV network.json
+
+    Coordinates:
+      - nodes/<pop>/x,y,z
+      - OR nodes/<pop>/positions (Nx3)
+      - OR nodes/<pop>/<group_id>/positions using node_group_id + node_group_index
+
+    Cell types:
+      - If internal_node_types.csv exists and has (node_type_id, ei):
+            ei == 'e' -> cell_type = 0
+            ei == 'i' -> cell_type = 1
+      - Otherwise: DEFAULT ALL to excitatory (cell_type = 0)
+        (NO heuristic guessing)
+    """
+    os.makedirs(out_dir, exist_ok=True)
+    out_path = os.path.join(out_dir, "network.json")
+
+    def pick_population(names):
+        if not names:
+            return None
+        if preferred_pop:
+            lower = {n.lower(): n for n in names}
+            for p in preferred_pop:
+                if p.lower() in lower:
+                    return lower[p.lower()]
+        return names[0]
+
+    # --- OPTIONAL E/I mapping from CSV ---
+    type_map = {}
+    node_types_csv = os.path.join(os.path.dirname(nodes_h5_path), "internal_node_types.csv")
+    if os.path.exists(node_types_csv):
+        try:
+            df = _read_node_types_csv_any_delim(node_types_csv)
+            if "node_type_id" in df.columns and "ei" in df.columns:
+                for _, row in df.iterrows():
+                    try:
+                        nid = int(row["node_type_id"])
+                        ei = str(row["ei"]).strip().lower()
+                        if ei == "e":
+                            type_map[nid] = 0
+                        elif ei == "i":
+                            type_map[nid] = 1
+                    except Exception:
+                        pass
+        except Exception:
+            # If CSV fails to parse, just ignore and default to excitatory
+            type_map = {}
+
+    with h5py.File(nodes_h5_path, "r") as f:
+        if "nodes" not in f:
+            raise ValueError("nodes.h5 missing top-level group 'nodes'")
+
+        pop = pick_population(list(f["nodes"].keys()))
+        if pop is None:
+            raise ValueError("No population found under /nodes")
+
+        popg = f["nodes"][pop]
+
+        node_id = popg["node_id"][:]
+        node_type_id = popg["node_type_id"][:] if "node_type_id" in popg else None
+        node_group_id = popg["node_group_id"][:] if "node_group_id" in popg else None
+        node_group_index = popg["node_group_index"][:] if "node_group_index" in popg else None
+
+        n = len(node_id)
+
+        # ---- COORDINATES ----
+        if all(k in popg for k in ("x", "y", "z")):
+            x = popg["x"][:]
+            y = popg["y"][:]
+            z = popg["z"][:]
+
+        elif "positions" in popg:
+            pos = popg["positions"][:]
+            if pos.ndim != 2 or pos.shape[1] < 3:
+                raise ValueError(f"nodes/{pop}/positions has wrong shape: {pos.shape}")
+            x, y, z = pos[:, 0], pos[:, 1], pos[:, 2]
+
+        else:
+            # subgroup storage: nodes/<pop>/<group_id>/positions
+            if node_group_id is None or node_group_index is None:
+                raise ValueError(
+                    f"Could not find coordinates for nodes/{pop}. "
+                    f"Expected x/y/z or positions Nx3 OR node_group_id & node_group_index."
+                )
+
+            x = np.empty(n, dtype=np.float64)
+            y = np.empty(n, dtype=np.float64)
+            z = np.empty(n, dtype=np.float64)
+
+            for gid in np.unique(node_group_id):
+                gid_str = str(int(gid))
+                if gid_str not in popg:
+                    raise ValueError(f"Group '{gid_str}' not found under nodes/{pop}")
+
+                gg = popg[gid_str]
+
+                if "positions" in gg:
+                    pos = gg["positions"][:]
+                    if pos.ndim != 2 or pos.shape[1] < 3:
+                        raise ValueError(f"nodes/{pop}/{gid_str}/positions has wrong shape: {pos.shape}")
+                    gx, gy, gz = pos[:, 0], pos[:, 1], pos[:, 2]
+                elif all(k in gg for k in ("x", "y", "z")):
+                    gx, gy, gz = gg["x"][:], gg["y"][:], gg["z"][:]
+                else:
+                    raise ValueError(
+                        f"Could not find coordinates in nodes/{pop}/{gid_str}. "
+                        f"Expected positions or x/y/z."
+                    )
+
+                mask = (node_group_id == gid)
+                idxs = node_group_index[mask].astype(np.int64)
+
+                if idxs.size == 0:
+                    continue
+                if idxs.min() < 0 or idxs.max() >= len(gx):
+                    raise ValueError(
+                        f"node_group_index out of range for group {gid_str}: "
+                        f"min={idxs.min()}, max={idxs.max()}, group_len={len(gx)}"
+                    )
+
+                x[mask] = gx[idxs]
+                y[mask] = gy[idxs]
+                z[mask] = gz[idxs]
+
+        if not np.isfinite(x).all() or not np.isfinite(y).all() or not np.isfinite(z).all():
+            raise ValueError("Coordinates contain NaN/Inf values.")
+
+        # ---- WRITE network.json ----
+        network = []
+        for i in range(n):
+            rec = {
+                "id": int(node_id[i]),
+                "x": float(x[i]),
+                "y": float(y[i]),
+                "z": float(z[i]),
+            }
+
+            # Default: excitatory
+            ct = 0
+
+            # If node_types CSV mapping exists, apply it (unknown -> excitatory)
+            if node_type_id is not None and type_map:
+                raw = int(node_type_id[i])
+                ct = int(type_map.get(raw, 0))
+
+            rec["cell_type"] = ct
+            network.append(rec)
+
+    with open(out_path, "w") as fp:
+        json.dump(network, fp)
+
+    return out_path
+
+
+
+def sonata_spikes_to_activity_csv(spikes_h5_path, out_dir):
+    out_path = os.path.join(out_dir, "activity.csv")
+
+    with h5py.File(spikes_h5_path, "r") as f:
+        if "spikes" not in f:
+            raise ValueError("spikes.h5 missing top-level group 'spikes'")
+
+        pop = pick_population(list(f["spikes"].keys()))
+        g = f["spikes"][pop]
+
+        # common names
+        if "timestamps" in g:
+            times = np.array(g["timestamps"][:], dtype=np.float64)
+        elif "times" in g:
+            times = np.array(g["times"][:], dtype=np.float64)
+        elif "time" in g:
+            times = np.array(g["time"][:], dtype=np.float64)
+        else:
+            raise ValueError(f"spikes/{pop} missing timestamps dataset")
+
+        if "node_ids" in g:
+            node_ids = np.array(g["node_ids"][:], dtype=np.int64)
+        elif "node_id" in g:
+            node_ids = np.array(g["node_id"][:], dtype=np.int64)
+        else:
+            raise ValueError(f"spikes/{pop} missing node_ids dataset")
+
+    # heuristic seconds->ms
+    if len(times) and times.max() < 1000.0:
+        times = times * 1000.0
+
+    # times = np.round(times, 1)
+    times = np.round(times, 3)
+
+    pd.DataFrame({"id": node_ids, "t": times}).to_csv(out_path, index=False, header=False)
+    return out_path
+
+
+@csrf_exempt
+def fetch_user_sonata_data(request):
+    try:
+        unique_directory = request.GET.get("dir")
+        if not unique_directory:
+            return JsonResponse({"error": "Missing directory identifier"}, status=400)
+
+        out_dir = os.path.join(settings.MEDIA_ROOT, "csv", unique_directory)
+        if not os.path.exists(out_dir):
+            return JsonResponse({"error": "Directory not found"}, status=404)
+
+        nodes_path = os.path.join(out_dir, "nodes.h5")
+        spikes_path = os.path.join(out_dir, "spikes.h5")
+        if not os.path.exists(nodes_path) or not os.path.exists(spikes_path):
+            return JsonResponse({"error": "nodes.h5 and spikes.h5 are required"}, status=400)
+
+        # 1) Convert SONATA -> NCV files
+        network_json_path = os.path.join(out_dir, "network.json")
+        activity_csv_path = os.path.join(out_dir, "activity.csv")
+
+        # Always regenerate derived files
+        if os.path.exists(network_json_path):
+            os.remove(network_json_path)
+        if os.path.exists(activity_csv_path):
+            os.remove(activity_csv_path)
+
+        # remove old chunks
+        for fn in os.listdir(out_dir):
+            if fn.startswith("activity_chunk_") and fn.endswith(".json"):
+                os.remove(os.path.join(out_dir, fn))
+
+        # ---- Determine whether a valid node_types CSV exists (and likely usable) ----
+        # upload endpoint stores a detected one as internal_node_types.csv
+        node_types_csv = os.path.join(out_dir, "internal_node_types.csv")
+        used_cell_types_csv = False
+        if os.path.exists(node_types_csv):
+            try:
+                df = _read_node_types_csv_any_delim(node_types_csv)
+                if "node_type_id" in df.columns and "ei" in df.columns:
+                    # "used" if it contains at least one E or I mapping
+                    eis = set(str(v).strip().lower() for v in df["ei"].dropna().tolist())
+                    used_cell_types_csv = ("e" in eis) or ("i" in eis)
+            except Exception:
+                used_cell_types_csv = False
+
+        # Generate network.json + activity.csv
+        sonata_nodes_to_network_json(nodes_path, out_dir)
+        sonata_spikes_to_activity_csv(spikes_path, out_dir)
+
+        # 2) Load network.json for visualization
+        with open(network_json_path, "r") as f:
+            file_data = ujson.load(f)
+
+        total_neurons = len(file_data)
+        total_excitatory = 0
+        total_inhibitory = 0
+
+        # cell_type counts derived from network.json (source of truth)
+        for neuro in file_data:
+            ct = neuro.get("cell_type", 0)
+            if ct == 0:
+                total_excitatory += 1
+            elif ct == 1:
+                total_inhibitory += 1
+
+        # 3) Chunk activity.csv and compute MFR_total + MFR_active
+        lstresponse = {}
+        flag_check = 0
+
+        if os.path.exists(activity_csv_path):
+            flag_check = 1
+            lstresponse = chunk_activity_csv(
+                activity_csv_path,
+                out_dir,
+                chunk_size_bytes=100 * 1024 * 1024,
+                network_total_neurons=total_neurons,
+            )
+
+        data_list = [{
+            "filename": "network.json",
+            "fileData": file_data,
+            "total_neurons": total_neurons,
+            "total_excitatory": total_excitatory,
+            "total_inhibitory": total_inhibitory,
+            "json_directory": out_dir,
+            "cell_type_mode": "csv" if used_cell_types_csv else "default_all_excitatory",
+        }]
+
+        response_data = {
+            "files": data_list,
+            "lstresponse": lstresponse,
+            "total_size": (os.path.getsize(network_json_path) / (1024 * 1024)) if os.path.exists(network_json_path) else 0,
+            "flag_check": flag_check,
+            "used_cell_types_csv": used_cell_types_csv,   # ✅ NEW FLAG for UI
+        }
+        return JsonResponse(response_data, safe=False)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+    
+
+
+def chunk_activity_csv(
+    activity_csv_path,
+    out_dir,
+    chunk_size_bytes=100 * 1024 * 1024,
+    network_total_neurons=None,
+):
+    """
+    Produces activity_chunk_N.json and returns lstresponse dict.
+    Adds:
+      - MFR_total (normalized by total network neurons)
+      - MFR_active (normalized by active neurons in chunk)
+      - n_total, n_active, total_spikes, duration_ms
+    """
+    try:
+        try:
+            csv_data = pd.read_csv(activity_csv_path, header=None, names=["id", "t"], encoding="utf-8")
+        except UnicodeDecodeError:
+            csv_data = pd.read_csv(activity_csv_path, header=None, names=["id", "t"], encoding="latin1")
+
+        # group by time
+        data_dict = csv_data.groupby("t")["id"].agg(list).to_dict()
+
+        chunk_number = 0
+        first_last_keys = []
+        chunk_mfr_list = []
+        current_chunk_size = 0
+        current_data_dict = {}
+
+        # total neurons for MFR_total
+        n_total = int(network_total_neurons) if network_total_neurons and int(network_total_neurons) > 0 else None
+
+        def finalize_chunk(chunk_data, chunk_number):
+            times_in_chunk = sorted(chunk_data.keys())
+            t_min = float(times_in_chunk[0])
+            t_max = float(times_in_chunk[-1])
+
+            duration_ms = t_max - t_min
+            total_time_sec = max(duration_ms / 1000.0, 1e-9)
+
+            total_spikes = sum(len(v) for v in chunk_data.values())
+            unique_neurons = set(gid for v in chunk_data.values() for gid in v)
+            n_active = len(unique_neurons) or 1
+
+            n_total_used = n_total if n_total is not None else n_active
+
+            mfr_total = round((total_spikes / n_total_used) / total_time_sec, 2)
+            mfr_active = round((total_spikes / n_active) / total_time_sec, 2)
+
+            # save chunk json
+            chunk_file_path = os.path.join(out_dir, f"activity_chunk_{chunk_number}.json")
+            with open(chunk_file_path, "w") as f:
+                ujson.dump(chunk_data, f)
+
+            meta = {
+                "chunk_number": chunk_number,
+                "first_key": t_min,
+                "last_key": t_max,
+                "duration_ms": round(duration_ms, 1),
+                "total_spikes": int(total_spikes),
+                "n_total": int(n_total_used),
+                "n_active": int(n_active),
+                "MFR_total": mfr_total,
+                "MFR_active": mfr_active,
+            }
+            return meta
+
+        # IMPORTANT: ensure time sorted iteration
+        for key in sorted(data_dict.keys()):
+            values = data_dict[key]
+            entry_size = len(ujson.dumps({key: values}))
+
+            if current_chunk_size + entry_size > chunk_size_bytes and current_data_dict:
+                meta = finalize_chunk(current_data_dict, chunk_number)
+
+                chunk_mfr_list.append(meta)
+                first_last_keys.append({
+                    "chunk_number": chunk_number,
+                    "first_key": meta["first_key"],
+                    "last_key": meta["last_key"],
+                })
+
+                current_data_dict = {}
+                current_chunk_size = 0
+                chunk_number += 1
+
+            current_data_dict[key] = values
+            current_chunk_size += entry_size
+
+        if current_data_dict:
+            meta = finalize_chunk(current_data_dict, chunk_number)
+            chunk_mfr_list.append(meta)
+            first_last_keys.append({
+                "chunk_number": chunk_number,
+                "first_key": meta["first_key"],
+                "last_key": meta["last_key"],
+            })
+
+        total_activity_files = chunk_number + 1
+
+        return {
+            "OUTPUT_FOLDER": out_dir,
+            "total_lines": int(len(csv_data)),
+            "total_activity_files": int(total_activity_files),
+            "first_last_keys": first_last_keys,
+            "chunk_mfr_list": chunk_mfr_list,
+        }
+
+    except Exception as e:
+        raise RuntimeError(f"Error processing activity file: {str(e)}")
+
+
+
+
+############################################################
 @csrf_exempt
 def fetch_user_network_data(request):
     try:
@@ -355,11 +962,12 @@ def fetch_user_network_data(request):
             total_inhibitory = 0
             total_invalid = 0
 
-            total_neurons = len(file_data)
+            network_total_neurons = len(file_data)
+
 
             # ---- NEW: default ratio when cell_type missing ----
             excit_ratio = 90.909533 / 100.0
-            target_excitatory = int(round(total_neurons * excit_ratio))
+            target_excitatory = int(round(network_total_neurons * excit_ratio))
             # ---------------------------------------------------
 
             for i, neuro in enumerate(file_data):
@@ -391,7 +999,7 @@ def fetch_user_network_data(request):
             data_list.append({
                 'filename': "network.json",
                 'fileData': file_data,
-                'total_neurons': total_neurons,
+                'total_neurons': network_total_neurons,
                 'total_excitatory': total_excitatory,
                 'total_inhibitory': total_inhibitory,
                 # 'total_invalid': total_invalid,
@@ -408,7 +1016,7 @@ def fetch_user_network_data(request):
             
 
             try:
-                CHUNK_SIZE = 100 * 1024 * 1024
+                CHUNK_SIZE = 200 * 1024 * 1024 
                 try:
                     csv_data = pd.read_csv(activity_file_path, header=None, names=['id', 't'], encoding='utf-8')
                 except UnicodeDecodeError:
@@ -423,25 +1031,44 @@ def fetch_user_network_data(request):
                 current_chunk_size = 0
                 current_data_dict = {}
 
-                for key, values in data_dict.items():
+                for key in sorted(data_dict.keys()):
+                    values = data_dict[key]
+
                     entry_size = len(ujson.dumps({key: values}))
 
                     if current_chunk_size + entry_size > CHUNK_SIZE and current_data_dict:
                         times_in_chunk = list(current_data_dict.keys())
+                        
                         t_min = float(times_in_chunk[0])
+                        
                         t_max = float(times_in_chunk[-1])
+                        
                         total_time_sec = (t_max - t_min) / 1000.0
+                        
                         total_spikes = sum(len(v) for v in current_data_dict.values())
+                        
+                        
+                        # active neurons in this chunk (optional, keep if you want)
                         unique_neurons = set(gid for v in current_data_dict.values() for gid in v)
-                        total_neurons = len(unique_neurons)
-                        mfr = round((total_spikes / total_neurons) / total_time_sec, 2) if total_neurons > 0 and total_time_sec > 0 else 0
+                        n_active = len(unique_neurons) or 1
+
+                        # total neurons from network.json (this is what you want for dropdown)
+                        n_total = network_total_neurons if network_total_neurons > 0 else n_active
+
+                        mfr_total  = round((total_spikes / n_total) / total_time_sec, 2)
+                        mfr_active = round((total_spikes / n_active) / total_time_sec, 2)
 
                         chunk_mfr_list.append({
-                            "first_key": t_min,
-                            "last_key": t_max,
-                            "chunk_number": chunk_number,
-                            "MFR": mfr
-                        })
+                                "first_key": t_min,
+                                "last_key": t_max,
+                                "chunk_number": chunk_number,
+                                "MFR_total": mfr_total,
+                                "MFR_active": mfr_active,
+                                "n_total": int(n_total),
+                                "n_active": int(n_active),
+                                "total_spikes": int(total_spikes),
+                            })
+
                         first_last_keys.append({'chunk_number': chunk_number, 'first_key': t_min, 'last_key': t_max})
 
                         chunk_file_path = os.path.join(json_directory, f'activity_chunk_{chunk_number}.json')
@@ -457,20 +1084,36 @@ def fetch_user_network_data(request):
 
                 if current_data_dict:
                     times_in_chunk = list(current_data_dict.keys())
+                        
                     t_min = float(times_in_chunk[0])
+                    
                     t_max = float(times_in_chunk[-1])
+                    
                     total_time_sec = (t_max - t_min) / 1000.0
+                    
                     total_spikes = sum(len(v) for v in current_data_dict.values())
+                    
+                    
+                    # active neurons in this chunk (optional, keep if you want)
                     unique_neurons = set(gid for v in current_data_dict.values() for gid in v)
-                    total_neurons = len(unique_neurons)
-                    mfr = round((total_spikes / total_neurons) / total_time_sec, 2) if total_neurons > 0 and total_time_sec > 0 else 0
+                    n_active = len(unique_neurons) or 1
+
+                    # total neurons from network.json (this is what you want for dropdown)
+                    n_total = network_total_neurons if network_total_neurons > 0 else n_active
+
+                    mfr_total  = round((total_spikes / n_total) / total_time_sec, 2)
+                    mfr_active = round((total_spikes / n_active) / total_time_sec, 2)
 
                     chunk_mfr_list.append({
-                        "first_key": t_min,
-                        "last_key": t_max,
-                        "chunk_number": chunk_number,
-                        "MFR": mfr
-                    })
+                            "first_key": t_min,
+                            "last_key": t_max,
+                            "chunk_number": chunk_number,
+                            "MFR_total": mfr_total,
+                            "MFR_active": mfr_active,
+                            "n_total": int(n_total),
+                            "n_active": int(n_active),
+                            "total_spikes": int(total_spikes),
+                        })
                     first_last_keys.append({'chunk_number': chunk_number, 'first_key': t_min, 'last_key': t_max})
 
                     final_chunk_file_path = os.path.join(json_directory, f'activity_chunk_{chunk_number}.json')
@@ -500,6 +1143,73 @@ def fetch_user_network_data(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+
+
+
+# def get_chunk_data(request):
+
+#     chunk_number = request.GET.get("chunk_number")  # Get chunk number from request
+#     unique_directory = request.GET.get("dir")  # Get chunk number from request
+
+#     if not chunk_number:
+#         return JsonResponse({"error": "No chunk number provided"}, status=400)
+
+#     chunk_file_path = os.path.join(settings.MEDIA_ROOT, 'csv', unique_directory)
+#     unique_directory = os.path.join(settings.MEDIA_ROOT, 'csv', unique_directory)
+
+#     activity_file_path = os.path.join(chunk_file_path,  f"activity_chunk_{chunk_number}.json")
+#     try:
+#         with open(activity_file_path, "r") as f:
+#             chunk_data = ujson.load(f)
+#     except Exception as e:
+#         return JsonResponse({"error": f"Error loading activity.json: {str(e)}"}, status=500)
+
+
+
+#     # Process GIDs from network.json
+#     network_file_path = os.path.join(unique_directory, "network.json")
+#     Gids_array = extract_ids_from_json(network_file_path)
+
+#     gids_activity_indexes = get_activity_indexes(chunk_data, Gids_array)
+#     # print("length gids:    ",len(gids_activity_indexes))
+
+#     # Cache GIDs activity indexes
+#     cache_file_path = os.path.join(chunk_file_path, 'gids_activity_indexes.json')
+#     try:
+#         with open(cache_file_path, 'w') as f:
+#             ujson.dump(gids_activity_indexes, f)
+#     except Exception as e:
+#         return JsonResponse({"error": f"Error saving gids_activity_indexes.json: {str(e)}"}, status=500)
+
+
+#     # Extract `t` values (time) and count spikes per time bin
+#     try:
+
+#         total_spikes = sum(len(activity_ids) for activity_ids in chunk_data.values())
+#         # Generate visualization images
+#         # raster_img = generate_raster_plot(chunk_data)
+#         hist_img = generate_spike_histogram(chunk_data, chunk_number)
+        
+#         # in get_chunk_data(...) right before the final JsonResponse
+#         hist = compute_hist_data(chunk_data, chunk_number, bins=100)
+
+#        # Return both chunk data and GIDs activity indexes in a single response
+#         return JsonResponse({
+#             "chunk_data": chunk_data,
+#             "total_spikes": total_spikes,  # Total spikes count
+#             # "raster_plot": raster_img,
+#             "histogram": hist_img,
+#              "hist_data": hist,                     # NEW: JSON for interactive plot
+#             "gids_activity_indexes": gids_activity_indexes
+#         })
+
+#     except Exception as e:
+#         return JsonResponse({"error": f"Error generating histogram: {str(e)}"}, status=500)
+
+
+
+
+
 def get_chunk_data(request):
 
     chunk_number = request.GET.get("chunk_number")  # Get chunk number from request
@@ -527,6 +1237,12 @@ def get_chunk_data(request):
     gids_activity_indexes = get_activity_indexes(chunk_data, Gids_array)
     # print("length gids:    ",len(gids_activity_indexes))
 
+
+    # --- after you load Gids_array ---
+    total_neurons = len(Gids_array)  # total neurons in the uploaded network
+
+    
+
     # Cache GIDs activity indexes
     cache_file_path = os.path.join(chunk_file_path, 'gids_activity_indexes.json')
     try:
@@ -542,10 +1258,13 @@ def get_chunk_data(request):
         total_spikes = sum(len(activity_ids) for activity_ids in chunk_data.values())
         # Generate visualization images
         # raster_img = generate_raster_plot(chunk_data)
-        hist_img = generate_spike_histogram(chunk_data, chunk_number)
         
-        # in get_chunk_data(...) right before the final JsonResponse
-        hist = compute_hist_data(chunk_data, chunk_number, bins=100)
+        # Pass total_neurons so UI MFR matches benchmark definition
+        hist_img = generate_spike_histogram(chunk_data, chunk_number, color="white", total_neurons=total_neurons)
+
+        
+        # Interactive histogram JSON (includes MFR values)
+        hist = compute_hist_data(chunk_data, chunk_number, bins=100, total_neurons=total_neurons)
 
        # Return both chunk data and GIDs activity indexes in a single response
         return JsonResponse({
@@ -554,11 +1273,15 @@ def get_chunk_data(request):
             # "raster_plot": raster_img,
             "histogram": hist_img,
              "hist_data": hist,                     # NEW: JSON for interactive plot
-            "gids_activity_indexes": gids_activity_indexes
+            "gids_activity_indexes": gids_activity_indexes,
+            "total_neurons": total_neurons,  #  expose to frontend
         })
 
     except Exception as e:
         return JsonResponse({"error": f"Error generating histogram: {str(e)}"}, status=500)
+
+
+
 
 def generate_raster_plot(chunk_data):
     try:
@@ -598,71 +1321,227 @@ def generate_raster_plot(chunk_data):
     except Exception as e:
         return f"Error generating raster plot: {str(e)}"
 
+# def compute_hist_data(chunk_data, chunk_number, bins=100, total_neurons=None):
+#     # flatten (t,gids)
+#     times = []
+#     times_gids = []  # list of (t, set(gids)) per unique t
+#     gid_set = set()
+#     for t_str, gids in chunk_data.items():
+#         t = float(t_str)
+#         gids_set = set(gids)
+#         gid_set |= gids_set
+#         times.extend([t] * len(gids))
+#         times_gids.append((t, gids_set))
+
+#     if not times:
+#         return {"bin_edges": [], "bin_centers": [], "counts": [], "sd_poisson": [], "sd_binomial": [], "t_min": 0, "t_max": 0, "mfr": 0}
+
+#     t_min = 0.0 if str(chunk_number) == "0" else min(times)
+#     t_max = max(times)
+#     edges = np.linspace(t_min, t_max, bins + 1)
+#     counts, _ = np.histogram(times, bins=edges)
+
+#     # Poisson SD
+#     sd_poisson = np.sqrt(counts)
+
+#     # Binomial SD (unique neurons per bin)
+#     N = total_neurons if total_neurons is not None else (len(gid_set) or 1)
+#     uniq_per_bin = np.zeros(bins, dtype=int)
+#     # bucket times_gids by bin (fast pass)
+#     for t, gids in times_gids:
+#         if t < t_min or t >= t_max: 
+#             continue
+#         i = np.searchsorted(edges, t, side='right') - 1
+#         if 0 <= i < bins:
+#             # accumulate per-bin unique neurons
+#             # WARNING: for huge data this set-per-bin can be heavy;
+#             # replace with a counting bloom or skip if not needed.
+#             pass
+#     # Memory-light alternative: approximate k with counts capped at 1 per neuron per bin
+#     # If you can compute uniqs, do:
+#     # p = uniq_per_bin / float(N)
+#     # sd_binomial = np.sqrt(N * p * (1.0 - p))
+#     sd_binomial = None  # optional
+
+#     total_spikes = len(times)
+#     total_time_sec = max((t_max - t_min) / 1000.0, 1e-9)
+#     mfr = (total_spikes / max(N, 1)) / total_time_sec
+
+#     return {
+#         "bin_edges": edges.tolist(),
+#         "bin_centers": ((edges[:-1] + edges[1:]) / 2.0).tolist(),
+#         "counts": counts.tolist(),
+#         "sd_poisson": sd_poisson.tolist(),
+#         "sd_binomial": sd_binomial.tolist() if sd_binomial is not None else [],
+#         "t_min": float(t_min),
+#         "t_max": float(t_max),
+#         "mfr": float(mfr),
+#     }
+     
+
+
+
+
 def compute_hist_data(chunk_data, chunk_number, bins=100, total_neurons=None):
-    # flatten (t,gids)
-    times = []
-    times_gids = []  # list of (t, set(gids)) per unique t
-    gid_set = set()
+    # flatten all spikes
+    all_times = []
+    active_neurons = set()
+
     for t_str, gids in chunk_data.items():
         t = float(t_str)
-        gids_set = set(gids)
-        gid_set |= gids_set
-        times.extend([t] * len(gids))
-        times_gids.append((t, gids_set))
+        all_times.extend([t] * len(gids))
+        active_neurons.update(gids)
 
-    if not times:
-        return {"bin_edges": [], "bin_centers": [], "counts": [], "sd_poisson": [], "sd_binomial": [], "t_min": 0, "t_max": 0, "mfr": 0}
+    if not all_times:
+        return {"bin_edges": [], "bin_centers": [], "counts": [], "sd_poisson": [],
+                "t_min": 0.0, "t_max": 0.0, "mfr_total": 0.0, "mfr_active": 0.0,
+                "n_total": int(total_neurons or 0), "n_active": 0, "total_spikes": 0}
 
-    t_min = 0.0 if str(chunk_number) == "0" else min(times)
-    t_max = max(times)
+
+    t_min, t_max = chunk_time_bounds_from_keys(chunk_data)
+
+
     edges = np.linspace(t_min, t_max, bins + 1)
-    counts, _ = np.histogram(times, bins=edges)
-
-    # Poisson SD
+    counts, _ = np.histogram(all_times, bins=edges)
     sd_poisson = np.sqrt(counts)
 
-    # Binomial SD (unique neurons per bin)
-    N = total_neurons if total_neurons is not None else (len(gid_set) or 1)
-    uniq_per_bin = np.zeros(bins, dtype=int)
-    # bucket times_gids by bin (fast pass)
-    for t, gids in times_gids:
-        if t < t_min or t >= t_max: 
-            continue
-        i = np.searchsorted(edges, t, side='right') - 1
-        if 0 <= i < bins:
-            # accumulate per-bin unique neurons
-            # WARNING: for huge data this set-per-bin can be heavy;
-            # replace with a counting bloom or skip if not needed.
-            pass
-    # Memory-light alternative: approximate k with counts capped at 1 per neuron per bin
-    # If you can compute uniqs, do:
-    # p = uniq_per_bin / float(N)
-    # sd_binomial = np.sqrt(N * p * (1.0 - p))
-    sd_binomial = None  # optional
+    total_spikes = len(all_times)
+    dur_s = max((t_max - t_min) / 1000.0, 1e-9)
 
-    total_spikes = len(times)
-    total_time_sec = max((t_max - t_min) / 1000.0, 1e-9)
-    mfr = (total_spikes / max(N, 1)) / total_time_sec
+    n_active = max(len(active_neurons), 1)
+    n_total = int(total_neurons) if total_neurons and int(total_neurons) > 0 else n_active
+
+    mfr_total = (total_spikes / n_total) / dur_s
+    mfr_active = (total_spikes / n_active) / dur_s
 
     return {
         "bin_edges": edges.tolist(),
         "bin_centers": ((edges[:-1] + edges[1:]) / 2.0).tolist(),
         "counts": counts.tolist(),
         "sd_poisson": sd_poisson.tolist(),
-        "sd_binomial": sd_binomial.tolist() if sd_binomial is not None else [],
-        "t_min": float(t_min),
-        "t_max": float(t_max),
-        "mfr": float(mfr),
+        "t_min": t_min,
+        "t_max": t_max,
+        "total_spikes": int(total_spikes),
+        "n_total": int(n_total),
+        "n_active": int(n_active),
+        "mfr_total": float(mfr_total),
+        "mfr_active": float(mfr_active),
     }
+
      
-def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="white"):
+
+
+     
+# def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="white"):
+#     try:
+#         if not chunk_data or not isinstance(chunk_data, dict):
+#             return "Error: No data available for plotting."
+
+#         # Convert spike times and collect active neurons
+#         all_spike_times = []
+#         active_neurons = set()
+#         for t_str, gids in chunk_data.items():
+#             t = float(t_str)
+#             all_spike_times.extend([t] * len(gids))
+#             active_neurons.update(gids)
+
+#         if not all_spike_times:
+#             return "Error: No spike times in chunk data."
+
+#         # Sort times to get actual range
+#         min_time = min(all_spike_times)
+#         max_time = max(all_spike_times)
+
+#         # Set time range based on chunk number
+#         if str(chunk_number) == "0":
+#             t_min = 0
+#         else:
+#             t_min = min_time
+
+#         t_max = max_time
+
+#         # Compute histogram
+#         bin_edges = np.linspace(t_min, t_max, bins + 1)
+#         spike_counts, _ = np.histogram(all_spike_times, bins=bin_edges)
+
+#         # Compute per-bin standard deviation
+#         std_per_bin = []
+#         for i in range(len(bin_edges) - 1):
+#             bin_start, bin_end = bin_edges[i], bin_edges[i + 1]
+#             bin_spikes = [t for t in all_spike_times if bin_start <= t < bin_end]
+#             if len(bin_spikes) > 1:
+#                 std_per_bin.append(np.std(bin_spikes))
+#             else:
+#                 std_per_bin.append(0.0)  # No variation if ≤1 spike
+
+#         # Compute Mean Firing Rate (MFR)
+#         total_spikes = len(all_spike_times)
+#         total_neurons = len(active_neurons)
+#         total_time_sec = (t_max - t_min) / 1000.0
+#         mfr = (total_spikes / total_neurons) / total_time_sec if total_neurons > 0 and total_time_sec > 0 else 0
+
+#         # Plot histogram
+#         fig, ax = plt.subplots(figsize=(12, 6), dpi=300)
+#         fig.patch.set_facecolor("#33373d")
+#         ax.set_facecolor("#33373d")
+
+#         bars = ax.bar(bin_edges[:-1], spike_counts, width=np.diff(bin_edges), 
+#                       color=color, alpha=0.7, edgecolor="black", align="edge")
+
+#         # Annotate each bar with its std
+#         for bar, std_val in zip(bars, std_per_bin):
+#             height = bar.get_height()
+#             ax.text(bar.get_x() + bar.get_width() / 2, height + 0.5,
+#                     f"{std_val:.1f}", ha="center", va="bottom", fontsize=6, color="yellow", rotation=90)
+
+#         # Legend info
+#         legend_labels = {
+#             "# Max Spike": max(spike_counts),
+#             "# Min Spike": min(spike_counts),
+#             "# Spikes": total_spikes,
+#             "# Neurons": total_neurons,
+#             "# Min Time (ms)": round(t_min, 1),
+#             "# Max Time (ms)": round(t_max, 1),
+#         }
+#         legend_text = "\n".join([f"{key}: {value}" for key, value in legend_labels.items()])
+#         plt.gcf().text(0.80, 0.79, legend_text, fontsize=8, 
+#                        bbox=dict(facecolor='white', alpha=0.5), color='black')
+
+#         ax.set_xlim(t_min, t_max)
+#         ax.set_xlabel("Time (ms)", fontsize=16, fontweight="bold", color="white")
+#         ax.set_ylabel("Number of Firing Neurons", fontsize=16, fontweight="bold", color="white")
+#         ax.set_title(f"Chunk {chunk_number} - MFR: {mfr:.2f} Hz", fontsize=18, fontweight="bold", color="white")
+
+#         ax.tick_params(axis='x', colors='white')
+#         ax.tick_params(axis='y', colors='white')
+#         ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
+#         ax.grid(True, linestyle="--", alpha=0.4)
+
+#         for label in ax.get_xticklabels() + ax.get_yticklabels():
+#             label.set_color("white")
+
+#         # Convert to base64 image
+#         img_buffer = io.BytesIO()
+#         plt.savefig(img_buffer, format="png", bbox_inches="tight", dpi=300, facecolor=fig.get_facecolor())
+#         img_buffer.seek(0)
+#         img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+#         plt.close()
+
+#         return img_base64
+
+#     except Exception as e:
+#         return f"Error generating spike histogram: {str(e)}"
+
+
+
+def generate_spike_histogram(chunk_data, chunk_number,  color="white", total_neurons=None):
     try:
         if not chunk_data or not isinstance(chunk_data, dict):
             return "Error: No data available for plotting."
 
-        # Convert spike times and collect active neurons
         all_spike_times = []
         active_neurons = set()
+
         for t_str, gids in chunk_data.items():
             t = float(t_str)
             all_spike_times.extend([t] * len(gids))
@@ -671,69 +1550,71 @@ def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="white"):
         if not all_spike_times:
             return "Error: No spike times in chunk data."
 
-        # Sort times to get actual range
         min_time = min(all_spike_times)
         max_time = max(all_spike_times)
 
-        # Set time range based on chunk number
-        if str(chunk_number) == "0":
-            t_min = 0
-        else:
-            t_min = min_time
+        t_min, t_max = chunk_time_bounds_from_keys(chunk_data)
 
-        t_max = max_time
 
-        # Compute histogram
-        bin_edges = np.linspace(t_min, t_max, bins + 1)
+        bin_edges = np.linspace(np.floor(t_min), np.ceil(t_max), np.ceil(t_max)-np.floor(t_min)+1)
         spike_counts, _ = np.histogram(all_spike_times, bins=bin_edges)
 
-        # Compute per-bin standard deviation
+        # Std per bin (your existing approach)
         std_per_bin = []
         for i in range(len(bin_edges) - 1):
             bin_start, bin_end = bin_edges[i], bin_edges[i + 1]
             bin_spikes = [t for t in all_spike_times if bin_start <= t < bin_end]
-            if len(bin_spikes) > 1:
-                std_per_bin.append(np.std(bin_spikes))
-            else:
-                std_per_bin.append(0.0)  # No variation if ≤1 spike
+            std_per_bin.append(float(np.std(bin_spikes)) if len(bin_spikes) > 1 else 0.0)
 
-        # Compute Mean Firing Rate (MFR)
         total_spikes = len(all_spike_times)
-        total_neurons = len(active_neurons)
-        total_time_sec = (t_max - t_min) / 1000.0
-        mfr = (total_spikes / total_neurons) / total_time_sec if total_neurons > 0 and total_time_sec > 0 else 0
+        total_time_sec = max((t_max - t_min) / 1000.0, 1e-9)
 
-        # Plot histogram
+        n_active = len(active_neurons) or 1
+        n_total = int(total_neurons) if (total_neurons is not None and int(total_neurons) > 0) else n_active
+
+        # Two MFRs:
+        mfr_total = (total_spikes / n_total) / total_time_sec   # matches benchmark definition
+        mfr_active = (total_spikes / n_active) / total_time_sec # old behavior
+
+        # Plot
         fig, ax = plt.subplots(figsize=(12, 6), dpi=300)
         fig.patch.set_facecolor("#33373d")
         ax.set_facecolor("#33373d")
 
-        bars = ax.bar(bin_edges[:-1], spike_counts, width=np.diff(bin_edges), 
-                      color=color, alpha=0.7, edgecolor="black", align="edge")
+        bars = ax.bar(
+            bin_edges[:-1], spike_counts, width=np.diff(bin_edges),
+            color=color, alpha=0.7, edgecolor="black", align="edge"
+        )
 
-        # Annotate each bar with its std
         for bar, std_val in zip(bars, std_per_bin):
             height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width() / 2, height + 0.5,
-                    f"{std_val:.1f}", ha="center", va="bottom", fontsize=6, color="yellow", rotation=90)
+            ax.text(
+                bar.get_x() + bar.get_width() / 2, height + 0.5,
+                f"{std_val:.1f}", ha="center", va="bottom",
+                fontsize=6, color="yellow", rotation=90
+            )
 
-        # Legend info
         legend_labels = {
-            "# Max Spike": max(spike_counts),
-            "# Min Spike": min(spike_counts),
-            "# Spikes": total_spikes,
-            "# Neurons": total_neurons,
-            "# Min Time (ms)": round(t_min, 1),
-            "# Max Time (ms)": round(t_max, 1),
+            "# Max Spike": int(max(spike_counts)) if len(spike_counts) else 0,
+            "# Min Spike": int(min(spike_counts)) if len(spike_counts) else 0,
+            "# Spikes": int(total_spikes),
+            "# Active Neurons": int(n_active),
+            "# Total Neurons": int(n_total),
+            "# Min Time (ms)": float(t_min),
+            "# Max Time (ms)": float(t_max),
+            "MFR (total-norm) Hz": float(mfr_total),
+            "MFR (active-norm) Hz": float(mfr_active),
         }
-        legend_text = "\n".join([f"{key}: {value}" for key, value in legend_labels.items()])
-        plt.gcf().text(0.80, 0.79, legend_text, fontsize=8, 
+        legend_text = "\n".join([f"{k}: {v}" for k, v in legend_labels.items()])
+        plt.gcf().text(0.80, 0.79, legend_text, fontsize=8,
                        bbox=dict(facecolor='white', alpha=0.5), color='black')
 
         ax.set_xlim(t_min, t_max)
         ax.set_xlabel("Time (ms)", fontsize=16, fontweight="bold", color="white")
         ax.set_ylabel("Number of Firing Neurons", fontsize=16, fontweight="bold", color="white")
-        ax.set_title(f"Chunk {chunk_number} - MFR: {mfr:.2f} Hz", fontsize=18, fontweight="bold", color="white")
+
+        # IMPORTANT: title now shows total-normalized MFR (matches benchmark)
+        ax.set_title(f"Chunk {chunk_number} - MFR: {mfr_total:.2f} Hz", fontsize=18, fontweight="bold", color="white")
 
         ax.tick_params(axis='x', colors='white')
         ax.tick_params(axis='y', colors='white')
@@ -743,7 +1624,6 @@ def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="white"):
         for label in ax.get_xticklabels() + ax.get_yticklabels():
             label.set_color("white")
 
-        # Convert to base64 image
         img_buffer = io.BytesIO()
         plt.savefig(img_buffer, format="png", bbox_inches="tight", dpi=300, facecolor=fig.get_facecolor())
         img_buffer.seek(0)
@@ -754,6 +1634,16 @@ def generate_spike_histogram(chunk_data, chunk_number, bins=100, color="white"):
 
     except Exception as e:
         return f"Error generating spike histogram: {str(e)}"
+
+
+def chunk_time_bounds_from_keys(chunk_data):
+    # chunk_data keys are your time bins (strings)
+    ts = sorted(float(k) for k in chunk_data.keys())
+    if not ts:
+        return 0.0, 0.0
+    return ts[0], ts[-1]
+
+
 
 def generate_network_graph(network_data):
     try:
