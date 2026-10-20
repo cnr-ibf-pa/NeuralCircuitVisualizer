@@ -1,0 +1,2676 @@
+/* ==========================================================================
+   Neural Circuit Visualizer — dark / teal theme
+   --------------------------------------------------------------------------
+   Load order: bootstrap.css → main.css → alert.css → theme.css (this file).
+   Presentation only: no element IDs, form names or JS hooks are changed.
+
+   CONTENTS
+     1. Design tokens
+     2. Base & Bootstrap dark overrides
+     3. App shell (header, nav, layout grid)
+     4. Sidebar — tabs, cards, forms, buttons
+     5. Sidebar — demo-circuit accordions, fetched jobs, legend
+     6. Top control bar (activity window, playback, timeline)
+     7. Stage — canvas, toolbar, floating panels, HUD widgets, dock
+     8. Empty state
+     9. Misc widgets (loader, modals, popup, scrollbars)
+    10. Motion
+    11. Responsive
+   ========================================================================== */
+
+/* ==========================================================================
+   1. DESIGN TOKENS
+   ========================================================================== */
+:root {
+  /* surfaces */
+  --bg: #070b14;
+  --bg-2: #0b1120;
+  --panel: #0d1424;
+  --panel-2: #121b2f;
+  --glass: rgba(13, 20, 36, 0.78);
+  --line: #1c2740;
+  --line-2: #26334f;
+
+  /* text */
+  --text: #e6edf7;
+  --muted: #8b97ab;
+
+  /* accent */
+  --accent: #2dd4bf;
+  --accent-2: #38bdf8;
+  --accent-ink: #04201c;
+  --accent-hover: #5eead4;
+  --grad: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  --glow: 0 0 0 1px rgba(45, 212, 191, 0.35), 0 8px 28px -8px rgba(45, 212, 191, 0.55);
+  --warn: #f59e0b;
+
+  /* shape / type / motion */
+  --radius: 10px;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
+
+  /* layout */
+  --header-h: 80px;
+  --gap: 14px;
+}
+
+/* ==========================================================================
+   2. BASE & BOOTSTRAP DARK OVERRIDES
+   ========================================================================== */
+html {
+  color-scheme: dark; /* native dropdown popups, scrollbars and number spinners go dark */
+}
+select option {
+  background: var(--panel);
+  color: var(--text);
+}
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg) !important;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+}
+
+[data-bs-theme="dark"] {
+  --bs-body-bg: var(--bg);
+  --bs-body-color: var(--text);
+  --bs-border-color: var(--line);
+  --bs-secondary-color: var(--muted);
+  --bs-form-control-bg: var(--bg-2);
+}
+
+/* ambient glow behind everything */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(900px 520px at 8% -8%, rgba(45, 212, 191, 0.13), transparent 60%), radial-gradient(800px 600px at 100% 105%, rgba(56, 189, 248, 0.1), transparent 60%), radial-gradient(600px 400px at 60% 40%, rgba(99, 102, 241, 0.05), transparent 70%);
+}
+
+label,
+.form-label {
+  margin-bottom: 0.35rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+::selection {
+  background: rgba(45, 212, 191, 0.35);
+  color: #fff;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   3. APP SHELL
+   ========================================================================== */
+.main-container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: transparent !important;
+}
+
+/* ---- header ---- */
+.app-header {
+  position: relative;
+  flex: 0 0 var(--header-h);
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  background: linear-gradient(180deg, rgba(14, 22, 40, 0.92), rgba(7, 11, 20, 0.85));
+  backdrop-filter: blur(10px);
+}
+.app-header::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(45, 212, 191, 0.55) 30%, rgba(56, 189, 248, 0.45) 70%, transparent);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--text);
+  text-decoration: none;
+}
+.brand-logo-link {
+  display: flex;
+  align-items: center;
+}
+.brand-logo {
+  display: block;
+  height: 62px;
+  width: auto;
+  max-width: none;
+  image-rendering: -webkit-optimize-contrast;
+  transition: transform 0.3s var(--ease), filter 0.3s;
+}
+.brand-logo-link:hover .brand-logo {
+  transform: scale(1.04);
+  filter: drop-shadow(0 0 10px rgba(45, 212, 191, 0.45));
+}
+.brand-divider {
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(180deg, transparent, var(--line-2), transparent);
+}
+.visualizer-title {
+  display: block;
+  font-family: var(--sans);
+  font-size: 1.12rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0;
+  text-shadow: none;
+  background: linear-gradient(90deg, #fff 30%, #9ff3e6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* ---- nav ---- */
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+}
+.app-nav a.nav-item-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px;
+  color: var(--text);
+  font-size: 0.95rem;
+  text-decoration: none;
+  opacity: 0.92;
+  transition: color 0.2s;
+}
+.app-nav a.nav-item-link::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--grad);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s var(--ease);
+}
+.app-nav a.nav-item-link:hover {
+  color: var(--accent);
+  opacity: 1;
+}
+.app-nav a.nav-item-link:hover::after {
+  transform: scaleX(1);
+}
+
+/* login / logout include → gradient button */
+#login-button,
+#logout-button {
+  flex-direction: row-reverse;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: var(--grad) !important;
+  color: var(--accent-ink) !important;
+  font-size: 0.92rem;
+  font-weight: 700;
+  box-shadow: var(--glow);
+  transition: transform 0.2s var(--ease), box-shadow 0.2s;
+}
+#login-button:hover,
+#logout-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.6), 0 12px 30px -8px rgba(45, 212, 191, 0.75);
+}
+#login-button p,
+#logout-button p {
+  margin: 0 !important;
+}
+#login-button svg,
+#logout-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---- two-column body ---- */
+.app-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;
+  margin: 0 !important;
+  padding: var(--gap);
+  display: grid;
+  grid-template-columns: clamp(340px, 22vw, 460px) minmax(0, 1fr);
+  gap: var(--gap);
+}
+.app-side {
+  flex: none !important;
+  width: auto !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-height: 0;
+  padding: 0 4px 0 0 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+.app-main {
+  flex: none !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0;
+  min-height: 0;
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ==========================================================================
+   4. SIDEBAR — TABS, CARDS, FORMS, BUTTONS
+   ========================================================================== */
+
+/* ---- tabs ---- */
+.side-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--glass);
+  backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.side-tabs .nav-link {
+  position: relative;
+  flex: 1 1 0;
+  padding: 9px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: center;
+  transition: color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+.side-tabs .nav-link:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+.side-tabs .nav-link.active {
+  border-color: rgba(45, 212, 191, 0.45);
+  background: linear-gradient(180deg, #17223b, #121b2f);
+  color: #fff;
+  box-shadow: 0 0 18px -6px rgba(45, 212, 191, 0.6);
+}
+.side-tabs .nav-link.active::after {
+  content: "";
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--grad);
+  box-shadow: 0 0 10px var(--accent);
+}
+.tab-content > .tab-pane {
+  display: none;
+}
+.tab-content > .active {
+  display: block;
+}
+
+/* ---- cards ---- */
+.card-panel {
+  margin-bottom: 12px;
+  padding: 18px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(18, 27, 47, 0.85), rgba(13, 20, 36, 0.85)) padding-box, linear-gradient(160deg, rgba(45, 212, 191, 0.35), rgba(38, 51, 79, 0.6) 40%, rgba(56, 189, 248, 0.18)) border-box;
+  box-shadow: 0 10px 30px -14px rgba(0, 0, 0, 0.7);
+  transition: box-shadow 0.3s;
+}
+.card-panel:hover {
+  box-shadow: 0 16px 38px -14px rgba(0, 0, 0, 0.8), 0 0 28px -14px rgba(45, 212, 191, 0.5);
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.card-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--text);
+  font-size: 1.02rem;
+  font-weight: 700;
+}
+.card-head h3::before {
+  content: "";
+  width: 4px;
+  height: 16px;
+  border-radius: 3px;
+  background: var(--grad);
+  box-shadow: 0 0 10px rgba(45, 212, 191, 0.7);
+}
+.chip {
+  padding: 3px 10px;
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  border-radius: 999px;
+  background: rgba(45, 212, 191, 0.08);
+  color: #8ff0e1;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+}
+.section-label {
+  width: 100%;
+  margin: 6px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.section-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--line-2), transparent);
+}
+.side-foot {
+  margin-top: auto;
+  padding: 10px 4px 2px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.side-foot a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* ---- form controls ---- */
+.form-select,
+.form-control,
+select,
+.ncv-input,
+.ncv-select,
+.value-box {
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  background-color: rgba(7, 11, 20, 0.7) !important;
+  color: var(--text) !important;
+  box-shadow: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+select {
+  width: auto;
+  padding: revert;
+}
+.form-select {
+  width: 100%;
+}
+.card-panel .form-select,
+.card-panel .form-control {
+  min-height: 44px;
+  font-size: 0.95rem;
+}
+.card-panel input[type="number"] {
+  font-family: var(--mono);
+}
+.form-select:hover,
+.form-control:hover {
+  border-color: var(--line-2) !important;
+  background-color: rgba(11, 17, 32, 0.9) !important;
+}
+.form-select:focus,
+.form-control:focus,
+.ncv-input:focus,
+.ncv-select:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.18), 0 0 18px -6px rgba(45, 212, 191, 0.5) !important;
+}
+.form-control.is-invalid {
+  border-color: #ef4444 !important;
+}
+.form-check-input {
+  border-color: var(--line-2);
+  background-color: var(--bg-2);
+}
+.form-check-input:checked {
+  border-color: var(--accent) !important;
+  background-color: var(--accent) !important;
+}
+
+/* ---- buttons ---- */
+.btn-accent,
+.btn-success.btn-accent {
+  position: relative;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+  padding: 12px 18px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: var(--grad) !important;
+  color: var(--accent-ink) !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  box-shadow: var(--glow) !important;
+  transition: transform 0.2s var(--ease), box-shadow 0.2s !important;
+}
+.btn-accent::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -80%;
+  width: 60%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.6s var(--ease);
+}
+.btn-accent:hover {
+  transform: translateY(-2px) !important;
+  color: var(--accent-ink) !important;
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.6), 0 14px 32px -10px rgba(45, 212, 191, 0.8) !important;
+}
+.btn-accent:hover::after {
+  left: 130%;
+}
+.btn-accent:active {
+  transform: translateY(0) !important;
+}
+.btn-accent:disabled {
+  opacity: 0.6;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid var(--line-2) !important;
+  border-radius: 8px !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.btnstyle {
+  padding: 10px 16px;
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: none;
+}
+.btn-ghost,
+.btnstyle {
+  transition: transform 0.2s var(--ease), border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-ghost:hover,
+.btnstyle:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent) !important;
+  background: #17223b;
+  color: var(--accent) !important;
+  box-shadow: 0 8px 22px -12px rgba(45, 212, 191, 0.6);
+}
+.btn-outline-light {
+  --bs-btn-color: var(--muted);
+  --bs-btn-border-color: var(--line-2);
+}
+
+/* ==========================================================================
+   5. SIDEBAR — ACCORDIONS, FETCHED JOBS, LEGEND
+   ========================================================================== */
+
+/* ---- accordions (Demo circuit tab) ---- */
+.accordion,
+.accordion-item {
+  --bs-accordion-bg: transparent;
+  --bs-accordion-border-color: var(--line);
+  --bs-accordion-color: var(--text);
+  border-color: var(--line) !important;
+  background: transparent !important;
+}
+.accordion-header {
+  margin-bottom: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.accordion-button,
+.accordion-button:not(.collapsed) {
+  border-radius: 8px !important;
+  background: var(--panel-2) !important;
+  background-image: none !important;
+  color: var(--text) !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+.accordion-button:hover {
+  color: var(--accent) !important;
+}
+.accordion-button::after {
+  filter: invert(1) brightness(1.6);
+}
+.accordion-body,
+#accordionFlushRegions .accordion-body {
+  background: transparent !important;
+  color: var(--text) !important;
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+#accordionFlushExample,
+#accordionFlushRegions {
+  border: 0 !important;
+}
+#accordionFlushRegions.border {
+  border: 1px solid var(--line) !important;
+  border-radius: 8px;
+}
+.form-check-label,
+.form-check-label1,
+.form-check-input:checked + .form-check-label {
+  color: var(--text) !important;
+}
+.region-labels {
+  color: var(--muted);
+}
+
+/* ---- fetched jobs ---- */
+.jobs-empty {
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px dashed var(--line-2);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+#fetchedJobsDiv:not(.d-none) ~ .jobs-empty {
+  display: none;
+}
+/* long job lists scroll inside the card instead of stretching the sidebar */
+#fetched-jobs-list {
+  max-height: 360px;
+  padding-right: 4px;
+  overflow-y: auto;
+}
+#fetched-jobs-list > div {
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.job-button {
+  padding: 0.6rem !important;
+  border: 1px solid var(--line-2) !important;
+  border-radius: 8px !important;
+  background: var(--panel-2) !important;
+  color: var(--text) !important;
+  font-family: var(--sans) !important;
+  font-size: 0.85rem !important;
+  font-weight: 500;
+  line-height: 1.3;
+  transition: transform 0.15s var(--ease), background 0.2s, box-shadow 0.2s;
+}
+.job-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -12px rgba(45, 212, 191, 0.6);
+}
+.job-button svg {
+  width: 16px;
+  fill: currentColor;
+}
+.job-success {
+  border-color: #1b5a56 !important;
+  background: rgba(45, 212, 191, 0.14) !important;
+  color: var(--accent) !important;
+}
+.job-success:hover {
+  background: rgba(45, 212, 191, 0.28) !important;
+}
+.job-pending {
+  background: rgba(245, 158, 11, 0.14) !important;
+  color: var(--warn) !important;
+}
+.job-pending:hover {
+  background: rgba(245, 158, 11, 0.28) !important;
+}
+.job-failed {
+  background: rgba(239, 68, 68, 0.14) !important;
+  color: #f87171 !important;
+}
+.job-failed:hover {
+  background: rgba(239, 68, 68, 0.3) !important;
+}
+
+/* ---- legend + neuron counts (hidden until main.js reveals it) ---- */
+#Neurons_firing_attributes {
+  height: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-width: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--panel);
+  color: var(--text);
+}
+#Neurons_firing_attributes[style*="visibility: visible"] {
+  height: auto;
+  padding: 12px 14px !important;
+  border: 1px solid var(--line);
+  overflow: visible;
+  background: linear-gradient(180deg, rgba(18, 27, 47, 0.85), rgba(13, 20, 36, 0.85));
+  box-shadow: 0 10px 30px -16px rgba(0, 0, 0, 0.8);
+}
+#Neurons_firing_attributes .rounded-circle {
+  box-shadow: 0 0 10px currentColor;
+}
+
+/* ==========================================================================
+   6. TOP CONTROL BAR
+   ========================================================================== */
+.control-panel {
+  --bs-gutter-x: 1.2rem;
+  flex: 0 0 auto;
+  margin: 0 !important;
+  padding: 12px 18px !important;
+  align-items: flex-end !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(18, 27, 47, 0.8), rgba(13, 20, 36, 0.8)) !important;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px -16px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  font-family: var(--sans);
+}
+.control-panel .form-label,
+.control-panel .ncv-inline-label span {
+  margin-bottom: 8px;
+  color: var(--muted) !important;
+  font-family: var(--mono);
+  font-size: 0.68rem !important;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.control-panel .ncv-select {
+  min-width: 240px;
+  height: 44px;
+  font-size: 0.92rem;
+}
+.control-panel .ncv-input {
+  width: 92px;
+  max-width: 92px;
+  height: 44px;
+  font-family: var(--mono);
+}
+
+/* transport buttons */
+.ncv-btn {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 1rem;
+  transition: transform 0.15s var(--ease), border-color 0.2s, background 0.2s;
+}
+.ncv-btn:hover {
+  border-color: var(--accent);
+  background: #17223b;
+}
+.ncv-btn:active {
+  transform: scale(0.94);
+}
+#startbtn {
+  border-color: var(--accent);
+  background: var(--grad);
+  color: var(--accent-ink);
+  box-shadow: var(--glow);
+  animation: pulse 2.6s ease-in-out infinite;
+}
+#startbtn:hover {
+  transform: translateY(-1px);
+}
+
+/* time readout */
+#time {
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+#time span {
+  color: var(--muted);
+}
+#time #current-time {
+  color: #9ff3e6;
+  text-shadow: 0 0 12px rgba(45, 212, 191, 0.5);
+}
+
+/* timeline slider */
+.ncv-range,
+#timebar,
+#timebar:hover {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px !important;
+  margin-top: 10px;
+  border-radius: 999px !important;
+  background: var(--line-2) !important;
+}
+.ncv-range::-webkit-slider-thumb,
+#timebar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: var(--grad) !important;
+  box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.2), 0 0 14px rgba(45, 212, 191, 0.7);
+}
+.ncv-range::-moz-range-thumb,
+#timebar::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: var(--accent) !important;
+  box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.2);
+}
+
+/* workflow-id include */
+.app-main .d-flex.flex-column.mx-auto {
+  align-items: stretch;
+  gap: 6px;
+}
+.app-main .d-flex.flex-column.mx-auto .btn {
+  padding: 10px 18px !important;
+  border: 1px solid var(--line-2) !important;
+  border-radius: 8px !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+.app-main .d-flex.flex-column.mx-auto .btn:hover {
+  transform: none !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+.lbljobid {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #6f7d95;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 400;
+  text-align: right;
+}
+
+/* ==========================================================================
+   7. STAGE — CANVAS, TOOLBAR, FLOATING PANELS, HUD WIDGETS, DOCK
+   --------------------------------------------------------------------------
+   .stage is the positioning context for everything floating over the canvas.
+   .viz-toolbar covers the whole stage (click-through) so that #panel and
+   .playback-container — which main.js places inside it — are positioned
+   relative to the stage, not to the little button row.
+   ========================================================================== */
+.stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: radial-gradient(circle at 50% 45%, rgba(45, 212, 191, 0.05), transparent 55%), radial-gradient(circle, #1a2338 1px, transparent 1.4px) 0 0 / 22px 22px, #060a12 !important;
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.65), 0 20px 50px -24px rgba(0, 0, 0, 0.9);
+}
+/* gradient hairline border */
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.35), transparent 22%, transparent 78%, rgba(56, 189, 248, 0.28));
+  -webkit-mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+#neuronCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  border: 0;
+  background: transparent;
+}
+#hudCanvas {
+  top: 0;
+  left: 0;
+}
+
+/* ---- toolbar (full-stage, click-through) ---- */
+.viz-toolbar {
+  position: absolute !important;
+  inset: 0;
+  z-index: 1000;
+  width: auto !important;
+  padding: var(--gap);
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 8px;
+  pointer-events: none;
+}
+.viz-toolbar > * {
+  pointer-events: auto;
+}
+
+#togglePanelBtn,
+#btnopen {
+  position: static !important;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  padding: 11px 16px;
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: none;
+  transition: transform 0.2s var(--ease), border-color 0.2s, box-shadow 0.2s, color 0.2s;
+}
+/* main.js sets display:block inline once a circuit is ready */
+#togglePanelBtn[style*="block"],
+#btnopen[style*="block"] {
+  display: inline-flex !important;
+}
+#togglePanelBtn:hover,
+#btnopen:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 10px 26px -12px rgba(45, 212, 191, 0.7);
+}
+#togglePanelBtn i,
+#btnopen i {
+  color: var(--accent);
+}
+
+/* ---- floating panels ---- */
+.playback-container,
+#panel {
+  position: absolute !important;
+  z-index: 999;
+  transform: none !important;
+  border: 1px solid var(--line-2) !important;
+  border-radius: 12px !important;
+  background: var(--glass) !important;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* playback panel — right, under the buttons */
+.playback-container {
+  top: 68px !important;
+  right: 318px !important; /* sits left of the visualization panel */
+  left: auto !important;
+  width: 300px !important;
+  min-width: 0;
+  max-width: calc(100% - 28px);
+  padding: 14px 16px !important;
+  color: var(--text);
+}
+.playback-container .config-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 8px;
+  margin-bottom: 14px;
+}
+.playback-container .config-row:last-child {
+  margin-bottom: 0;
+}
+.playback-container .config-row > label {
+  grid-column: 1;
+  grid-row: 1;
+  margin: 0;
+  color: var(--text);
+  font-size: 0.82rem;
+}
+.playback-container .slider-wrapper {
+  display: contents;
+}
+.playback-container .slider-wrapper .value-box {
+  grid-column: 2;
+  grid-row: 1;
+  width: 74px;
+  padding: 4px 8px;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+}
+.playback-container .slider-wrapper input[type="range"] {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line-2);
+}
+.playback-container .slider-wrapper input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--grad);
+  box-shadow: 0 0 12px rgba(45, 212, 191, 0.7);
+}
+.playback-container .slider-wrapper input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.playback-container .slider-wrapper input[type="range"]::-moz-range-track {
+  height: 6px;
+  background: var(--line-2);
+}
+
+/* visualization-controls panel (lil-gui) — left */
+#panel {
+  top: 68px !important; /* directly under the buttons */
+  right: var(--gap) !important;
+  left: auto !important;
+  width: 290px !important;
+  max-height: calc(100% - 68px - 78px); /* stops above the neuron popup / dock */
+  overflow-y: auto;
+}
+#panel #gui {
+  width: 100%;
+  padding: 8px;
+  background-color: transparent !important;
+  /* lil-gui theme variables */
+  --background-color: transparent;
+  --title-background-color: var(--panel-2);
+  --title-text-color: var(--text);
+  --widget-color: var(--panel-2);
+  --hover-color: #17223b;
+  --focus-color: #1d2a47;
+  --number-color: var(--accent);
+  --string-color: var(--accent);
+  --text-color: var(--text);
+  --font-family: var(--sans);
+}
+#gui .title,
+#gui .controller,
+#gui .children,
+#gui .children input,
+#gui .gui-inline-row,
+#gui .cam-grid {
+  color: var(--text) !important;
+}
+#gui .title {
+  background-color: var(--panel-2);
+}
+#gui .controller,
+#gui .children,
+#gui .children input {
+  background-color: transparent !important;
+}
+#gui .gui-inline-row,
+#gui .cam-grid {
+  background: transparent !important;
+}
+#gui .controller .slider {
+  background: var(--panel-2);
+}
+#gui .fill {
+  background: var(--accent);
+}
+#gui .gui-inline-row button,
+#gui .cam-grid button {
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--text);
+}
+#gui .gui-inline-row button:hover,
+#gui .cam-grid button:hover {
+  border-color: var(--accent);
+  background: #17223b;
+}
+#panel::-webkit-scrollbar {
+  width: 4px;
+}
+#panel::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: 4px;
+}
+
+/* ---- HUD widgets ---- */
+#spikeTableWidget {
+  position: absolute !important;
+  top: var(--gap) !important;
+  left: var(--gap) !important;
+  right: auto !important;
+  z-index: 998;
+  transform: none !important;
+}
+#spikeTable {
+  --bs-table-bg: var(--panel);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+#rec-indicator {
+  position: absolute !important;
+  top: 64px !important;
+  left: 18px !important;
+  z-index: 1001;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+
+/* neuron / spike counters — bottom centre */
+#networkspikes {
+  position: absolute !important;
+  bottom: var(--gap) !important;
+  left: 50% !important;
+  right: auto !important;
+  z-index: 999;
+  flex-direction: row !important;
+  transform: translateX(-50%);
+}
+#networkspikes .badge {
+  border: 1px solid rgba(45, 212, 191, 0.3);
+  background: var(--glass) !important;
+  backdrop-filter: blur(10px);
+  color: #d7f8f2 !important;
+  font-family: var(--mono);
+  font-weight: 500;
+  box-shadow: 0 8px 22px -12px rgba(0, 0, 0, 0.9);
+}
+#lblnetwork::before,
+#lblspikes::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  vertical-align: middle;
+}
+#lblspikes::before {
+  background: #fbbf24;
+  box-shadow: 0 0 10px #fbbf24;
+}
+
+/* connections selector — bottom left (main.js reveals it) */
+.connection-panel {
+  position: absolute !important;
+  inset: auto auto var(--gap) var(--gap) !important;
+  z-index: 999;
+  visibility: hidden;
+  gap: 10px;
+  padding: 8px 12px !important;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: var(--glass) !important;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 26px -14px rgba(0, 0, 0, 0.9);
+}
+.connection-panel label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.connection-panel select {
+  min-height: 0;
+  padding: 8px 32px 8px 12px;
+  border: 1px solid var(--line-2) !important;
+  border-radius: 8px;
+  background-color: var(--bg-2) !important;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+}
+
+/* simulation-log + record dock — bottom right */
+.dock {
+  position: absolute;
+  right: var(--gap);
+  bottom: var(--gap);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: var(--glass) !important;
+  backdrop-filter: blur(12px);
+  font-size: 0.82rem;
+  box-shadow: 0 10px 26px -14px rgba(0, 0, 0, 0.9);
+}
+.dock:has(#downloadLogBtn:not([hidden])),
+.dock:has(#startRecordingBtn[style*="block"]),
+.dock:has(#stopRecordingBtn[style*="block"]) {
+  display: flex;
+}
+.dock-sep {
+  align-self: stretch;
+  width: 1px;
+  background: var(--line-2);
+}
+#downloadLogBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.82rem;
+}
+#downloadLogBtn[hidden] {
+  display: none !important;
+}
+#downloadLogBtn:hover {
+  color: var(--accent);
+}
+#recordControls {
+  position: static !important;
+  display: flex;
+  align-items: center;
+  gap: 10px !important;
+  transform: none !important;
+}
+#startRecordingBtn,
+#stopRecordingBtn {
+  width: auto !important;
+  height: auto !important;
+  align-items: center;
+  gap: 8px;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--text);
+  font-size: 0.82rem;
+}
+#startRecordingBtn[style*="block"],
+#stopRecordingBtn[style*="block"] {
+  display: inline-flex !important;
+}
+#startRecordingBtn > div {
+  width: 9px !important;
+  height: 9px !important;
+  margin: 0 !important;
+  background: var(--warn) !important;
+  box-shadow: 0 0 10px var(--warn);
+  animation: blink 1.6s ease-in-out infinite;
+}
+#startRecordingBtn::after {
+  content: "Record";
+}
+#stopRecordingBtn > div {
+  width: 11px !important;
+  height: 11px !important;
+  margin: 0 !important;
+  border-radius: 2px !important;
+  background: #e2e8f0 !important;
+}
+#stopRecordingBtn::after {
+  content: "Stop";
+}
+
+/* ==========================================================================
+   8. EMPTY STATE
+   ========================================================================== */
+.empty-state {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+.empty-state > * {
+  pointer-events: auto;
+}
+.empty-state::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.14), transparent 65%);
+  filter: blur(10px);
+}
+.empty-state svg {
+  width: 84px;
+  height: 84px;
+  margin-bottom: 22px;
+  filter: drop-shadow(0 0 18px rgba(45, 212, 191, 0.55));
+  animation: float 5s ease-in-out infinite;
+}
+.empty-state h2 {
+  margin: 0 0 12px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #fff, #9ff3e6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.empty-state p {
+  max-width: 430px;
+  margin: 0 0 22px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+/* main.js makes #networkspikes visible once a circuit is loaded → hide this */
+#networkspikes[style*="visibility: visible"] ~ .empty-state {
+  display: none;
+}
+
+/* ==========================================================================
+   9. MISC WIDGETS
+   ========================================================================== */
+/* ---- loading overlay (main.js toggles display; we only restyle) ---- */
+#page-loader {
+  width: min(92vw, 460px);
+  max-width: 460px;
+  padding: 30px 32px 24px;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(18, 27, 47, 0.94), rgba(10, 16, 30, 0.94)) padding-box, linear-gradient(140deg, rgba(45, 212, 191, 0.7), rgba(38, 51, 79, 0.5) 45%, rgba(56, 189, 248, 0.5)) border-box;
+  backdrop-filter: blur(14px);
+  color: var(--text);
+  /* the huge spread shadow dims & focuses the whole page behind the card */
+  box-shadow: 0 0 0 100vmax rgba(4, 7, 14, 0.6), 0 30px 80px -20px rgba(0, 0, 0, 0.9), 0 0 60px -20px rgba(45, 212, 191, 0.45);
+  animation: pop 0.35s var(--ease) both;
+}
+#page-loader h3 {
+  margin: 18px 0 6px;
+  font-family: var(--sans);
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #fff, #9ff3e6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+#page-loader > img {
+  display: none; /* replaced by the orbit animation */
+}
+#msgprogress {
+  min-height: 1.4em;
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+#msgprogress small {
+  font-size: inherit;
+}
+#progress-percentage {
+  margin: 10px 0 0;
+  color: #9ff3e6;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+/* orbiting-neuron spinner */
+.ld-orbit {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  margin: 0 auto;
+}
+.ld-orbit i {
+  position: absolute;
+  inset: 30px;
+  border-radius: 50%;
+  background: var(--grad);
+  box-shadow: 0 0 22px var(--accent);
+  animation: core 1.8s ease-in-out infinite;
+}
+.ld-orbit span {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(45, 212, 191, 0.25);
+  animation: spin 2.4s linear infinite;
+}
+.ld-orbit span::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: calc(50% - 4px);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+}
+.ld-orbit span:nth-child(2) {
+  inset: 10px;
+  border-color: rgba(56, 189, 248, 0.25);
+  animation-duration: 1.7s;
+  animation-direction: reverse;
+}
+.ld-orbit span:nth-child(2)::before {
+  background: var(--accent-2);
+  box-shadow: 0 0 12px var(--accent-2);
+}
+.ld-orbit span:nth-child(3) {
+  inset: 20px;
+  border-color: rgba(251, 191, 36, 0.22);
+  animation-duration: 1.1s;
+}
+.ld-orbit span:nth-child(3)::before {
+  width: 6px;
+  height: 6px;
+  top: -3px;
+  left: calc(50% - 3px);
+  background: #fbbf24;
+  box-shadow: 0 0 10px #fbbf24;
+}
+
+/* progress bar: fills from the "NN%" text (see small script in index.html),
+   sweeps back and forth when no percentage is available */
+.ld-bar {
+  position: relative;
+  height: 6px;
+  margin: 0 auto;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--line-2);
+}
+.ld-bar i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 35%;
+  border-radius: inherit;
+  background: var(--grad);
+  box-shadow: 0 0 12px rgba(45, 212, 191, 0.7);
+  animation: sweep 1.3s var(--ease) infinite;
+}
+#page-loader[data-pct] .ld-bar i {
+  width: var(--pct, 0%);
+  animation: none;
+  transition: width 0.4s var(--ease);
+}
+#page-loader[data-pct] .ld-bar i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  background-size: 60% 100%;
+  background-repeat: no-repeat;
+  animation: shine 1.4s linear infinite;
+}
+
+.my-alert {
+  z-index: 100001;
+}
+.modal-content {
+  border: 1px solid var(--line-2);
+  background: var(--panel);
+  color: var(--text);
+}
+.table-light {
+  --bs-table-bg: var(--panel-2);
+  --bs-table-color: var(--text);
+}
+.progressbar {
+  display: none;
+}
+
+/* neuron info popup (position:fixed, outside the stage) — keep it clear of the dock */
+#neuron-popup {
+  right: 1.2rem;
+  bottom: 5.5rem;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: var(--glass) !important;
+  backdrop-filter: blur(12px);
+}
+
+/* scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-2) transparent;
+}
+.app-side::-webkit-scrollbar {
+  width: 6px;
+}
+.app-side::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: 6px;
+}
+.app-side::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* ==========================================================================
+   10. MOTION
+   ========================================================================== */
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.35), 0 0 0 0 rgba(45, 212, 191, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.35), 0 0 0 8px rgba(45, 212, 191, 0);
+  }
+}
+@keyframes blink {
+  50% {
+    opacity: 0.45;
+  }
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes core {
+  0%,
+  100% {
+    transform: scale(0.85);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+@keyframes sweep {
+  0% {
+    left: -40%;
+  }
+  100% {
+    left: 105%;
+  }
+}
+@keyframes shine {
+  from {
+    background-position: -80% 0;
+  }
+  to {
+    background-position: 180% 0;
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.card-panel,
+.playback-container,
+#panel {
+  animation: rise 0.4s var(--ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   11. RESPONSIVE
+   ========================================================================== */
+@media (max-width: 992px) {
+  html,
+  body,
+  .main-container {
+    height: auto;
+    overflow: auto;
+  }
+  .app-header {
+    height: auto;
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .app-nav {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .app-body {
+    grid-template-columns: 1fr;
+  }
+  .app-side {
+    height: auto !important;
+    overflow: visible;
+  }
+  .stage {
+    min-height: 70vh;
+  }
+}
+
+/* ---- 11b. tablet & phone refinements ---- */
+@media (max-width: 992px) {
+  /* bottom row would collide: lift the pill and dock above the counters */
+  .connection-panel {
+    inset: auto auto 56px var(--gap) !important;
+  }
+  .dock {
+    bottom: 56px;
+  }
+  .brand-logo {
+    height: 50px;
+  }
+  :root {
+    --header-h: 68px;
+  }
+}
+
+@media (max-width: 680px) {
+  .stage {
+    min-height: 78vh;
+  }
+  /* floating panels become full-width cards under the buttons */
+  #panel,
+  .playback-container {
+    left: var(--gap) !important;
+    right: var(--gap) !important;
+    width: auto !important;
+    top: 64px !important;
+    max-height: calc(100% - 64px - 110px);
+  }
+  .viz-toolbar {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-content: flex-start;
+    row-gap: 6px;
+  }
+  .viz-toolbar .btn,
+  .viz-toolbar > button {
+    font-size: 0.78rem;
+    padding: 7px 10px;
+  }
+  .visualizer-title {
+    font-size: 0.95rem;
+  }
+  .brand-divider {
+    display: none;
+  }
+  .app-nav {
+    font-size: 0.85rem;
+    gap: 10px;
+  }
+  .app-nav a span {
+    display: none;
+  } /* icons only if links wrap text in spans */
+  #spikeTableWidget {
+    max-width: calc(100% - 2 * var(--gap));
+  }
+  #neuron-popup {
+    left: var(--gap);
+    right: var(--gap);
+    bottom: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-logo {
+    height: 40px;
+  }
+  .app-header {
+    gap: 6px;
+  }
+  .visualizer-title {
+    font-size: 0.85rem;
+  }
+  .app-side,
+  .app-main {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .dock {
+    right: var(--gap);
+    left: var(--gap);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  #networkspikes {
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .viz-toolbar {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+  .viz-toolbar .btn,
+  .viz-toolbar > button {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
+    font-size: 0.7rem;
+    padding: 7px 6px;
+  }
+}
+
+/* ---- 11c. stop off-screen alert from widening the page on phones ----
+   alert.css parks the hidden .my-alert at translateX(150%) with position:absolute,
+   which enlarges the layout viewport so mobile browsers zoom the page out. */
+.my-alert {
+  position: fixed !important;
+  max-width: calc(100vw - 32px);
+  width: max-content;
+}
+@media (max-width: 992px) {
+  html,
+  body {
+    overflow-x: hidden !important;
+    max-width: 100vw;
+  }
+  .my-alert {
+    right: 16px !important;
+    bottom: 16px !important;
+  }
+}
+
+/* ==========================================================================
+   12. MORE ROOM FOR THE 3D STAGE (desktop / laptop)
+   Slimmer header, one-line control bar, narrower sidebar, tighter gaps.
+   ========================================================================== */
+@media (min-width: 993px) {
+  :root {
+    --header-h: 68px;
+    --gap: 10px;
+  }
+  .brand-logo {
+    height: 54px;
+  }
+  .brand-divider {
+    height: 30px;
+  }
+
+  /* sidebar a little narrower → wider stage */
+  .app-body {
+    grid-template-columns: clamp(340px, 22vw, 460px) minmax(0, 1fr);
+  }
+  .app-main {
+    gap: 10px;
+  }
+
+  /* control bar: one compact row */
+  .control-panel {
+    padding: 6px 14px !important;
+    align-items: center !important;
+    --bs-gutter-x: 1rem;
+  }
+  .control-panel > * {
+    margin-top: 0 !important;
+  }
+  .control-panel .form-label {
+    margin: 0 0 3px;
+    font-size: 0.6rem !important;
+    line-height: 1;
+  }
+  .control-panel .ncv-select {
+    height: 34px;
+    min-width: 210px;
+    font-size: 0.85rem;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  .control-panel .ncv-input {
+    height: 30px;
+    width: 78px;
+    max-width: 78px;
+    font-size: 0.8rem;
+  }
+  .ncv-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 0.9rem;
+  }
+  #time {
+    font-size: 0.8rem;
+  }
+  .ncv-range,
+  #timebar,
+  #timebar:hover {
+    margin-top: 4px;
+  }
+
+  /* START / END sit beside their inputs instead of above them */
+  .control-panel .ncv-inline-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+  }
+  .control-panel .ncv-inline-label span {
+    margin: 0;
+  }
+
+  /* workflow-id block: keep compact */
+  .control-panel .btn {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-size: 0.8rem;
+  }
+  .lbljobid {
+    font-size: 0.66rem;
+  }
+}
+
+/* very large / ultra-wide monitors: let the sidebar stay readable but not grow */
+@media (min-width: 1700px) {
+  .app-body {
+    grid-template-columns: clamp(380px, 21vw, 460px) minmax(0, 1fr);
+  }
+}
+
+/* ==========================================================================
+   12b. ULTRA-COMPACT CONTROL BAR (desktop) — ~56px tall
+   ========================================================================== */
+@media (min-width: 993px) {
+  .control-panel {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 14px;
+    padding: 6px 12px !important;
+    min-height: 0;
+  }
+  .control-panel > [class*="col"] {
+    width: auto !important;
+    max-width: none !important;
+    flex: 0 0 auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .control-panel > .col-lg {
+    flex: 1 1 0 !important;
+    min-width: 220px;
+  }
+  .control-panel > .ms-md-auto {
+    margin-left: auto !important;
+  }
+
+  /* small captions above dropdown / transport buttons */
+  .control-panel .form-label {
+    display: block !important;
+    margin: 0 0 3px !important;
+    font-size: 0.58rem !important;
+    line-height: 1;
+    letter-spacing: 0.14em;
+  }
+
+  .control-panel .ncv-select {
+    height: 32px;
+    min-width: 190px;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  .ncv-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+  }
+  .control-panel .ncv-input {
+    height: 28px;
+    width: 70px;
+    max-width: 70px;
+    padding: 0 8px;
+    font-size: 0.78rem;
+  }
+
+  /* START / END beside their boxes, on the same line as the time readout */
+  .control-panel .ncv-inline-label {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin: 0 !important;
+  }
+  .control-panel .ncv-inline-label span {
+    margin: 0 !important;
+    font-size: 0.6rem !important;
+  }
+  .control-panel .col-lg > div:first-child {
+    margin: 0;
+  }
+  .control-panel .ncv-range,
+  .control-panel #timebar {
+    margin: 2px 0 0 !important;
+  }
+
+  /* New workflow + NCV id */
+  .control-panel .btn {
+    padding: 3px 12px !important;
+    font-size: 0.78rem !important;
+    line-height: 1.3;
+  }
+  .control-panel .lbljobid {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.62rem;
+    text-align: right;
+  }
+}
+
+/* ==========================================================================
+   13. LEGEND ON STAGE · FOCUS MODE · HEADER TWEAK
+   ========================================================================== */
+/* legend + neuron counts now live inside the stage (top-left glass card) */
+.stage > #Neurons_firing_attributes {
+  position: absolute;
+  top: var(--gap);
+  left: var(--gap);
+  z-index: 900;
+  width: 270px;
+  pointer-events: none;
+  font-size: 0.78rem;
+}
+.stage > #Neurons_firing_attributes[style*="visibility: visible"] {
+  padding: 10px 14px !important;
+  border: 1px solid var(--line-2);
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 26px -14px rgba(0, 0, 0, 0.9);
+  pointer-events: auto;
+}
+.stage > #Neurons_firing_attributes .row {
+  --bs-gutter-x: 0.5rem;
+  margin-bottom: 0;
+}
+.stage > #Neurons_firing_attributes .small,
+.stage > #Neurons_firing_attributes .stats-block {
+  font-size: 0.74rem !important;
+}
+.stage > #Neurons_firing_attributes .rounded-circle {
+  width: 11px !important;
+  height: 11px !important;
+}
+.stage > #Neurons_firing_attributes .mb-2 {
+  margin-bottom: 4px !important;
+}
+.stage > #Neurons_firing_attributes .stats-block {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+/* keep the spike table clear of the legend */
+#spikeTableWidget {
+  left: 300px !important;
+}
+
+/* focus mode button (sits left of the other two toolbar buttons) */
+#focusBtn {
+  position: static !important;
+  order: 9;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: transform 0.2s var(--ease), border-color 0.2s, box-shadow 0.2s, color 0.2s;
+}
+#togglePanelBtn[style*="block"] ~ #focusBtn {
+  display: inline-flex;
+}
+#focusBtn:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 10px 26px -12px rgba(45, 212, 191, 0.7);
+}
+#focusBtn i {
+  color: var(--accent);
+}
+
+body.focus-mode .app-header,
+body.focus-mode .app-side {
+  display: none !important;
+}
+body.focus-mode .app-body {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 993px) {
+  :root {
+    --header-h: 72px;
+  }
+  .brand-logo {
+    height: 48px;
+  }
+}
+@media (max-width: 992px) {
+  #focusBtn {
+    display: none !important;
+  }
+  .stage > #Neurons_firing_attributes {
+    width: 230px;
+  }
+  #spikeTableWidget {
+    left: var(--gap) !important;
+    top: 150px !important;
+  }
+}
+
+/* ==========================================================================
+   14. UPLOAD TAB + LEGEND — cleaner text
+   ========================================================================== */
+/* three equal format buttons in one row */
+#tab-upload .d-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px !important;
+}
+#tab-upload .btnstyle {
+  padding: 11px 6px !important;
+  font-size: 0.8rem !important;
+  white-space: nowrap;
+}
+
+/* help text → three tidy rows with icons */
+.upload-notes {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.upload-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.upload-note > i {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  background: rgba(45, 212, 191, 0.08);
+  color: var(--accent);
+  font-size: 0.95rem;
+}
+.upload-note strong {
+  display: block;
+  margin-bottom: 1px;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.upload-note span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+/* info button: small, top-right of the card */
+.upload-info {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.upload-info .btn {
+  padding: 3px !important;
+  border: 1px solid var(--line-2) !important;
+  border-radius: 8px !important;
+  background: var(--panel-2) !important;
+  line-height: 1;
+}
+.upload-info img {
+  height: 18px !important;
+  filter: saturate(1.2);
+}
+
+/* legend: one-line labels, smaller dots, calmer table */
+#Neurons_firing_attributes > .row > [class*="col"] {
+  flex: 0 0 50%;
+  max-width: 50%;
+  padding-left: 0;
+  padding-right: 4px;
+}
+#Neurons_firing_attributes .small {
+  font-size: 0.78rem !important;
+  white-space: nowrap;
+  color: var(--text);
+}
+#Neurons_firing_attributes .rounded-circle {
+  width: 12px !important;
+  height: 12px !important;
+  margin-right: 8px !important;
+}
+#Neurons_firing_attributes .stats-block {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+#Neurons_firing_attributes .stats-block .d-flex {
+  padding: 3px 0 !important;
+  font-size: 0.78rem !important;
+}
+#Neurons_firing_attributes .stats-block strong {
+  color: var(--muted);
+  font-weight: 500;
+}
+#Neurons_firing_attributes .stats-block .d-flex > span:last-child {
+  color: var(--text);
+  font-family: var(--mono);
+  font-weight: 500;
+}
+#Neurons_firing_attributes .stats-block .d-flex:first-child > span:last-child {
+  color: #9ff3e6;
+}
+
+/* ==========================================================================
+   15. DISABLED BUTTONS · INFO ICONS · SONATA BUTTON FIT
+   ========================================================================== */
+.btnstyle:disabled,
+.btnstyle[disabled] {
+  background: var(--panel) !important;
+  border-color: var(--line) !important;
+  color: #5d6c88 !important;
+  opacity: 1;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+/* info buttons: icon instead of white-square image */
+.btn-outline-light[data-bs-toggle="modal"] {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  min-height: 38px;
+  padding: 0 !important;
+  border: 1px solid var(--line-2) !important;
+  border-radius: 8px !important;
+  background: var(--panel-2) !important;
+  color: var(--accent) !important;
+  font-size: 1.05rem;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.btn-outline-light[data-bs-toggle="modal"]:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent) !important;
+  box-shadow: 0 8px 22px -12px rgba(45, 212, 191, 0.7);
+}
+.upload-info .btn {
+  width: 32px;
+  min-height: 32px;
+  font-size: 0.95rem;
+}
+/* connection row: button grows, info icon matches its height */
+.d-flex.gap-2.col-10 {
+  align-items: stretch;
+}
+.d-flex.gap-2.col-10 > .btnstyle {
+  flex: 1 1 auto;
+}
+/* 3-up upload buttons: keep "SONATA files" inside its box */
+#tab-upload .btnstyle {
+  padding: 11px 4px !important;
+  font-size: 0.76rem !important;
+  letter-spacing: 0;
+}
+
+/* ==========================================================================
+   16. REGION SWITCHES — no text running out of the box
+   ========================================================================== */
+#collapseRegion .container {
+  padding: 0 12px;
+  max-width: 100%;
+}
+#collapseRegion .row {
+  --bs-gutter-x: 0.4rem;
+}
+#collapseRegion .row > [class*="col-"] {
+  min-width: 0;
+  padding-left: 0.2rem;
+  padding-right: 0.2rem;
+}
+#collapseRegion .form-check.form-switch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+#collapseRegion .form-switch .form-check-input {
+  float: none;
+  margin: 0;
+  flex: none;
+}
+#collapseRegion .form-check-label {
+  max-width: 100%;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+#collapseRegion .region-labels {
+  font-size: 0.64rem;
+}
+/* long accordion titles: slightly smaller so they wrap less */
+.accordion-button {
+  font-size: 0.86rem;
+}
+
+/* ==========================================================================
+   17. FULL RESPONSIVE PASS
+   Tiers:  ≥1280 desktop · 993–1279 small laptop · 681–992 tablet ·
+           ≤680 phone · short landscape · touch devices
+   ========================================================================== */
+
+/* mobile browsers: use the real visible height */
+@media (min-width: 993px) {
+  .main-container {
+    height: 100dvh;
+  }
+}
+
+/* ---- small laptop 993–1279: control bar wraps into two tidy rows ---- */
+@media (min-width: 993px) and (max-width: 1279px) {
+  .control-panel {
+    flex-wrap: wrap !important;
+    row-gap: 6px;
+  }
+  .control-panel > .col-lg {
+    order: 5;
+    flex: 1 1 100% !important;
+    min-width: 0;
+  }
+  .control-panel .ncv-select {
+    min-width: 170px;
+  }
+  .control-panel > .ms-md-auto {
+    margin-left: auto !important;
+  }
+}
+
+/* ---- ≤1200: lift the bottom-left pill and bottom-right dock above the counters ---- */
+@media (max-width: 1200px) {
+  .connection-panel {
+    inset: auto auto 54px var(--gap) !important;
+  }
+  .dock {
+    bottom: 54px;
+  }
+  #panel {
+    max-height: calc(100% - 68px - 120px);
+  }
+}
+
+/* ---- tablet & below (≤992): scrolling page, compact header, compact control bar ---- */
+@media (max-width: 992px) {
+  :root {
+    --gap: 10px;
+    --header-h: 64px;
+  }
+
+  /* header: brand left · nav right, one row while it fits */
+  .app-header {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    padding: 8px 14px;
+    gap: 12px;
+    height: auto;
+    min-height: var(--header-h);
+  }
+  .brand {
+    min-width: 0;
+    gap: 10px;
+  }
+  .brand-logo {
+    height: 44px;
+  }
+  .visualizer-title {
+    font-size: 1rem;
+  }
+  .app-nav {
+    flex-wrap: nowrap;
+    gap: 14px;
+    margin-left: auto;
+  }
+  .app-nav a.nav-item-link {
+    font-size: 0.85rem;
+    padding: 4px 0;
+    white-space: nowrap;
+  }
+  #login-button,
+  #logout-button {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .app-body {
+    padding: var(--gap);
+    gap: var(--gap);
+  }
+  .app-side {
+    padding: 0 !important;
+  }
+  .app-main {
+    gap: var(--gap);
+  }
+
+  /* control bar: row 1 = dropdown · transport · workflow, row 2 = timeline */
+  .control-panel {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: flex-end !important;
+    gap: 10px 14px;
+    padding: 10px 12px !important;
+  }
+  .control-panel > [class*="col"] {
+    width: auto !important;
+    max-width: none !important;
+    flex: 0 0 auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .control-panel > :first-child {
+    flex: 1 1 220px !important;
+  }
+  .control-panel .ncv-select {
+    width: 100%;
+    min-width: 0;
+    height: 38px;
+  }
+  .control-panel > .col-lg {
+    order: 5;
+    flex: 1 1 100% !important;
+    min-width: 0;
+  }
+  .control-panel > .ms-md-auto {
+    margin-left: auto !important;
+  }
+  .control-panel .form-label {
+    display: block !important;
+    margin: 0 0 4px !important;
+    font-size: 0.6rem !important;
+    line-height: 1;
+  }
+  .ncv-btn {
+    width: 38px;
+    height: 38px;
+  }
+  .control-panel .ncv-input {
+    height: 32px;
+    width: 74px;
+    max-width: 74px;
+  }
+  .control-panel .ncv-inline-label {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 6px !important;
+    margin: 0 !important;
+  }
+  .control-panel .ncv-inline-label span {
+    margin: 0 !important;
+  }
+  .control-panel .lbljobid {
+    display: block;
+    text-align: right;
+  }
+
+  .stage {
+    min-height: clamp(420px, 70vh, 780px);
+  }
+  .stage > #Neurons_firing_attributes {
+    width: 230px;
+  }
+  #panel {
+    max-height: calc(100% - 68px - 130px);
+  }
+  /* a sidebar legend sits fine in one wide row */
+  #Neurons_firing_attributes > .row > [class*="col"] {
+    flex: 0 0 50%;
+  }
+}
+
+/* ---- phone (≤680) ---- */
+@media (max-width: 680px) {
+  .app-header {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    padding: 8px 12px;
+  }
+  .brand {
+    flex: 1 1 auto;
+  }
+  .app-nav {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    margin: 0;
+    gap: 6px 16px;
+  }
+  .app-nav .auth-slot,
+  .app-nav #login-button,
+  .app-nav #logout-button {
+    margin-left: auto;
+    flex: none;
+  }
+  .visualizer-title {
+    font-size: 0.92rem;
+  }
+
+  .control-panel > :first-child {
+    flex: 1 1 100% !important;
+  }
+  .control-panel > .ms-md-auto {
+    margin-left: auto !important;
+  }
+
+  /* floating panels: full width cards; when both are open the viz panel sits below the playback one */
+  #panel,
+  .playback-container {
+    left: var(--gap) !important;
+    right: var(--gap) !important;
+    width: auto !important;
+    top: 60px !important;
+  }
+  #panel {
+    max-height: calc(100% - 60px - 165px);
+  }
+  .viz-toolbar:has(#playbackcontainer[style*="block"]) #panel {
+    top: 196px !important;
+    max-height: calc(100% - 196px - 165px);
+  }
+  .playback-container {
+    max-height: 130px;
+    overflow-y: auto;
+  }
+
+  /* bottom stack: counters · connections · dock */
+  .connection-panel {
+    inset: auto auto 54px var(--gap) !important;
+    max-width: calc(100% - 2 * var(--gap));
+  }
+  .dock {
+    left: var(--gap);
+    right: var(--gap);
+    bottom: 108px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  #networkspikes {
+    bottom: 10px !important;
+    width: max-content;
+    max-width: calc(100% - 2 * var(--gap));
+  }
+  #neuron-popup {
+    left: var(--gap);
+    right: var(--gap);
+    bottom: 150px;
+    max-width: none;
+  }
+  .empty-state h2 {
+    font-size: 1.25rem;
+  }
+  .empty-state p {
+    font-size: 0.88rem;
+  }
+  .card-panel {
+    padding: 14px;
+  }
+}
+
+/* ---- short landscape (phones on their side): page scrolls, stage stays usable ---- */
+@media (max-height: 520px) and (max-width: 992px) {
+  .stage {
+    min-height: 440px;
+  }
+  .app-header {
+    min-height: 52px;
+  }
+  .brand-logo {
+    height: 36px;
+  }
+  #panel {
+    max-height: 300px;
+  }
+  .viz-toolbar:has(#playbackcontainer[style*="block"]) #panel {
+    top: 60px !important;
+    max-height: 300px;
+  }
+  /* landscape has width to spare → side by side again */
+  .playback-container {
+    left: auto !important;
+    right: 318px !important;
+    width: 300px !important;
+    max-height: none;
+  }
+  #panel {
+    left: auto !important;
+    right: var(--gap) !important;
+    width: 290px !important;
+  }
+}
+
+/* ---- touch devices: comfortable tap targets ---- */
+@media (pointer: coarse) {
+  .ncv-btn {
+    width: 42px;
+    height: 42px;
+  }
+  .btnstyle,
+  .btn-ghost,
+  .btn-accent,
+  .side-tabs .nav-link {
+    min-height: 42px;
+  }
+  .accordion-button {
+    min-height: 44px;
+  }
+  .form-check-input {
+    width: 1.35em;
+    height: 1.35em;
+  }
+  .form-select,
+  .form-control {
+    min-height: 42px;
+  }
+  #togglePanelBtn,
+  #btnopen,
+  #focusBtn {
+    min-height: 42px;
+  }
+  .ncv-range,
+  #timebar {
+    height: 8px !important;
+  }
+}
+
+/* ---- very narrow phones (≤480) ---- */
+@media (max-width: 480px) {
+  .app-nav {
+    gap: 6px 12px;
+  }
+  .app-nav a.nav-item-link {
+    font-size: 0.8rem;
+    gap: 5px;
+  }
+  .app-nav a.nav-item-link i {
+    display: none;
+  }
+  #login-button,
+  #logout-button {
+    padding: 7px 12px;
+    font-size: 0.8rem;
+  }
+  .viz-toolbar button i {
+    display: none;
+  }
+  .viz-toolbar button {
+    justify-content: center;
+    text-align: center;
+  }
+}
+@media (max-height: 520px) and (max-width: 992px) {
+  #panel,
+  .viz-toolbar:has(#playbackcontainer[style*="block"]) #panel {
+    max-height: 250px;
+  }
+}
+@media (max-height: 520px) and (max-width: 992px) {
+  .dock {
+    left: auto;
+    right: var(--gap);
+    bottom: 54px;
+    flex-wrap: nowrap;
+  }
+  #panel,
+  .viz-toolbar:has(#playbackcontainer[style*="block"]) #panel {
+    max-height: 220px;
+  }
+}
+
+/* ==========================================================================
+   18. LOGO SIZE — change --logo-h to make the logo bigger or smaller
+   (the header grows automatically: --header-h should be --logo-h + 20px)
+   ========================================================================== */
+:root {
+  --logo-h: 64px;
+}
+@media (min-width: 993px) {
+  :root {
+    --logo-h: 68px;
+    --header-h: 88px;
+  }
+  .brand-logo {
+    height: var(--logo-h);
+  }
+  .brand-divider {
+    height: 40px;
+  }
+}
+@media (max-width: 992px) {
+  :root {
+    --logo-h: 52px;
+    --header-h: 70px;
+  }
+  .brand-logo {
+    height: var(--logo-h);
+  }
+}
+@media (max-width: 480px) {
+  :root {
+    --logo-h: 44px;
+    --header-h: 60px;
+  }
+}
