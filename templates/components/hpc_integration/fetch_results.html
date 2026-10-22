@@ -3,17 +3,18 @@
   <form id="fetch-jobs-form">
     {% csrf_token %}
     <div class="mb-3">
-      <label for="hpc-selector" class="form-label">Select HPC Platform:</label>
+      <label for="hpc-selector" class="form-label">HPC platform</label>
       <select class="form-select" id="hpc-selector" name="hpc">
-        <option id="JUSUF-SA" value="JUSUF - ServiceAccount">JUSUF - JSC (all users via service account)</option>
+        <option id="JUSUF-SA" value="JUSUF - ServiceAccount">JUSUF — JSC (all users via service account)</option>
         <option value="CINECA - G100">CINECA - G100 (icei project users)</option>
       </select>
     </div>
-    <button type="submit" class="btn btn-success w-100 d-flex-inline" id="fetch-job-button">
+    <button type="submit" class="btn btn-ghost w-100 justify-content-center" id="fetch-job-button">
       <div class="spinner-border spinner-border-sm d-none" role="status" id="fetch-job-spinner">
         <span class="visually-hidden">Loading...</span>
       </div>
-      Fetch jobs
+      <i class="bi bi-arrow-clockwise"></i>
+      Refresh
     </button>
   </form>
   <div id="fetchedJobsDiv" class="d-block d-none">
@@ -31,6 +32,7 @@
       </div>
     </div>
   </div>
+  <div class="jobs-empty">No fetched jobs yet. Submitted runs appear here when complete.</div>
 </div>
 <script>
   function addJobToList(jobId, details) {

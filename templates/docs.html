@@ -1,198 +1,295 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
   {% load static %}
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HCV - User Guide</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <title>NCV - User Guide</title>
+    <link rel="shortcut icon" href="{% static 'img/favicon.svg' %}" type="image/x-icon" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <style>
-      html,
+      /* ==========================================================================
+         NCV docs — same dark navy / teal design as the main page.
+         Presentation only: the guide text, figures and links are unchanged.
+         ========================================================================== */
+      :root {
+        --bg: #070b14; --bg-2: #0b1120; --panel: #0d1424; --panel-2: #121b2f;
+        --glass: rgba(13, 20, 36, 0.78); --line: #1c2740; --line-2: #26334f;
+        --text: #e6edf7; --muted: #8b97ab;
+        --accent: #2dd4bf; --accent-2: #38bdf8; --accent-ink: #04201c;
+        --grad: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+        --glow: 0 0 0 1px rgba(45, 212, 191, 0.35), 0 8px 28px -8px rgba(45, 212, 191, 0.55);
+        --radius: 10px; --gap: 14px;
+        --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
+        --logo-h: 68px; --header-h: 88px;
+      }
+      html { color-scheme: dark; scroll-behavior: smooth; scroll-padding-top: calc(var(--header-h) + 20px); }
+      html, body { overflow-x: hidden; }
       body {
-        overflow-x: hidden;
-        font-family: "Segoe UI", Roboto, sans-serif;
-        background-color: #f9f9f9;
-        color: #333;
-        scroll-behavior: smooth;
+        margin: 0; background: var(--bg) !important; color: var(--text);
+        font-family: var(--sans); font-size: 15px; line-height: 1.65;
       }
+      body::before {
+        content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+        background: radial-gradient(900px 520px at 8% -8%, rgba(45, 212, 191, 0.13), transparent 60%),
+                    radial-gradient(800px 600px at 100% 105%, rgba(56, 189, 248, 0.1), transparent 60%),
+                    radial-gradient(600px 400px at 60% 40%, rgba(99, 102, 241, 0.05), transparent 70%);
+      }
+      *, *::before, *::after { box-sizing: border-box; }
+      ::selection { background: rgba(45, 212, 191, 0.35); color: #fff; }
+      :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      * { scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+
+      /* ---------- header (same as the app) ---------- */
+      .app-header {
+        position: sticky; top: 0; z-index: 1000;
+        min-height: var(--header-h);
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 22px;
+        background: linear-gradient(180deg, rgba(14, 22, 40, 0.94), rgba(7, 11, 20, 0.88));
+        backdrop-filter: blur(10px);
+      }
+      .app-header::after {
+        content: ""; position: absolute; inset: auto 0 0 0; height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(45, 212, 191, 0.55) 30%, rgba(56, 189, 248, 0.45) 70%, transparent);
+      }
+      .brand { display: flex; align-items: center; gap: 14px; color: var(--text); text-decoration: none; min-width: 0; }
+      .brand-logo-link { display: flex; align-items: center; }
+      .brand-logo { display: block; height: var(--logo-h); width: auto; max-width: none; transition: transform 0.3s var(--ease), filter 0.3s; }
+      .brand-logo-link:hover .brand-logo { transform: scale(1.04); filter: drop-shadow(0 0 10px rgba(45, 212, 191, 0.45)); }
+      .brand-divider { width: 1px; height: 40px; background: linear-gradient(180deg, transparent, var(--line-2), transparent); }
       .visualizer-title {
-        font-size: 2rem;
-        font-weight: bold;
-        color: #ffffff;
-        margin: 0;
-        text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
-        letter-spacing: 1px;
-        transition: all 0.3s ease-in-out;
+        display: block; margin: 0; font-size: 1.12rem; font-weight: 700; line-height: 1.25;
+        background: linear-gradient(90deg, #fff 30%, #9ff3e6 100%);
+        -webkit-background-clip: text; background-clip: text;
+        -webkit-text-fill-color: transparent; color: transparent;
       }
-      @media (max-width: 768px) {
-        .visualizer-title {
-          font-size: 1.5rem;
-        }
+      .app-nav { display: flex; align-items: center; gap: 26px; }
+      .app-nav a.nav-item-link {
+        position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 6px 2px;
+        color: var(--text); font-size: 0.95rem; text-decoration: none; opacity: 0.92; transition: color 0.2s;
       }
-      h1,
-      h2,
-      h3,
-      h4 {
-        color: #00563f;
+      .app-nav a.nav-item-link::after {
+        content: ""; position: absolute; inset: auto 0 0 0; height: 2px; border-radius: 2px;
+        background: var(--grad); transform: scaleX(0); transform-origin: left; transition: transform 0.3s var(--ease);
       }
+      .app-nav a.nav-item-link:hover, .app-nav a.nav-item-link.is-current { color: var(--accent); opacity: 1; }
+      .app-nav a.nav-item-link:hover::after, .app-nav a.nav-item-link.is-current::after { transform: scaleX(1); }
+      .btn-app {
+        display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px;
+        background: var(--grad); color: var(--accent-ink) !important; font-size: 0.92rem; font-weight: 700;
+        text-decoration: none; box-shadow: var(--glow); transition: transform 0.2s var(--ease), box-shadow 0.2s;
+      }
+      .btn-app:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.6), 0 12px 30px -8px rgba(45, 212, 191, 0.75); }
+
+      /* ---------- two-column body: contents on the left, guide on the right ---------- */
+      .docs-shell {
+        position: relative; z-index: 1;
+        display: grid; grid-template-columns: clamp(240px, 19vw, 300px) minmax(0, 1fr);
+        gap: var(--gap); padding: var(--gap);
+        max-width: 1560px; margin: 0 auto; align-items: start;
+      }
+      .docs-side {
+        position: sticky; top: calc(var(--header-h) + var(--gap));
+        max-height: calc(100vh - var(--header-h) - 2 * var(--gap));
+        overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+      }
+      .card-panel {
+        padding: 18px; border: 1px solid transparent; border-radius: 12px;
+        background: linear-gradient(180deg, rgba(18, 27, 47, 0.85), rgba(13, 20, 36, 0.85)) padding-box,
+                    linear-gradient(160deg, rgba(45, 212, 191, 0.35), rgba(38, 51, 79, 0.6) 40%, rgba(56, 189, 248, 0.18)) border-box;
+        box-shadow: 0 10px 30px -14px rgba(0, 0, 0, 0.7);
+      }
+      .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+      .card-head h3 { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--text); font-size: 1.02rem; font-weight: 700; }
+      .card-head h3::before { content: ""; width: 4px; height: 16px; border-radius: 3px; background: var(--grad); box-shadow: 0 0 10px rgba(45, 212, 191, 0.7); }
+      .chip {
+        padding: 3px 10px; border: 1px solid rgba(45, 212, 191, 0.35); border-radius: 999px;
+        background: rgba(45, 212, 191, 0.08); color: #8ff0e1; font-family: var(--mono); font-size: 0.68rem;
+      }
+      .toc { display: flex; flex-direction: column; gap: 3px; }
+      .toc a {
+        display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+        border: 1px solid transparent; border-radius: 8px;
+        color: var(--muted); font-size: 0.88rem; font-weight: 600; text-decoration: none;
+        transition: color 0.2s, background 0.2s, border-color 0.2s;
+      }
+      .toc a i { color: var(--muted); font-size: 1rem; transition: color 0.2s; }
+      .toc a:hover { background: rgba(255, 255, 255, 0.04); color: var(--text); }
+      .toc a.active {
+        border-color: rgba(45, 212, 191, 0.45); color: #fff;
+        background: linear-gradient(180deg, #17223b, #121b2f); box-shadow: 0 0 18px -8px rgba(45, 212, 191, 0.6);
+      }
+      .toc a.active i { color: var(--accent); }
+      .help-card p { margin: 0 0 12px; color: var(--muted); font-size: 0.82rem; line-height: 1.5; }
+      .help-card .btn-app { width: 100%; justify-content: center; padding: 10px 14px; }
+      .side-foot { padding: 2px 4px; color: var(--muted); font-size: 0.78rem; }
+      .side-foot a { color: var(--accent); text-decoration: none; }
+
+      /* ---------- the guide itself ---------- */
+      .docs-main {
+        min-width: 0; padding: 34px clamp(20px, 3.4vw, 52px) 40px;
+        border: 1px solid transparent; border-radius: 12px;
+        background: linear-gradient(180deg, rgba(18, 27, 47, 0.7), rgba(13, 20, 36, 0.7)) padding-box,
+                    linear-gradient(160deg, rgba(45, 212, 191, 0.3), rgba(38, 51, 79, 0.55) 40%, rgba(56, 189, 248, 0.16)) border-box;
+        box-shadow: 0 20px 50px -24px rgba(0, 0, 0, 0.9);
+      }
+      .docs-main > * { max-width: 980px; margin-left: auto; margin-right: auto; }
+      .docs-main h1 {
+        margin: 0 auto 4px; font-size: clamp(1.5rem, 2.6vw, 2.1rem); font-weight: 700; line-height: 1.2;
+        background: linear-gradient(90deg, #fff 30%, #9ff3e6 100%);
+        -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+      }
+      .docs-main h1 + p { color: var(--muted); font-family: var(--mono); font-size: 0.8rem; margin-bottom: 2rem; }
+      .docs-main h2 {
+        display: flex; align-items: center; gap: 12px;
+        margin: 0 auto 1rem; padding-top: 0.4rem; color: var(--text); font-size: 1.4rem; font-weight: 700;
+      }
+      .docs-main h2::before { content: ""; flex: none; width: 4px; height: 22px; border-radius: 3px; background: var(--grad); box-shadow: 0 0 10px rgba(45, 212, 191, 0.7); }
+      .docs-main h3 { margin-top: 1.8rem; margin-bottom: 0.6rem; color: #9ff3e6; font-size: 1.15rem; font-weight: 700; }
+      .docs-main h4 { margin-top: 1.4rem; margin-bottom: 0.6rem; color: #9ff3e6; font-weight: 700; }
+      .docs-main h5 { color: var(--text); font-weight: 700; }
+      .docs-main section, .docs-main .section {
+        margin-bottom: 0; padding-bottom: 2.4rem; margin-top: 2.4rem;
+        border-top: 1px solid var(--line);
+        padding-top: 2.2rem;
+      }
+      .docs-main h1 + p + section { border-top: 0; margin-top: 0; padding-top: 0; }
+      .docs-main p, .docs-main li { color: #cbd5e3; }
+      .docs-main strong { color: var(--text); font-weight: 600; }
+      .docs-main em { color: #b6c2d6; }
+      .docs-main [style*="color: #374151"] { color: #cbd5e3 !important; }
+      .docs-main ul, .docs-main ol { padding-left: 1.4rem; }
+      .docs-main li { margin-bottom: 0.35rem; }
+      .docs-main li::marker { color: var(--accent); }
+      .docs-main a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(45, 212, 191, 0.35); transition: color 0.2s, border-color 0.2s; }
+      .docs-main a:hover { color: var(--accent-hover, #5eead4); border-color: var(--accent); }
       code {
-        background: #eee;
-        padding: 2px 4px;
-        border-radius: 4px;
-      }
-      .section {
-        margin-bottom: 3rem;
-        opacity: 0;
-        transform: translateY(40px);
-        transition: opacity 0.8s ease, transform 0.8s ease;
-      }
-      .section.visible {
-        opacity: 1;
-        transform: translateY(0);
-      }
-      .screenshot {
-        text-align: center;
-        margin-top: 1rem;
-        margin-bottom: 2rem;
-      }
-      .screenshot img {
-        max-width: 90%;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-      }
-      .screenshot img:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        padding: 2px 7px; border: 1px solid var(--line-2); border-radius: 6px;
+        background: rgba(7, 11, 20, 0.7); color: #9ff3e6; font-family: var(--mono); font-size: 0.84em;
       }
       .highlight {
-        background: #e0f7ea;
-        padding: 1rem;
-        border-radius: 5px;
-        margin: 1rem 0;
+        margin: 1.2rem 0; padding: 1.2rem 1.4rem; border: 1px solid rgba(45, 212, 191, 0.25);
+        border-left: 3px solid var(--accent); border-radius: 10px;
+        background: linear-gradient(180deg, rgba(45, 212, 191, 0.07), rgba(45, 212, 191, 0.02));
+        font-family: var(--sans);
       }
+      .highlight code { display: inline-block; margin: 0.6rem 0 0.2rem; }
+      .highlight p, .highlight li { color: #cbd5e3; font-family: var(--mono); font-size: 0.82rem; }
 
-      .screenshot video {
-        max-width: 100%;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      /* figures */
+      .screenshot { text-align: center; margin: 1.2rem 0 0.6rem; }
+      .screenshot img, .screenshot video {
+        max-width: 100%; height: auto; border: 1px solid var(--line-2); border-radius: 12px;
+        background: var(--bg-2); box-shadow: 0 14px 40px -18px rgba(0, 0, 0, 0.9);
+        transition: transform 0.3s var(--ease), box-shadow 0.3s, border-color 0.3s;
       }
-      .screenshot video:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      .screenshot img { max-width: 92%; }
+      .screenshot img:hover, .screenshot video:hover {
+        transform: scale(1.02); border-color: rgba(45, 212, 191, 0.5);
+        box-shadow: 0 18px 46px -16px rgba(0, 0, 0, 0.95), 0 0 30px -14px rgba(45, 212, 191, 0.6);
       }
+      .legend-figure { margin: 0.4rem 0 1.8rem; text-align: center; color: var(--muted) !important; font-size: 0.82rem; font-style: normal; font-family: var(--mono); }
+      .legend-list { list-style: none; padding: 0; }
+      .legend-item { display: flex; align-items: center; margin-bottom: 0.5rem; font-size: 1rem; }
+      .legend-dot { width: 14px; height: 14px; border-radius: 50%; margin-right: 10px; display: inline-block; }
+      .dot-blue { background-color: blue; } .dot-red { background-color: red; }
+      .dot-yellow { background-color: gold; } .dot-white { background-color: white; border: 1px solid #ccc; }
 
-      a {
-        color: #00796b;
-      }
+      /* scroll-in animation (JS adds .visible; harmless without JS) */
+      .section { opacity: 0; transform: translateY(24px); transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
+      .section.visible { opacity: 1; transform: none; }
+
       #backToTopBtn {
-        display: none;
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        z-index: 999;
-        background-color: #2f3542;
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        font-size: 20px;
-        cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        transition: background 0.3s, transform 0.3s;
+        display: none; position: fixed; right: 26px; bottom: 26px; z-index: 999;
+        width: 46px; height: 46px; border: 0; border-radius: 12px;
+        background: var(--grad); color: var(--accent-ink); font-size: 1.2rem; font-weight: 700; cursor: pointer;
+        box-shadow: var(--glow); transition: transform 0.2s var(--ease);
       }
-      #backToTopBtn:hover {
-        background-color: #1d4e29;
-        transform: scale(1.1);
-      }
+      #backToTopBtn:hover { transform: translateY(-2px); }
 
-      .legend-list {
-        list-style: none;
-        padding: 0;
+      /* ---------- responsive ---------- */
+      @media (max-width: 992px) {
+        :root { --logo-h: 56px; --header-h: 72px; }
+        .docs-shell { grid-template-columns: minmax(0, 1fr); }
+        .docs-side { position: static; max-height: none; }
+        .toc { flex-direction: row; flex-wrap: wrap; gap: 6px; }
+        .toc a { padding: 7px 12px; border-color: var(--line-2); font-size: 0.82rem; }
+        .help-card, .side-foot { display: none; }
+        .app-nav { gap: 16px; }
       }
-      .legend-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 0.5rem;
-        font-size: 1rem;
+      @media (max-width: 680px) {
+        .app-header { flex-wrap: wrap; row-gap: 6px; padding: 8px 12px; }
+        .brand { flex: 1 1 auto; }
+        .brand-divider { display: none; }
+        .visualizer-title { font-size: 0.95rem; }
+        .app-nav { flex: 1 1 100%; flex-wrap: wrap; gap: 6px 16px; }
+        .app-nav .btn-app { margin-left: auto; padding: 8px 14px; font-size: 0.85rem; }
+        .docs-main { padding: 22px 16px 28px; }
+        .docs-main h2 { font-size: 1.2rem; }
+        .screenshot img { max-width: 100%; }
       }
-      .legend-figure {
-        text-align: center;
-        font-style: italic;
+      @media (max-width: 480px) {
+        :root { --logo-h: 46px; }
+        .app-nav a.nav-item-link { font-size: 0.82rem; gap: 5px; }
+        .app-nav a.nav-item-link i { display: none; }
+        .visualizer-title { font-size: 0.85rem; }
       }
-      .legend-dot {
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        margin-right: 10px;
-        display: inline-block;
-      }
-      .dot-blue {
-        background-color: blue;
-      }
-      .dot-red {
-        background-color: red;
-      }
-      .dot-yellow {
-        background-color: gold;
-      }
-      .dot-white {
-        background-color: white;
-        border: 1px solid #ccc;
-      }
-      .header-icon {
-        height: 24px;
-        margin-left: 10px;
-        vertical-align: middle;
-        transition: transform 0.2s ease;
-      }
-      .header-icon:first-child {
-        margin-left: 10; /* No margin for the first icon */
-      }
-      .header-icon-link:hover .header-icon {
-        transform: scale(1.2); /* Slight zoom effect on hover */
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+        .section { opacity: 1; transform: none; }
       }
     </style>
   </head>
 
   <body>
-    <!-- Header -->
-    <div class="container-fluid g-0" style="position: fixed; top: 0; left: 0; right: 0; z-index: 1000">
-      <div class="row align-items-center py-3 px-2 header-row" style="background-color: #2f3542">
-        <div class="col-12 col-md-3 text-center text-md-start mb-2 mb-md-0">
-          <img src="{% static 'img/logoEscritta.svg' %}" alt="Logo" style="max-height: 60px" />
-        </div>
-        <div class="col-12 col-md-6 text-center mb-2 mb-md-0">
-          <h2 class="visualizer-title">Neural Circuit Visualizer</h2>
-        </div>
-
-        <!-- Header Icons -->
-        <div class="col-12 col-md-3 text-center text-md-end mb-2 mb-md-0 pe-4">
-          <!-- Home: Go back to root (/) -->
-          <a href="../" class="header-icon-link">
-            <img src="{% static 'img/docs/home.svg' %}" alt="Home" class="header-icon" />
-          </a>
-
-          <!-- Info: Current page -->
-          <a href="/docs" class="header-icon-link">
-            <img src="{% static 'img/docs/file-info.svg' %}" alt="Info" class="header-icon" />
-          </a>
-
-          <!-- Video section on current page -->
-          <a href="#demovideos" class="header-icon-link">
-            <img src="{% static 'img/docs/brand-youtube.svg' %}" alt="Video" class="header-icon" />
-          </a>
-        </div>
+    <!-- Header (same look as the main page) -->
+    <header class="app-header">
+      <div class="brand">
+        <a class="brand-logo-link" href="https://ebrains-italy.eu/" title="Italian distributed research infrastructure" target="_blank" rel="noopener noreferrer"><img class="brand-logo" src="{% static 'img/logo_white.png' %}" alt="IRIN" /></a>
+        <span class="brand-divider" aria-hidden="true"></span>
+        <span class="visualizer-title">Neural Circuit Visualizer</span>
       </div>
-    </div>
+      <nav class="app-nav">
+        <a href="../" class="nav-item-link"><i class="bi bi-house"></i> Home</a>
+        <a href="/docs" class="nav-item-link is-current"><i class="bi bi-file-earmark-text"></i> Documentation</a>
+        <a href="#demovideos" class="nav-item-link"><i class="bi bi-play-btn"></i> Demo videos</a>
+        <a href="../" class="btn-app"><i class="bi bi-box-arrow-up-right"></i> Open NCV</a>
+      </nav>
+    </header>
 
-    <!-- Main Content -->
-    <div class="container py-4">
-      <h1 style="margin-top: 6vw">Neural Circuit Visualizer (NCV) – User Guide</h1>
+    <div class="docs-shell">
+      <!-- Left column: contents -->
+      <aside class="docs-side">
+        <div class="card-panel">
+          <div class="card-head"><h3>On this page</h3><span class="chip">v1.0</span></div>
+          <nav class="toc" id="toc">
+            <a href="#ncv-overview"><i class="bi bi-compass"></i> Overview</a>
+            <a href="#run-simulation"><i class="bi bi-cpu"></i> Simulation</a>
+            <a href="#controls"><i class="bi bi-sliders"></i> Playback controls</a>
+            <a href="#features"><i class="bi bi-eye"></i> Visualization &amp; recording</a>
+            <a href="#demo-circuits"><i class="bi bi-diagram-3"></i> Demo circuits</a>
+            <a href="#demovideos"><i class="bi bi-play-btn"></i> Demo videos</a>
+            <a href="#uploading"><i class="bi bi-cloud-arrow-up"></i> Data upload</a>
+            <a href="#support"><i class="bi bi-life-preserver"></i> Support</a>
+          </nav>
+        </div>
+        <div class="card-panel help-card">
+          <div class="card-head"><h3>Need help?</h3></div>
+          <p>Questions about your data format or a failed job? Write to us.</p>
+          <a class="btn-app" href="#support"><i class="bi bi-envelope"></i> Contact support</a>
+        </div>
+        <div class="side-foot">Part of <a href="https://ebrains-italy.eu/" target="_blank" rel="noopener">IRIN</a>, Infrastruttura di Ricerca Italiana per le Neuroscienze.</div>
+      </aside>
+
+      <!-- Right column: the guide -->
+      <article class="docs-main">
+      <h1>Neural Circuit Visualizer (NCV) – User Guide</h1>
       <p><em>Version 1.0, July 2025</em></p>
 
       <!-- Sections -->
@@ -230,7 +327,7 @@
       </section>
 
       <section id="run-simulation" aria-labelledby="run-simulation-heading">
-        <h2 id="ncv-heading">Simulation</h2>
+        <h2 id="sim-heading">Simulation</h2>
         <h4 id="run-simulation-heading" style="font-size: 1.5rem; margin-bottom: 0.75rem">Run Simulation</h4>
         <p style="color: #374151">
           The
@@ -367,7 +464,7 @@
       </div>
 
       <div class="section" id="features">
-        
+        <h2>Visualization and Recording</h2>
 
         <h3>Visualization Panel</h3>
         <p style="color: #374151">
@@ -793,10 +890,11 @@
           <strong>ali.maqsood AT ibf.cnr.it</strong>
         </p>
       </div>
-
-      <!-- Back to Top Button -->
-      <button onclick="scrollToTop()" id="backToTopBtn" title="Back to top">↑</button>
+      </article>
     </div>
+
+    <!-- Back to Top Button -->
+    <button onclick="scrollToTop()" id="backToTopBtn" title="Back to top">↑</button>
     <script>
       // Fade in animation
       const sections = document.querySelectorAll(".section");
@@ -806,9 +904,26 @@
             if (entry.isIntersecting) entry.target.classList.add("visible");
           });
         },
-        { threshold: 0.1 }
+        { threshold: 0.05 }
       );
       sections.forEach((section) => observer.observe(section));
+
+      // Highlight the current section in "On this page"
+      const tocLinks = Array.from(document.querySelectorAll("#toc a"));
+      const spy = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              tocLinks.forEach((a) => a.classList.toggle("active", a.getAttribute("href") === "#" + entry.target.id));
+            }
+          });
+        },
+        { rootMargin: "-15% 0px -70% 0px" }
+      );
+      tocLinks.forEach((a) => {
+        const t = document.querySelector(a.getAttribute("href"));
+        if (t) spy.observe(t);
+      });
 
       // Back to top button
       const backToTopBtn = document.getElementById("backToTopBtn");
