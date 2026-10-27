@@ -237,8 +237,23 @@ class JobHelper:
             headers['Content-Disposition'] = 'attachment;filename=' + zip_name
             sa_endpoint += str(r0.json().get('id')) + '/upload-input-file/'
             logger.info('Uploading input file on service account with headers: %s', headers)
+            # with open(SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER, 'rb') as fd:
+            #     r1 = requests.patch(url=sa_endpoint, headers=headers, data=fd.read(), timeout=360000)
             with open(SERVICE_ACCOUNT_FILEPATH_PLACEHOLDER, 'rb') as fd:
-                r1 = requests.patch(url=sa_endpoint, headers=headers, data=fd.read(), timeout=360000)
+                r1 = requests.patch(
+                    url=sa_endpoint,
+                    headers=headers,
+                    data=fd.read(),
+                    timeout=360000,
+                )
+
+            if not 200 <= r1.status_code < 300:
+                raise errors.HPCException(
+                    f"Submission {r0.json().get('id')} was created, "
+                    f"but its input upload failed "
+                    f"(HTTP {r1.status_code}). "
+                    "Check the job list before retrying."
+                )
         else:
             logger.error('Error while submitting job on service account: %s', r0.content)
             raise errors.HPCException(messages.JOB_SUBMISSION_FAILED)
