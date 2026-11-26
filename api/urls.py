@@ -18,6 +18,7 @@ urlpatterns = [
     # path("benchmark_accuracy/", views.benchmark_accuracy, name="benchmark_accuracy"),
     path("upload_and_save_sonata_anynames/", views.upload_and_save_sonata_anynames),
     path("fetch_user_sonata_data/", views.fetch_user_sonata_data),
+    path("api/convert_to_mp4/", views.convert_to_mp4),
 
     
 ]
