@@ -104,57 +104,116 @@
 </div>
 
 <script>
-  document.getElementById("optimization-settings-forms").addEventListener("submit", async function (event) {
+    {% comment %} document.getElementById("optimization-settings-forms").addEventListener("submit", async function (event) {
+      event.preventDefault();
+      document.querySelectorAll(`#optimization-settings-forms input`).forEach((el) => el.classList.remove("is-invalid"));
+      const url = "/hpc-integration/submit-job";
+      const formData = new FormData(this);
+      const spinner = document.getElementById("submit-job-spinner");
+      spinner.classList.remove("d-none");
+      const button = document.getElementById("submit-job-button");
+      button.setAttribute("disabled", true);
+      const response = await fetch(url, {
+        method: "POST",
+        body: formData,
+      });
+      if (response.ok) {
+        showAlert("Job submitted successfully!", "success");
+      } else {
+        getError(response);
+      }
+      button.removeAttribute("disabled");
+      spinner.classList.add("d-none");
+    }); {% endcomment %}
+
+    document.getElementById("optimization-settings-forms").addEventListener("submit", async function (event) {
     event.preventDefault();
-    document.querySelectorAll(`#optimization-settings-forms input`).forEach((el) => el.classList.remove("is-invalid"));
-    const url = "/hpc-integration/submit-job";
+
     const formData = new FormData(this);
-    const spinner = document.getElementById("submit-job-spinner");
-    spinner.classList.remove("d-none");
     const button = document.getElementById("submit-job-button");
-    button.setAttribute("disabled", true);
-    const response = await fetch(url, {
-      method: "POST",
-      body: formData,
-    });
-    if (response.ok) {
-      showAlert("Job submitted successfully!", "success");
-    } else {
-      getError(response);
+    const spinner = document.getElementById("submit-job-spinner");
+
+    if (button.disabled) return;
+
+    button.disabled = true;
+    spinner.classList.remove("d-none");
+
+    try {
+      const response = await fetch("/hpc-integration/submit-job", {
+        method: "POST",
+        body: formData,
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+
+      if (response.redirected) {
+        throw new Error("Please sign in again.");
+      }
+
+      if (!response.ok) {
+        if (response.status === 509 || response.status === 510) {
+          showAlert(
+            await response.text(),
+            response.status === 510 ? "info" : "error"
+          );
+        } else {
+          await getError(response);
+        }
+        return;
+      }
+
+      // This confirmation header is added in step 5.
+      if (response.headers.get("X-NCV-Job-Submitted") !== "true") {
+        throw new Error("The server did not confirm submission.");
+      }
+
+      showAlert(await response.text(), "success");
+
+      // Fetch from the same HPC used for this submission.
+      document.getElementById("fetch-hpc-selector").value =
+        formData.get("hpc");
+
+      document.getElementById("fetch-jobs-form").requestSubmit();
+    } catch (error) {
+      console.error(error);
+      showAlert(
+        "Submission could not be confirmed. Refresh the jobs before retrying.",
+        "error"
+      );
+    } finally {
+      button.disabled = false;
+      spinner.classList.add("d-none");
     }
-    button.removeAttribute("disabled");
-    spinner.classList.add("d-none");
   });
+    window.onload = function () {
+      onCircuitSelection({ type: "load" });
+    };
 
-  window.onload = function () {
-    onCircuitSelection({ type: "load" });
-  };
+    function onCircuitSelection(event) {
+      // document.getElementById('hpc-selector').value = "CINECA - G100";
+      if (event.type === "load") {
+        value = document.getElementById("circuit-selector").value;
+      }
 
-  function onCircuitSelection(event) {
-    // document.getElementById('hpc-selector').value = "CINECA - G100";
-    if (event.type === "load") {
-      value = document.getElementById("circuit-selector").value;
+      if (value === "human") {
+        // to hide
+        document.getElementById("JUSUF-SA").classList.add("d-none");
+        document.getElementById("mouse-row-input-1").classList.add("d-none");
+        document.getElementById("mouse-row-input-2").classList.add("d-none");
+
+        // to show
+        document.getElementById("human-row-input-1").classList.remove("d-none");
+      } else {
+        // to hide
+        document.getElementById("mouse-row-input-1").classList.remove("d-none");
+        document.getElementById("mouse-row-input-2").classList.remove("d-none");
+
+        // to show
+        document.getElementById("JUSUF-SA").classList.remove("d-none");
+        document.getElementById("human-row-input-1").classList.add("d-none");
+      }
     }
-
-    if (value === "human") {
-      // to hide
-      document.getElementById("JUSUF-SA").classList.add("d-none");
-      document.getElementById("mouse-row-input-1").classList.add("d-none");
-      document.getElementById("mouse-row-input-2").classList.add("d-none");
-
-      // to show
-      document.getElementById("human-row-input-1").classList.remove("d-none");
-    } else {
-      // to hide
-      document.getElementById("mouse-row-input-1").classList.remove("d-none");
-      document.getElementById("mouse-row-input-2").classList.remove("d-none");
-
-      // to show
-      document.getElementById("JUSUF-SA").classList.remove("d-none");
-      document.getElementById("human-row-input-1").classList.add("d-none");
-    }
-  }
-  // set right circuit on load page
-  window.addEventListener("load", onCircuitSelection);
+    // set right circuit on load page
+    window.addEventListener("load", onCircuitSelection);
 </script>
 {% endblock %}

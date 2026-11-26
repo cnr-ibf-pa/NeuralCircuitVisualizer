@@ -3,9 +3,9 @@
   <form id="fetch-jobs-form">
     {% csrf_token %}
     <div class="mb-3">
-      <label for="hpc-selector" class="form-label">HPC platform</label>
-      <select class="form-select" id="hpc-selector" name="hpc">
-        <option id="JUSUF-SA" value="JUSUF - ServiceAccount">JUSUF — JSC (all users via service account)</option>
+      <label for="fetch-hpc-selector" class="form-label">HPC platform</label>
+      <select class="form-select" id="fetch-hpc-selector" name="hpc">
+        <option id="fetch-JUSUF-SA" value="JUSUF - ServiceAccount">JUSUF — JSC (all users via service account)</option>
         <option value="CINECA - G100">CINECA - G100 (icei project users)</option>
       </select>
     </div>
@@ -32,153 +32,226 @@
       </div>
     </div>
   </div>
+  {% comment %}
   <div class="jobs-empty">No fetched jobs yet. Submitted runs appear here when complete.</div>
+  {% endcomment %}
 </div>
 <script>
-  function addJobToList(jobId, details) {
-    console.log("Adding job to list:", jobId, details);
+    function addJobToList(jobId, details) {
+      console.log("Adding job to list:", jobId, details);
 
-    const div = document.createElement("div");
-    div.classList.add("d-flex", "align-items-center");
+      const div = document.createElement("div");
+      div.classList.add("d-flex", "align-items-center");
 
-    const downloadButton = document.createElement("button");
-    downloadButton.classList.add("btn", "job-button", "border");
-    downloadButton.style.width = "64px";
-    downloadButton.innerHTML =
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M144 480C64.5 480 0 415.5 0 336c0-62.8 40.2-116.2 96.2-135.9c-.1-2.7-.2-5.4-.2-8.1c0-88.4 71.6-160 160-160c59.3 0 111 32.2 138.7 80.2C409.9 102 428.3 96 448 96c53 0 96 43 96 96c0 12.2-2.3 23.8-6.4 34.6C596 238.4 640 290.1 640 352c0 70.7-57.3 128-128 128l-368 0zm79-167l80 80c9.4 9.4 24.6 9.4 33.9 0l80-80c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0l-39 39L344 184c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 134.1-39-39c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9z"/></svg>';
-    downloadButton.addEventListener("click", function () {
-      const a = document.createElement("a");
-      a.href = new URL(`hpc-integration/download-activity-network?job_id=${jobId}`, window.location.origin);
-      a.style.display = "none";
-      document.body.appendChild(a);
-      a.click();
-    });
-
-    const el = document.createElement("button");
-    el.classList.add("btn", "job-button", "border");
-    el.innerText = details.job_name;
-    const status = details.status.toLowerCase();
-    if (status === "successful") {
-      el.classList.add("job-success", "btn-success");
-    } else if (status === "failed") {
-      el.classList.add("job-failed", "btn-danger");
-    } else if (status === "pending" || status === "running" || status === "queued") {
-      el.classList.add("job-pending", "btn-info");
-    }
-    if (status === "successful") {
-      el.addEventListener("click", function () {
-        fetchActivityNetworkFromJob(jobId);
-      });
-    } else if (status === "failed") {
-      el.addEventListener("click", function () {
+      const downloadButton = document.createElement("button");
+      downloadButton.classList.add("btn", "job-button", "border");
+      downloadButton.style.width = "64px";
+      downloadButton.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M144 480C64.5 480 0 415.5 0 336c0-62.8 40.2-116.2 96.2-135.9c-.1-2.7-.2-5.4-.2-8.1c0-88.4 71.6-160 160-160c59.3 0 111 32.2 138.7 80.2C409.9 102 428.3 96 448 96c53 0 96 43 96 96c0 12.2-2.3 23.8-6.4 34.6C596 238.4 640 290.1 640 352c0 70.7-57.3 128-128 128l-368 0zm79-167l80 80c9.4 9.4 24.6 9.4 33.9 0l80-80c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0l-39 39L344 184c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 134.1-39-39c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9z"/></svg>';
+      downloadButton.addEventListener("click", function () {
         const a = document.createElement("a");
-        a.href = new URL(`/hpc-integration/download-job-results?job_id=${jobId}`, window.location.origin);
+        a.href = new URL(`hpc-integration/download-activity-network?job_id=${jobId}`, window.location.origin);
         a.style.display = "none";
         document.body.appendChild(a);
         a.click();
       });
+
+      const el = document.createElement("button");
+      el.classList.add("btn", "job-button", "border");
+      /*el.innerText = details.job_name;*/
+      el.innerText =
+        (details.job_name || jobId) +
+        " | ID: " + jobId +
+        " | " + details.status +
+        " | " + details.date;
+      const status = details.status.toLowerCase();
+      if (status === "successful") {
+        el.classList.add("job-success", "btn-success");
+      } else if (status === "failed") {
+        el.classList.add("job-failed", "btn-danger");
+      } else if (status === "pending" || status === "running" || status === "queued") {
+        el.classList.add("job-pending", "btn-info");
+      }
+      if (status === "successful") {
+        el.addEventListener("click", function () {
+          fetchActivityNetworkFromJob(jobId);
+        });
+      } else if (status === "failed") {
+        el.addEventListener("click", function () {
+          const a = document.createElement("a");
+          a.href = new URL(`/hpc-integration/download-job-results?job_id=${jobId}`, window.location.origin);
+          a.style.display = "none";
+          document.body.appendChild(a);
+          a.click();
+        });
+      }
+      div.appendChild(el);
+      div.appendChild(downloadButton);
+      document.getElementById("fetched-jobs-list").appendChild(div);
     }
-    div.appendChild(el);
-    div.appendChild(downloadButton);
-    document.getElementById("fetched-jobs-list").appendChild(div);
-  }
 
-  document.getElementById("fetch-jobs-form").addEventListener("submit", function (event) {
+
+    let fetchJobsSequence = 0;
+
+  document.getElementById("fetch-jobs-form").addEventListener("submit", async function (event) {
     event.preventDefault();
-    document.getElementById("fetchedJobsDiv").classList.add("d-none");
-    const formData = new FormData(this);
+
+    const sequence = ++fetchJobsSequence;
+    const spinner = document.getElementById("fetch-job-spinner");
+    const button = document.getElementById("fetch-job-button");
+    const panel = document.getElementById("fetchedJobsDiv");
+
     const url = new URL("/hpc-integration/fetch-jobs", window.location.origin);
-    url.searchParams.set("hpc", formData.get("hpc"));
-    document.getElementById("fetch-job-spinner").classList.remove("d-none");
-    document.getElementById("fetch-job-button").setAttribute("disabled", true);
-    fetch(url)
-      .then(async (response) => {
-        if (!response.ok) {
-          getError(response);
-        } else {
-          const data = await response.json();
-          document.getElementById("fetched-jobs-list").innerHTML = "";
-          document.getElementById("fetchedJobsDiv").classList.remove("d-none");
-          Object.keys(data).forEach((jobId) => addJobToList(jobId, data[jobId]));
-        }
-      })
-      .finally(() => {
-        document.getElementById("fetch-job-spinner").classList.add("d-none");
-        document.getElementById("fetch-job-button").removeAttribute("disabled");
+    url.searchParams.set("hpc", new FormData(this).get("hpc"));
+
+    spinner.classList.remove("d-none");
+    button.disabled = true;
+    panel.classList.add("d-none");
+
+    try {
+      const response = await fetch(url, {
+        cache: "no-store",
+        credentials: "same-origin",
       });
+
+      if (sequence !== fetchJobsSequence) return;
+
+      if (response.redirected) {
+        throw new Error("Please sign in again.");
+      }
+
+      if (!response.ok) {
+        await getError(response);
+        return;
+      }
+
+      const data = await response.json();
+
+      if (sequence !== fetchJobsSequence) return;
+
+      // Sort explicitly by date, including when job IDs are numeric.
+      const jobs = Object.entries(data).sort(
+        (a, b) =>
+          (Date.parse(b[1].date) || 0) -
+          (Date.parse(a[1].date) || 0)
+      );
+
+      document.getElementById("fetched-jobs-list").replaceChildren();
+
+      jobs.forEach(([jobId, details]) => {
+        addJobToList(jobId, details);
+      });
+
+      panel.classList.remove("d-none");
+    } catch (error) {
+      if (sequence !== fetchJobsSequence) return;
+
+      console.error(error);
+      showAlert("Could not fetch jobs. Please refresh again.", "error");
+    } finally {
+      if (sequence === fetchJobsSequence) {
+        spinner.classList.add("d-none");
+        button.disabled = false;
+      }
+    }
   });
 
-  function fetchActivityNetworkFromJob(jobId) {
-    fetch("hpc-integration/download-activity-network?job_id=" + jobId)
-      .then((response) => {
-        if (!response.ok) {
-          getError(response);
-        }
-        return response.blob();
-      })
-      .then((blob) => {
-        const file = new File([blob], "activity_network.hdf5", { type: "application/octet-stream" });
-        const dataTransfer = new DataTransfer();
-        const hdfFileInput = document.getElementById("activityFileInput");
+    {% comment %} document.getElementById("fetch-jobs-form").addEventListener("submit", function (event) {
+      event.preventDefault();
+      document.getElementById("fetchedJobsDiv").classList.add("d-none");
+      const formData = new FormData(this);
+      const url = new URL("/hpc-integration/fetch-jobs", window.location.origin);
+      url.searchParams.set("hpc", formData.get("hpc"));
+      document.getElementById("fetch-job-spinner").classList.remove("d-none");
+      document.getElementById("fetch-job-button").setAttribute("disabled", true);
+      fetch(url)
+        .then(async (response) => {
+          if (!response.ok) {
+            getError(response);
+          } else {
+            const data = await response.json();
+            document.getElementById("fetched-jobs-list").innerHTML = "";
+            document.getElementById("fetchedJobsDiv").classList.remove("d-none");
+            Object.keys(data).forEach((jobId) => addJobToList(jobId, data[jobId]));
+          }
+        })
+        .finally(() => {
+          document.getElementById("fetch-job-spinner").classList.add("d-none");
+          document.getElementById("fetch-job-button").removeAttribute("disabled");
+        });
+    }); {% endcomment %}
 
-        // Set a custom attribute to indicate this is a download-triggered change
-        hdfFileInput.setAttribute("data-download-triggered", "true");
+    function fetchActivityNetworkFromJob(jobId) {
+      fetch("hpc-integration/download-activity-network?job_id=" + jobId)
+        .then((response) => {
+          if (!response.ok) {
+            getError(response);
+          }
+          return response.blob();
+        })
+        .then((blob) => {
+          const file = new File([blob], "activity_network.hdf5", { type: "application/octet-stream" });
+          const dataTransfer = new DataTransfer();
+          const hdfFileInput = document.getElementById("activityFileInput");
 
-        dataTransfer.items.add(file);
-        hdfFileInput.files = dataTransfer.files;
+          // Set a custom attribute to indicate this is a download-triggered change
+          hdfFileInput.setAttribute("data-download-triggered", "true");
 
-        hdfFileInput.dispatchEvent(new Event("change"));
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-    document.getElementById("fetched-jobs-list").appendChild(el);
-  }
+          dataTransfer.items.add(file);
+          hdfFileInput.files = dataTransfer.files;
 
-  document.getElementById("fetch-jobs-form").addEventListener("submit", function (event) {
-    event.preventDefault();
-    document.getElementById("fetchedJobsDiv").classList.add("d-none");
-    const formData = new FormData(this);
-    const url = new URL("/hpc-integration/fetch-jobs", window.location.origin);
-    url.searchParams.set("hpc", formData.get("hpc"));
-    document.getElementById("fetch-job-spinner").classList.remove("d-none");
-    document.getElementById("fetch-job-button").setAttribute("disabled", true);
-    fetch(url)
-      .then(async (response) => {
-        if (!response.ok) {
-          getError(response);
-        } else {
-          const data = await response.json();
-          document.getElementById("fetched-jobs-list").innerHTML = "";
-          document.getElementById("fetchedJobsDiv").classList.remove("d-none");
-          Object.keys(data).forEach((jobId) => addJobToList(jobId, data[jobId]));
-        }
-      })
-      .finally(() => {
-        document.getElementById("fetch-job-spinner").classList.add("d-none");
-        document.getElementById("fetch-job-button").removeAttribute("disabled");
-      });
-  });
+          hdfFileInput.dispatchEvent(new Event("change"));
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+      //document.getElementById("fetched-jobs-list").appendChild(el);
+    }
 
-  function downloadActivityNetworkFromJob(jobId) {
-    fetch("hpc-integration/download-activity-network?job_id=" + jobId)
-      .then((response) => {
-        if (!response.ok) {
-          getError(response);
-        }
-        return response.blob();
-      })
-      .then((blob) => {
-        const file = new File([blob], `${jobId}.hdf5`, { type: "application/octet-stream" });
-        const dataTransfer = new DataTransfer();
-        const hdfFileInput = document.getElementById("activityFileInput");
-        dataTransfer.items.add(file);
-        hdfFileInput.files = dataTransfer.files;
-        hdfFileInput.dispatchEvent(new Event("change"));
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }
+    {% comment %} document.getElementById("fetch-jobs-form").addEventListener("submit", function (event) {
+      event.preventDefault();
+      document.getElementById("fetchedJobsDiv").classList.add("d-none");
+      const formData = new FormData(this);
+      const url = new URL("/hpc-integration/fetch-jobs", window.location.origin);
+      url.searchParams.set("hpc", formData.get("hpc"));
+      document.getElementById("fetch-job-spinner").classList.remove("d-none");
+      document.getElementById("fetch-job-button").setAttribute("disabled", true);
+      fetch(url)
+        .then(async (response) => {
+          if (!response.ok) {
+            getError(response);
+          } else {
+            const data = await response.json();
+            document.getElementById("fetched-jobs-list").innerHTML = "";
+            document.getElementById("fetchedJobsDiv").classList.remove("d-none");
+            Object.keys(data).forEach((jobId) => addJobToList(jobId, data[jobId]));
+          }
+        })
+        .finally(() => {
+          document.getElementById("fetch-job-spinner").classList.add("d-none");
+          document.getElementById("fetch-job-button").removeAttribute("disabled");
+        });
+    }); {% endcomment %}
+
+    function downloadActivityNetworkFromJob(jobId) {
+      fetch("hpc-integration/download-activity-network?job_id=" + jobId)
+        .then((response) => {
+          if (!response.ok) {
+            getError(response);
+          }
+          return response.blob();
+        })
+        .then((blob) => {
+          const file = new File([blob], `${jobId}.hdf5`, { type: "application/octet-stream" });
+          const dataTransfer = new DataTransfer();
+          const hdfFileInput = document.getElementById("activityFileInput");
+          dataTransfer.items.add(file);
+          hdfFileInput.files = dataTransfer.files;
+          hdfFileInput.dispatchEvent(new Event("change"));
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
 </script>
 {% endblock %}

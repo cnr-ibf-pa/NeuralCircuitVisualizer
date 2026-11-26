@@ -631,6 +631,17 @@
           line-height: 1.25;
           overflow-wrap: anywhere;
         }
+        #collapseRegion .region-color-cell {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+          margin-bottom: 8px;
+          text-align: center;
+        }
+        #collapseRegion .region-color-cell .region-labels {
+          margin: 0;
+        }
         #collapseRegion .region-labels {
           font-size: 0.64rem;
         }
@@ -1045,6 +1056,26 @@
             --header-h: 60px;
           }
         }
+
+        .visualizer-title {
+          font-size: 2rem !important;
+          letter-spacing: 0.2px;
+        }
+        @media (max-width: 992px) {
+          .visualizer-title {
+            font-size: 1.3rem !important;
+          }
+        }
+        @media (max-width: 680px) {
+          .visualizer-title {
+            font-size: 1.1rem !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .visualizer-title {
+            font-size: 0.95rem !important;
+          }
+        }
       </style>
 
       <style>
@@ -1064,6 +1095,8 @@
       </script>
 
       <script type="x-shader/x-vertex" id="vertexshader">
+        #include <common>
+        #include <logdepthbuf_pars_vertex>
         attribute float size;
         varying vec3 vColor;
         varying float vScale;
@@ -1074,15 +1107,18 @@
         vScale = 400.0 / length(mvPosition.xyz); //200 size for when closer to the camersa
         gl_PointSize = size * vScale;
         gl_Position = projectionMatrix * mvPosition;
+        #include <logdepthbuf_vertex>
         }
       </script>
 
       <script type="x-shader/x-fragment" id="fragmentshader">
+          #include <logdepthbuf_pars_fragment>
           uniform sampler2D pointTexture;
           uniform float uBrightness;
           varying vec3 vColor;
 
           void main() {
+          #include <logdepthbuf_fragment>
           vec2 coord = gl_PointCoord - 0.5;
         float dist = dot(coord, coord);
 
@@ -1233,19 +1269,19 @@
                                         <div class="container">
                                           <!-- Region Switches -->
                                           <div class="row py-2">
-                                            <div class="col-md-4">
+                                            <div class="col-4">
                                               <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" id="AllDGRegSwitchCheck" />
                                                 <label class="form-check-label" for="AllDGRegSwitchCheck">Dentate Gyrus (DG)</label>
                                               </div>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-4">
                                               <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" id="AllCA3RegSwitchCheck" />
                                                 <label class="form-check-label" for="AllCA3RegSwitchCheck">CA3</label>
                                               </div>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-4">
                                               <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" id="AllCA2RegSwitchCheck" />
                                                 <label class="form-check-label" for="AllCA2RegSwitchCheck">CA2</label>
@@ -1254,19 +1290,19 @@
                                           </div>
 
                                           <div class="row pb-3">
-                                            <div class="col-md-4">
+                                            <div class="col-4">
                                               <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" id="AllCA1RegSwitchCheck" />
                                                 <label class="form-check-label" for="AllCA1RegSwitchCheck">CA1</label>
                                               </div>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-4">
                                               <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" id="AllSubRegSwitchCheck" />
                                                 <label class="form-check-label" for="AllSubRegSwitchCheck">Subiculum (Sub)</label>
                                               </div>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-4">
                                               <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" id="AllECRegSwitchCheck" />
                                                 <label class="form-check-label" for="AllECRegSwitchCheck">Entorhinal Cortex (EC)</label>
@@ -1274,35 +1310,30 @@
                                             </div>
                                           </div>
 
-                                          <!-- Region Labels -->
-                                          <div class="row text-center mb-1 text-muted region-labels">
-                                            <div class="col-md-2">DG PC</div>
-                                            <div class="col-md-2">CA3 PC</div>
-                                            <div class="col-md-2">CA2 PC</div>
-                                            <div class="col-md-2">CA1 PC</div>
-                                            <div class="col-md-2">Sub PC</div>
-                                            <div class="col-md-2">EC PC</div>
-                                          </div>
-
-                                          <!-- Color Pickers -->
-                                          <div class="row select-row">
-                                            <div class="col-md-2 d-flex justify-content-center">
+                                          <!-- Region colour pickers (label + picker kept together so they stay paired on mobile) -->
+                                          <div class="row select-row pb-2">
+                                            <div class="col-4 col-md-2 region-color-cell">
+                                              <div class="region-labels text-muted">DG PC</div>
                                               <input type="color" id="colorPickerDG" value="#0000ff" class="color-circle" />
-                                              <!-- default: orange -->
                                             </div>
-                                            <div class="col-md-2 d-flex justify-content-center">
+                                            <div class="col-4 col-md-2 region-color-cell">
+                                              <div class="region-labels text-muted">CA3 PC</div>
                                               <input type="color" id="colorPickerCA3" value="#0000ff" class="color-circle" />
                                             </div>
-                                            <div class="col-md-2 d-flex justify-content-center">
+                                            <div class="col-4 col-md-2 region-color-cell">
+                                              <div class="region-labels text-muted">CA2 PC</div>
                                               <input type="color" id="colorPickerCA2" value="#0000ff" class="color-circle" />
                                             </div>
-                                            <div class="col-md-2 d-flex justify-content-center">
+                                            <div class="col-4 col-md-2 region-color-cell">
+                                              <div class="region-labels text-muted">CA1 PC</div>
                                               <input type="color" id="colorPickerCA1" value="#0000ff" class="color-circle" />
                                             </div>
-                                            <div class="col-md-2 d-flex justify-content-center">
+                                            <div class="col-4 col-md-2 region-color-cell">
+                                              <div class="region-labels text-muted">Sub PC</div>
                                               <input type="color" id="colorPickerSub" value="#0000ff" class="color-circle" />
                                             </div>
-                                            <div class="col-md-2 d-flex justify-content-center">
+                                            <div class="col-4 col-md-2 region-color-cell">
+                                              <div class="region-labels text-muted">EC PC</div>
                                               <input type="color" id="colorPickerEC" value="#0000ff" class="color-circle" />
                                             </div>
                                           </div>

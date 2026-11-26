@@ -43,9 +43,29 @@ def submit_job(request):
     try:
         if request.session.get('job_already_submitted'):
             return HttpResponse(status=510, content=messages.JOB_ALREADY_SUBMITTED)
-        JobHelper().submit_job(data.pop("hpc"), data, request.session['oidc_access_token'], job_name=request.session.get('workflow_id'))
+        # JobHelper().submit_job(data.pop("hpc"), data, request.session['oidc_access_token'], job_name=request.session.get('workflow_id'))
+        # request.session['job_already_submitted'] = True
+        # return HttpResponse(status=OK, content=messages.JOB_SUBMITTED.format(data.get('hpc')))
+        
+        hpc = data.pop("hpc")
+
+        JobHelper().submit_job(
+            hpc,
+            data,
+            request.session['oidc_access_token'],
+            job_name=request.session.get('workflow_id'),
+        )
+
         request.session['job_already_submitted'] = True
-        return HttpResponse(status=OK, content=messages.JOB_SUBMITTED.format(data.get('hpc')))
+
+        response = HttpResponse(
+            status=OK,
+            content=messages.JOB_SUBMITTED.format(hpc),
+        )
+        response['X-NCV-Job-Submitted'] = 'true'
+        response['Cache-Control'] = 'no-store, private'
+        return response
+        
 
     except UnicoreClientException as err:
         logger.error(f'AUTH Error while trying to submit job: {err}')
@@ -79,7 +99,10 @@ def fetch_jobs(request):
 
     try:
         jobs_list = JobHelper().fetch_jobs_list(hpc, request.session['oidc_access_token'])
-        return JsonResponse(data=jobs_list)
+        # return JsonResponse(data=jobs_list)
+        response = JsonResponse(data=jobs_list)
+        response['Cache-Control'] = 'no-store, private'
+        return response
 
     except UnicoreClientException as err:
         logger.error(f'AUTH Error while trying to fetch jobs: {err}')

@@ -12,3 +12,4 @@ h5py
 networkx
 gunicorn
 pyjwt
+ffmpeg
